@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Growing Up to Learn</title>
+<meta name="description" content="Five experiments in raising a reinforcement learner: world models, drills, variation, teachers, and growing bodies — with real data.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+html{scroll-behavior:auto!important}
+:root{
+  --bg:#0E1420; --bg2:#131B2B; --panel:rgba(19,27,43,.86); --card:rgba(24,34,56,.92);
+  --ink:#F2EDE4; --muted:#9FA8B8; --faint:#5C6678; --hair:#263049; --accent:#E8C468;
+  --blue:#4C86D8; --orange:#C77B2F; --green:#4F9E6E; --violet:#AA64C8; --gold:#AD8F2E; --red:#C75F6B;
+  --serif:"Newsreader",Georgia,serif; --disp:"Young Serif","Iowan Old Style",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.7;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:#3a4a6b;color:var(--ink)}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(232,196,104,.35)}
+a:hover{border-bottom-color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+#gl{position:fixed;inset:0;z-index:0;pointer-events:none}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- the growth ruler (signature) ---------- */
+#ruler{position:fixed;left:0;top:0;bottom:0;width:74px;z-index:40;display:flex;flex-direction:column;
+  justify-content:space-between;padding:18vh 0 10vh;border-right:1px solid var(--hair);
+  background:linear-gradient(90deg,rgba(14,20,32,.9),rgba(14,20,32,0))}
+#ruler .tickwrap{position:relative;flex:1;margin:0 0 0 0}
+#ruler .lead{position:absolute;left:26px;top:0;bottom:0;width:2px;background:var(--hair)}
+#ruler .pencil{position:absolute;left:26px;bottom:0;width:2px;height:0;background:var(--accent)}
+#ruler button{position:absolute;left:0;transform:translateY(50%);display:flex;align-items:center;gap:8px;
+  background:none;border:0;color:var(--faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  cursor:pointer;padding:6px 4px;white-space:nowrap}
+#ruler button .mark{display:inline-block;width:18px;height:2px;background:currentColor}
+#ruler button:hover,#ruler button.active{color:var(--accent)}
+#ruler button .nm{writing-mode:vertical-rl;transform:rotate(180deg)}
+#topbar{display:none;position:fixed;top:0;left:0;right:0;height:3px;z-index:40;background:var(--hair)}
+#topbar .fill{height:100%;width:0;background:var(--accent)}
+@media(max-width:1099px){#ruler{display:none}#topbar{display:block}}
+
+/* ---------- layout ---------- */
+.chapter{position:relative}
+.scrolly{position:relative}
+.stage{height:100vh;width:100%;position:sticky;top:0;overflow:hidden}
+.stage .hud{position:absolute;inset:0;pointer-events:none}
+.prose{position:relative;z-index:2;max-width:700px;margin:0 auto;padding:9rem 24px 7rem}
+@media(min-width:1100px){.prose{padding-left:0;padding-right:0}}
+.prose p{margin:0 0 1.4em}
+.prose .lede{font-size:1.22em;line-height:1.65;color:var(--ink)}
+h1,h2,h3{font-family:var(--disp);font-weight:400;line-height:1.15;margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 1.2rem}
+.eyebrow .hyp{color:var(--faint)}
+h2{font-size:clamp(1.9rem,4.2vw,3rem);margin-bottom:1.6rem}
+.figure-note{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.6;margin-top:.6rem}
+.marginal{font-family:var(--mono);font-size:12.5px;color:var(--muted);border-left:2px solid var(--hair);padding-left:14px;margin:1.6em 0}
+.stat-inline{font-family:var(--mono);font-size:.86em;color:var(--accent);white-space:nowrap}
+
+/* step cards over stages */
+.steps{position:relative;z-index:3;pointer-events:none}
+.step{min-height:88vh;display:flex;align-items:center;justify-content:flex-start;padding:0 24px}
+.step .card{pointer-events:auto;max-width:330px;background:var(--card);border:1px solid var(--hair);
+  border-radius:10px;padding:18px 20px;font-size:15.5px;line-height:1.6;color:var(--ink);
+  box-shadow:0 12px 40px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
+.step .card .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px}
+.step .card p{margin:0}
+.step.center{justify-content:center;align-items:flex-end;padding:0 24px 9vh}
+@media(min-width:1100px){.step.center{padding-left:24px}}
+@media(min-width:1100px){.step{padding-left:calc(50% + 180px)}.step.left{padding-left:120px;justify-content:flex-start}}
+
+/* charts */
+.figure{position:relative;z-index:2;max-width:860px;margin:0 auto;padding:2rem 24px 4rem}
+.figure .panel{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:22px 22px 16px}
+.figure h3{font-size:1.15rem;margin-bottom:4px}
+.figure .sub{font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 0 14px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 6px}
+.legend .sw{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+svg.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+svg.chart .dl{font-size:11.5px;font-weight:500}
+.tooltip{position:fixed;z-index:60;pointer-events:none;background:#0b101b;border:1px solid var(--hair);
+  border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:12px;color:var(--ink);opacity:0;
+  box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.tooltip .trow{display:flex;justify-content:space-between;gap:14px}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:1.4rem 0}
+.tile{background:var(--card);border:1px solid var(--hair);border-radius:10px;padding:14px 16px}
+.tile .v{font-family:var(--mono);font-size:1.7rem;color:var(--ink)}
+.tile .l{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);margin-top:4px;line-height:1.5}
+.tile.win{border-color:rgba(232,196,104,.5)}
+.chip{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:3px 10px;border-radius:99px;border:1px solid}
+.chip.ok{color:#7CC79A;border-color:#2E5C42}
+.chip.no{color:#E09A93;border-color:#6b3a36}
+
+/* hero */
+#hero{height:100vh;position:relative;display:flex;align-items:center;justify-content:center;text-align:center}
+#hero .inner{position:relative;z-index:2;padding:0 24px;max-width:900px;text-shadow:0 2px 30px rgba(14,20,32,.95),0 0 80px rgba(14,20,32,.8)}
+#hero::after{content:"";position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 60% 45% at 50% 46%,rgba(14,20,32,.68),rgba(14,20,32,0) 70%)}
+#hero h1{font-size:clamp(2.6rem,7vw,5.2rem);letter-spacing:.01em}
+#hero .sub{font-size:clamp(1.05rem,2.2vw,1.35rem);color:var(--muted);margin-top:1.4rem;font-style:italic}
+#hero .meta{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:2.6rem}
+#hero .scrollcue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-family:var(--mono);
+  font-size:11px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase}
+
+/* honest failures */
+.fails{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin:1.5rem 0}
+.fail{background:linear-gradient(180deg,rgba(199,95,107,.08),rgba(24,34,56,.9));border:1px solid #4a3040;border-radius:10px;padding:16px 18px;font-size:15px}
+.fail .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:#E09A93;text-transform:uppercase;display:block;margin-bottom:6px}
+
+/* methods table */
+.mtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin:1rem 0}
+.mtable th,.mtable td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--hair);vertical-align:top}
+.mtable th{color:var(--muted);font-weight:500;letter-spacing:.06em}
+.mtable td:first-child{color:var(--accent);white-space:nowrap}
+footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4rem;padding:3rem 24px 5rem;
+  font-family:var(--mono);font-size:12.5px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion: reduce){#hero .scrollcue{display:none}}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div id="topbar" aria-hidden="true"><div class="fill"></div></div>
+<nav id="ruler" aria-label="Chapters — height marks on a door frame">
+  <div class="tickwrap"><div class="lead"></div><div class="pencil"></div></div>
+</nav>
+<div class="tooltip" id="tooltip" role="status"></div>
+
+<!-- ══════════ HERO ══════════ -->
+<section id="hero" class="chapter" data-scene="hero">
+  <div class="inner">
+    <p class="eyebrow">Five experiments · 150 seeded runs · all code &amp; data public</p>
+    <h1>Growing Up to&nbsp;Learn</h1>
+    <p class="sub">What reinforcement learning looks like when you raise it the way children are raised — with maps, drills, mess, teachers, and a body that starts small.</p>
+    <p class="meta">developmental-rl · numpy · 179 tests · every claim measured</p>
+  </div>
+  <div class="scrollcue">scroll to begin</div>
+</section>
+
+<!-- ══════════ INTRO PROSE ══════════ -->
+<section class="chapter">
+  <div class="prose">
+    <p class="lede">Reinforcement learning is usually told as a story about reward. An agent acts, the world scores it, and a policy slowly bends toward whatever pays. Imitation learning is the opposite story: copy the teacher and hope the world never drifts from the demonstrations.</p>
+    <p>Humans live between those stories. We take <em>instruction</em> — compressed experience handed down by people who practiced before us — and we cash it out through our own trial and error. We keep a model of the world in our heads and rehearse inside it. We drill small pieces before playing whole games. We practice with deliberate variation, because smooth repetition is a comfortable lie. And we do all of it inside a body that starts small and grows on a schedule that seems suspiciously convenient for learning.</p>
+    <p>This page reports five hypotheses about that middle ground, each turned into a falsifiable experiment on deliberately small systems — tabular and linear agents, gridworlds and a torque-limited pendulum — where every step is countable, budgets are matched to the step, and 20–40 seeds per condition make the statistics honest. Small worlds, so the mechanisms have nowhere to hide.</p>
+    <p class="marginal">Protocol, in one line: IQM point estimates, 95% percentile-bootstrap CIs, two-sided Mann-Whitney with Holm correction, and identical evaluation for every condition. Full details in the methods section at the end.</p>
+  </div>
+</section>
+
+<!-- ══════════ PRIMER ══════════ -->
+<section class="chapter" id="ch-primer" data-scene="primer">
+  <div class="scrolly"><div class="stage" data-stage="primer" aria-label="A three-by-three gridworld where value arrows grow out of cells as the agent learns"></div>
+  <div class="steps">
+    <div class="step left"><div class="card"><span class="k">the one idea you need</span><p>Every experiment here is tabular Q-learning: a table with one row per situation, one column per action, holding a running guess of long-run reward.</p></div></div>
+    <div class="step left"><div class="card"><span class="k">learning = leaking value backward</span><p>Reach the goal once and its value leaks one step back along the path. Arrows grow as the table converges. That's the whole engine.</p></div></div>
+    <div class="step left"><div class="card"><span class="k">why so small?</span><p>Because the hypotheses are about <em>structure around</em> the learner — models, drills, teachers, bodies. A small learner keeps the structure visible.</p></div></div>
+  </div></div><!-- /scrolly -->
+</section>
+
+<!-- ══════════ H1 BLINDFOLD ══════════ -->
+<section class="chapter" id="ch1">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H1 · world models</span> — chapter one</p>
+    <h2>The Blindfold Test</h2>
+    <p class="lede">Close your eyes in your own home and you can still find the fridge. Close your eyes in a stranger's home and you are lost immediately. Your motor neurons didn't change between those two sentences — your <em>map</em> did.</p>
+    <p>We raised an agent in a 13×11 apartment with 10% motor slip, letting it learn both a policy and a transition model of its home. Then we took its observations away entirely. Blindfolded, it navigates by dead reckoning: it imagines where each action should have taken it, tracks a belief over where it probably is, and asks its value table what to do from there. The test: same blindfold, familiar home versus stranger's home.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h1" aria-label="A dark apartment diorama. A glowing agent walks with a spotlight; when blindfolded, a ghost shows where it believes it is. In the stranger's home the ghost drifts away from the true body."></div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">sighted · home A</span><p>With eyes open, the trained agent reaches the fridge in 99% of episodes. The spotlight is its observation.</p></div></div>
+    <div class="step"><div class="card"><span class="k">lights out · home A</span><p>Blindfolded, pure dead reckoning drops to 21% — slip noise compounds, the belief drifts. Sound familiar? Add <em>touch</em> — a bump signal filtering the belief, a hand trailing the wall — and success returns to <strong>96%</strong>, nearly sighted-level.</p></div></div>
+    <div class="step"><div class="card"><span class="k">a stranger's home</span><p>Same agent, same blindfold, same touch — new floor plan. Success: 10%. Watch the ghost: the belief marches confidently through walls that aren't where it thinks they are.</p></div></div>
+    <div class="step"><div class="card"><span class="k">the model is the difference</span><p>Sighted transfer to home B with home A's values also fails (0%). It was never about vision. It's the map.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Model-based learning is the other half of H1</h3>
+      <p class="sub">Greedy success at the fridge, evaluated every 1k steps · 30 seeds · IQM with 95% bootstrap CI</p>
+      <div class="legend" id="lg-exp1"></div>
+      <svg class="chart" id="chart-exp1" role="img" aria-label="Learning curves: DynaQ reaches 90 percent success near 2000 steps, Q-learning near 25000"></svg>
+      <p class="figure-note">The same experience, replayed through a learned model (Dyna-Q, 20 imagined updates per real step), reaches 90% success in <span class="stat-inline">2,000 steps</span> vs <span class="stat-inline">24,938</span> model-free — a 12× gap (Holm p=3.1e-11). The map isn't just for blindfolds; it's a sample-efficiency engine.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H2 DRILLS ══════════ -->
+<section class="chapter" id="ch2">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H2 · microtasks</span> — chapter two</p>
+    <h2>Nobody Learns Soccer by Playing Soccer</h2>
+    <p class="lede">Coaches don't start with full matches, and piano teachers don't start with the whole piece. They isolate: shoot from close, then dribble, then play. We asked whether the drill structure itself — with no shaping, no hints, no extra reward — is worth anything to a reinforcement learner.</p>
+    <p>Three agents got identical budgets of 60,000 steps on an 11×7 pitch where only goals are ever rewarded. One played full games from kickoff the whole time. One spent 20% of its budget spawning near the goal with the ball (shooting drill), 20% spawning in its own half (dribbling drill), then played full games. The only thing the curriculum changes is <em>where episodes start</em>.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h2" aria-label="A bright pitch diorama. Ghost trajectories accumulate: the whole-game learner wanders; the drilled learner's paths funnel into the goal."></div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">whole games</span><p>From kickoff, a goal is a long corridor of luck away. The value table waits most of the run for its first win.</p></div></div>
+    <div class="step"><div class="card"><span class="k">drills first</span><p>Near the goal, wins are cheap — value pools around scoring. The dribble drill then connects midfield to that pool. Full games inherit a table that already knows how stories end.</p></div></div>
+    <div class="step"><div class="card"><span class="k">the same steps, spent better</span><p>Time to 90% success: drilled <strong>15,375</strong> steps vs whole-game <strong>38,875</strong> (p=1.1e-9). Fixed-spawn drills land between — variety inside the drill matters too.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Reverse curriculum over start states</h3>
+      <p class="sub">Full-game success from kickoff, 20 greedy evals / 2k steps · 30 seeds · IQM ± 95% CI</p>
+      <div class="legend" id="lg-exp2"></div>
+      <svg class="chart" id="chart-exp2" role="img" aria-label="Learning curves: drills-varied crosses 90 percent around 15000 steps, drills-fixed around 20000, whole games around 39000"></svg>
+      <p class="figure-note">Same environment, same reward, same total steps. The drilled agents' curves lift off during the drill phases (shaded) and never look back. Four whole-game seeds never reached 90% at all.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H3 VARIATION ══════════ -->
+<section class="chapter" id="ch3">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H3 · variation</span> — chapter three</p>
+    <h2>Practice That Feels Worse and Works Better</h2>
+    <p class="lede">In 1979, Shea and Morgan split learners into two groups: one drilled each movement pattern in a block, one practiced them shuffled. Blocked practice looked better <em>during</em> training — and lost on retention and transfer. Motor-learning calls it the contextual-interference effect. We reproduced it in a learner small enough to explain.</p>
+    <p>Three short piano passages share a library of six three-note motifs; each passage has one exception where its fingering breaks the pattern. A linear learner practices either <em>blocked</em> (all of passage A, then B, then C) or <em>interleaved</em> (a random passage each episode). Same total practice. The interference lives exactly where the skill does: in the shared motif weights.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h3" aria-label="A vertical piano-roll wall. Two lanes light up notes as practice runs; the blocked lane looks cleaner during practice, then the test flips the ranking.">
+    <div class="hud" style="font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase">
+      <span style="position:absolute;top:12%;left:25%;transform:translateX(-50%);color:#C77B2F">blocked · drill one passage</span>
+      <span style="position:absolute;top:12%;left:75%;transform:translateX(-50%);color:#4C86D8">interleaved · shuffle passages</span>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">watch the fool's progress</span><p>The blocked lane looks immaculate: every rep on the same passage, score climbing. Acquisition IQM 0.80 vs 0.77 — blocked genuinely wins the practice room (p=.006).</p></div></div>
+    <div class="step"><div class="card"><span class="k">then comes the recital</span><p>Test everything. The passage drilled first has decayed under two passages of shared-weight drift: retention on A — blocked 0.73, interleaved <strong>0.92</strong> (p=7e-10).</p></div></div>
+    <div class="step"><div class="card"><span class="k">and a new piece</span><p>On a never-practiced passage built from the same motifs, interleaved transfers 0.75 vs 0.64 (p=.006). Variation forced the weights to encode the <em>motifs</em>, not the last passage rehearsed.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>The crossover, in silico</h3>
+      <p class="sub">Left: score on the currently-practiced passage during training. Right: test with learning off · 40 seeds</p>
+      <div class="legend" id="lg-exp3"></div>
+      <svg class="chart" id="chart-exp3" role="img" aria-label="Acquisition curves where blocked leads, next to retention and transfer bars where interleaved leads"></svg>
+      <p class="figure-note">Blocked's one honest win: the passage it drilled <em>last</em> (retention on C: 0.99). Recency is real; it's just not learning. The crossover pattern — train worse, test better — is the Shea-Morgan signature, reproduced by shared-parameter interference alone.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H4 GENERATIONS ══════════ -->
+<section class="chapter" id="ch4">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H4 · teachers</span> — chapter four</p>
+    <h2>The One Time I Reached the Mountain</h2>
+    <p class="lede">No pianist learns from scratch. Teachers hand down compressed trajectories — <em>practice this passage, this way</em> — distilled from their teachers, and theirs. The knowledge crosses generations through a narrow channel: not brains, stories. We built the smallest version of that channel we could measure.</p>
+    <p>A gridworld hides a big reward far to the right, guarded by candy — small terminal rewards near the start that end episodes early and teach agents to stop looking. Each agent lives 15,000 steps with plasticity that decays as it ages: learning rate and exploration halve every 5,000 steps. Old agents remember their three best episodes ever — but can no longer act on them. At death, those episodes become advice: at most 100 state-action pairs, seeded optimistically into a fresh, fully plastic student.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h4" aria-label="A dark grid with candy traps near the start and a distant goal. Across five generations an inherited path skeleton thickens into a golden thread reaching the goal."></div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">generation 1</span><p>Lives, gorges on candy, stumbles onto the mountain once late in life — too rigid to consolidate it. Greedy performance at death: candy (0.3). Best memory: the mountain (10).</p></div></div>
+    <div class="step"><div class="card"><span class="k">the bottleneck</span><p>Its advice is not its brain. It's the skeleton of its best days — the one lucky deep run — passed to a student plastic enough to finish the thought.</p></div></div>
+    <div class="step"><div class="card"><span class="k">generation 5</span><p>The lineage ratchets: 0.3 → 1.25 → 4.4 → 7.5 → <strong>8.75</strong> IQM. 70% of lineages end at the mountain. Every control — weight-copy, one long life, slow decay, no inheritance — stays at candy forever, on every seed.</p></div></div>
+    <div class="step"><div class="card"><span class="k">why copying fails</span><p>The weight-copy makes the student inherit the whole trap-shaped value table — consolidated mediocrity. The bottleneck transmits only the peak. Losing almost everything is the feature.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Five generations, five conditions</h3>
+      <p class="sub">Greedy return at each generation's end · 30 seeds · IQM ± 95% CI · all four comparisons Holm p=.014</p>
+      <div class="legend" id="lg-exp4"></div>
+      <svg class="chart" id="chart-exp4" role="img" aria-label="Per-generation curves: generational distillation ratchets upward to 8.75 while all four baselines stay flat at 0.3"></svg>
+      <p class="figure-note">The gap between what long-lived agents <em>remember</em> (best episode ≈ mountain) and what they can <em>do</em> (candy) stays at ~3 points for 75,000 steps — they know the way and cannot walk it. Distillation converts that gap into the next generation's head start; by generation 5 it has closed to 0.7.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H5 GROWING BODIES ══════════ -->
+<section class="chapter" id="ch5">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H5 · morphology</span> — chapter five</p>
+    <h2>Small Bodies Fall Cheaply</h2>
+    <p class="lede">Toddlers fall about seventeen times an hour and shrug it off — small bodies carry little energy into the ground. By the square-cube law they are also relatively strong: strength scales with s², weight with s³. Falling is how you learn to stand, and evolution priced falling at its cheapest exactly when you need thousands of them.</p>
+    <p>Our learner balances a torque-limited pendulum whose scale s sets everything honestly: length s, mass 15s³, strength 40s², and fall damage (s)⁴ — impact energy. Six conditions, 120,000 steps each, all evaluated on the <em>adult</em> body. Some train adult-sized from day one. Some start at half size and grow — on a schedule, or adaptively, growing only when the current body stops falling.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h5" aria-label="Two pendulum creatures side by side: an adult-sized one that falls hard and often, and one that starts small, falls softly, and grows as it stabilizes. Damage counters accumulate."></div>
+  <div class="steps">
+    <div class="step center"><div class="card"><span class="k">born adult</span><p>Every early mistake lands at full mass and full height. Damage meter: spinning. It does learn — at a price of <strong>880</strong> damage units to reach competence.</p></div></div>
+    <div class="step center"><div class="card"><span class="k">grow when ready</span><p>The adaptive grower masters each body before earning the next. Falls happen — at toddler prices. Damage to the same adult competence: <strong>62</strong>. Fourteen times cheaper, and no slower in steps (p=.30).</p></div></div>
+    <div class="step center"><div class="card"><span class="k">skills survive growth</span><p>The policy transfers across nearby bodies as the dynamics shift smoothly under it — competence rides the growth curve up to a body it has barely trained on.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Damage accumulated on the way to adult competence</h3>
+      <p class="sub">Cumulative fall damage vs training step · 20 seeds · IQM ± 95% CI · damage = (size)⁴ per fall</p>
+      <div class="legend" id="lg-exp5"></div>
+      <svg class="chart" id="chart-exp5" role="img" aria-label="Damage curves: adult conditions accumulate roughly 880 units; growing conditions stay far lower, adaptive lowest at 62"></svg>
+      <p class="figure-note">Growing bodies buy competence with an order of magnitude less damage (Holm p ≤ 2.1e-6). In animals, damage is death, injury, and metabolic cost — the currency evolution actually optimizes.</p>
+    </div>
+  </div>
+  <div class="figure">
+    <div class="panel">
+      <h3>What didn't survive contact with the data</h3>
+      <p class="sub">Two of our own sub-claims failed their tests. They stay in the paper.</p>
+      <div class="fails">
+        <div class="fail"><span class="k">refuted · balance-first</span>We predicted "learn to balance, then walk," like infants. Backwards, here: walking-from-the-start reached competence faster (Holm p=3e-4). Weight-shifting practice visits the states balancing needs; a balance-only phase starves the walking half of the table. Infant staging may serve growing bodies and safety — not the value function.</div>
+        <div class="fail"><span class="k">null · gradualism</span>Growing in small increments wasn't reliably better than one jump from half-size to adult (p=.11, point estimate reversed). The savings come from <em>being small while incompetent</em> — not from the smoothness of the schedule.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SYNTHESIS ══════════ -->
+<section class="chapter" id="ch6">
+  <div class="prose">
+    <p class="eyebrow">synthesis</p>
+    <h2>Five Curves, One Lesson</h2>
+    <p class="lede">Every mechanism that worked, worked the same way: it changed <em>which experience the learner got</em>, not how the learner updates. The map replayed experience. Drills repositioned it. Variation shuffled it. Teachers curated it across lifetimes. Small bodies discounted its price.</p>
+    <p>That is what "between imitation and evaluation" means operationally. Pure evaluation wastes lifetimes rediscovering what the last lifetime knew; pure imitation caps the student at the teacher. The productive middle is a narrow, curated channel of experience — a curriculum, an anecdote, a drill, a start state — feeding a learner that remains free to disagree.</p>
+  </div>
+  <div class="figure">
+    <div class="panel">
+      <h3>Scorecard</h3>
+      <p class="sub">Primary comparisons, Holm-corrected within each experiment</p>
+      <div class="tiles" id="scorecard"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ METHODS ══════════ -->
+<section class="chapter" id="ch7">
+  <div class="prose">
+    <p class="eyebrow">methods &amp; colophon</p>
+    <h2>How the Numbers Were Made</h2>
+    <table class="mtable" aria-label="Experiment parameters">
+      <thead><tr><th>exp</th><th>world</th><th>agent</th><th>seeds</th><th>budget / condition</th></tr></thead>
+      <tbody>
+        <tr><td>H1</td><td>GridHome 13×11, slip 0.1</td><td>Q &amp; Dyna-Q(20), belief dead-reckoning + touch filter</td><td>30</td><td>40k steps</td></tr>
+        <tr><td>H2</td><td>SoccerGrid 11×7, p(goal)=1−d/5</td><td>tabular Q, shared table across phases</td><td>30</td><td>60k steps</td></tr>
+        <tr><td>H3</td><td>3 passages · 6 shared motifs · 8 keys</td><td>linear Q, SGD, ε-greedy</td><td>40</td><td>450 episodes</td></tr>
+        <tr><td>H4</td><td>TrapGrid 15×11, candy 0.3, goal 10</td><td>Q with plasticity decay ½ per 5k steps</td><td>30</td><td>5×15k steps</td></tr>
+        <tr><td>H5</td><td>Pendulum, l=s, m=15s³, τ=40s², dmg=s⁴</td><td>tabular Q, 765 states × 5 torques</td><td>20</td><td>120k steps</td></tr>
+      </tbody>
+    </table>
+    <p class="marginal">Statistics: IQM point estimates; 95% percentile bootstrap (10k resamples); two-sided Mann-Whitney with Holm correction within each experiment's primary family; censored time-to-threshold assigned budget+1 with censoring fractions reported. Budgets matched to the step across conditions; evaluation identical across conditions and excluded from budgets.</p>
+    <p>Everything is reproducible from the repository: environments, agents, experiment scripts, 179 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs.</p>
+    <p><a href="https://github.com/andrewboldi/developmental-rl">github.com/andrewboldi/developmental-rl</a></p>
+  </div>
+  <footer>
+    Growing Up to Learn · an experiment program by Andrew Boldi · built with three.js r147 + GSAP · charts are real data, seeds and all
+  </footer>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineSegmentsGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineMaterial.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineSegments2.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/Line2.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollToPlugin.min.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
