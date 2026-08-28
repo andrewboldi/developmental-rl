@@ -328,6 +328,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
   <div class="prose">
     <p class="eyebrow">methods &amp; colophon</p>
     <h2>How the Numbers Were Made</h2>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table class="mtable" aria-label="Experiment parameters">
       <thead><tr><th>exp</th><th>world</th><th>agent</th><th>seeds</th><th>budget / condition</th></tr></thead>
       <tbody>
@@ -338,6 +339,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
         <tr><td>H5</td><td>Pendulum, l=s, m=15s³, τ=40s², dmg=s⁴</td><td>tabular Q, 765 states × 5 torques</td><td>20</td><td>120k steps</td></tr>
       </tbody>
     </table>
+    </div>
     <p class="marginal">Statistics: IQM point estimates; 95% percentile bootstrap (10k resamples); two-sided Mann-Whitney with Holm correction within each experiment's primary family; censored time-to-threshold assigned budget+1 with censoring fractions reported. Budgets matched to the step across conditions; evaluation identical across conditions and excluded from budgets.</p>
     <p>Everything is reproducible from the repository: environments, agents, experiment scripts, 179 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs.</p>
     <p><a href="https://github.com/andrewboldi/developmental-rl">github.com/andrewboldi/developmental-rl</a></p>

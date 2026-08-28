@@ -117,7 +117,7 @@
     el('text', { x: m.l + iw / 2, y: Hh - (cfg.xlabelPad || -4) + 4, 'text-anchor': 'middle', fill: CSS.muted }, svg);
     if (cfg.threshold != null) {
       el('line', { x1: m.l, x2: W - m.r, y1: Y(cfg.threshold), y2: Y(cfg.threshold), stroke: CSS.accent, 'stroke-width': 1, 'stroke-dasharray': '5 5', opacity: .65 }, svg);
-      el('text', { x: W - m.r + 6, y: Y(cfg.threshold) + 4, fill: CSS.accent }, svg).textContent = cfg.thresholdLabel || '';
+      el('text', { x: m.l + 8, y: Y(cfg.threshold) - 6, fill: CSS.accent }, svg).textContent = cfg.thresholdLabel || '';
     }
     if (cfg.bands) for (const b of cfg.bands) {
       el('rect', { x: X(b.x0), y: m.t, width: X(b.x1) - X(b.x0), height: ih, fill: b.color || '#4C86D8', opacity: .07 }, svg);
