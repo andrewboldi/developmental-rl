@@ -7,20 +7,34 @@ kickoff. No synthetic rewards and one shared Q-table per run, so any speedup
 comes purely from where episodes begin. The blocked ablation runs the same
 phases from a single fixed spawn per drill (links to H3).
 
-Conditions (training budgets matched EXACTLY):
-  whole          all steps on full games from kickoff
-  drills-varied  20% shoot drill (random attacking-third spawn), 20% dribble
-                 drill (random left-half spawn), 60% full games
-  drills-fixed   same phases, one fixed spawn cell per drill (region centers)
+Conditions (training budgets matched EXACTLY; see DESIGN.md Amendments v2):
+  whole            all steps on full games from kickoff
+  drills-varied    20% shoot drill (random attacking-third spawn), 20% dribble
+                   drill (random left-half spawn), 60% full games
+  drills-fixed     same phases, one fixed spawn cell per drill (region centers)
+  whole-optimistic whole, but Q initialized at 1.0 (the return upper bound) —
+                   probes the exploration boundary condition found by the
+                   adversarial verification (Xie et al. 2021; JSRL)
+  explore-starts   uniformly random non-terminal (agent, ball) spawns for the
+                   first 40% of budget (the drill fraction), then full games —
+                   the classic exploring-starts alternative: start-state
+                   diversity without drill structure
 
 Eval: 20 greedy episodes from kickoff every 2k steps — on a separate env and
 rng, so eval consumes no training budget and the protocol is identical across
 conditions. Primary metric: time to 90% eval success; censored seeds are
-reported and imputed at budget+1 for rank tests (conservative).
+reported and imputed at budget+1 for rank tests (conservative). Every primary
+comparison reports both Mann-Whitney and Welch t p-values, each Holm-adjusted
+within the 5-comparison family; registered decisions ride on the MW Holm p.
+The conclusion is per-claim: {claims: [{claim, verdict, evidence}], summary}.
+
+Confirmatory seeds are 100..(100+N-1) via --seed-offset (default 100),
+disjoint from every seed ever used for tuning or verification (0-29,
+1000-1029, 3000-3019).
 
 Usage:
   python experiments/exp2_microtask.py --seeds 30 --out results/exp2.json
-                                       [--smoke] [--jobs 20]
+                                       [--smoke] [--jobs 20] [--seed-offset 100]
 """
 
 import argparse
@@ -28,19 +42,23 @@ import functools
 import time
 
 import numpy as np
+from scipy.stats import ttest_ind
 
 from devrl import stats
 from devrl.agents.qlearning import QLearner
 from devrl.envs.soccer import CARRIED, SoccerGrid
 from devrl.run import run_seeds, save_json
 
-CONDITIONS = ("whole", "drills-varied", "drills-fixed")
+CONDITIONS = ("whole", "drills-varied", "drills-fixed",
+              "whole-optimistic", "explore-starts")
 BUDGET, EVAL_EVERY = 60_000, 2_000
 CAP = 100
 N_EVAL_EPISODES = 20
 THRESHOLD = 0.9
 LR, GAMMA, EPS = 0.3, 0.99, 0.15
 SHOOT_FRAC, DRIBBLE_FRAC = 0.2, 0.2      # phase shares of the budget
+EXPLORE_FRAC = SHOOT_FRAC + DRIBBLE_FRAC  # explore-starts share == drill share
+OPTIMISTIC_Q0 = 1.0                      # upper bound: single terminal reward 1
 ATTACK_COLS = (8, 11)                    # attacking third: cols 8..10
 LEFT_COLS = (0, 5)                       # left half: cols 0..4
 FIXED_SHOOT_SPAWN = (3, 9)               # region centers (blocked ablation)
@@ -49,12 +67,25 @@ HYPOTHESIS = ("H2: a reverse curriculum over start states (shoot from near "
               "goal -> dribble from midfield -> full game) reaches full-game "
               "mastery in fewer total env steps than whole-game practice; "
               "no synthetic rewards, only the start-state distribution changes.")
+PRIMARY_PAIRS = (("drills-varied", "whole"),            # claim 1 headline
+                 ("drills-fixed", "whole"),
+                 ("drills-varied", "drills-fixed"),
+                 ("drills-varied", "whole-optimistic"),  # claim 2 boundary
+                 ("drills-varied", "explore-starts"))    # claim 3 structure
+CONTEXT_PAIRS = (("whole-optimistic", "whole"), ("explore-starts", "whole"))
+
+
+def q0_for(condition):
+    """Q-table initialization: optimistic only for whole-optimistic."""
+    return OPTIMISTIC_Q0 if condition == "whole-optimistic" else 0.0
 
 
 def phase_at(condition, step, budget):
     """Curriculum phase at a training step (fixed per episode at its start)."""
-    if condition == "whole":
+    if condition in ("whole", "whole-optimistic"):
         return "game"
+    if condition == "explore-starts":
+        return "explore" if step < round(EXPLORE_FRAC * budget) else "game"
     if step < round(SHOOT_FRAC * budget):
         return "shoot"
     if step < round((SHOOT_FRAC + DRIBBLE_FRAC) * budget):
@@ -74,6 +105,13 @@ def start_state(condition, phase, rng):
             return FIXED_DRIBBLE_SPAWN, SoccerGrid.KICKOFF_BALL
         return (int(rng.integers(SoccerGrid.H)),
                 int(rng.integers(*LEFT_COLS))), SoccerGrid.KICKOFF_BALL
+    if phase == "explore":
+        # Uniform over non-terminal states: agent anywhere; ball at any cell
+        # or carried (spawning on the ball's cell also picks it up).
+        agent = (int(rng.integers(SoccerGrid.H)), int(rng.integers(SoccerGrid.W)))
+        code = int(rng.integers(SoccerGrid.n_cells + 1))
+        ball = CARRIED if code == SoccerGrid.n_cells else divmod(code, SoccerGrid.W)
+        return agent, ball
     return SoccerGrid.KICKOFF_AGENT, SoccerGrid.KICKOFF_BALL
 
 
@@ -134,7 +172,7 @@ def _train(seed, condition, budget, eval_every, cap):
                                      for c in np.random.SeedSequence(seed).spawn(3))
     env = SoccerGrid(rng=env_rng)
     agent = QLearner(env.n_states, env.n_actions, lr=LR, gamma=GAMMA, eps=EPS,
-                     rng=agent_rng)
+                     optimistic_init=q0_for(condition), rng=agent_rng)
     traj_at = {budget // 4: "25", budget // 2: "50", budget: "100"}
     checkpoints = [0]
     curve = [greedy_eval(agent.Q, np.random.default_rng([seed, 0]), cap=cap)]

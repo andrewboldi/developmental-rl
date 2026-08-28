@@ -1,29 +1,73 @@
 """Tests for the EXP2 harness: curriculum schedule, start states, exact budget
-accounting, eval purity (greedy rollouts must not touch training state), and
-the shared output contract."""
+accounting, eval purity (greedy rollouts must not touch training state), the
+v2 conditions (whole-optimistic, explore-starts), the dual MW+Welch stats,
+the per-claim conclusion, and the shared output contract."""
 
 import sys
 from functools import partial
 from pathlib import Path
 
 import numpy as np
+import scipy.stats
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "experiments"))
 
 import exp2_microtask as exp2  # noqa: E402
 
-from devrl.envs.soccer import CARRIED, SoccerGrid  # noqa: E402
+from devrl.envs.soccer import CARRIED, SCORED, SoccerGrid  # noqa: E402
 from devrl.run import run_seeds  # noqa: E402
+
+
+def test_conditions_include_v2_arms():
+    assert exp2.CONDITIONS == ("whole", "drills-varied", "drills-fixed",
+                               "whole-optimistic", "explore-starts")
 
 
 def test_phase_schedule_is_reverse_curriculum():
     b = 60_000
-    assert [exp2.phase_at("whole", s, b)
-            for s in (0, 11_999, 12_000, 24_000, 59_999)] == ["game"] * 5
+    for cond in ("whole", "whole-optimistic"):
+        assert [exp2.phase_at(cond, s, b)
+                for s in (0, 11_999, 12_000, 24_000, 59_999)] == ["game"] * 5
     for cond in ("drills-varied", "drills-fixed"):
         got = [exp2.phase_at(cond, s, b)
                for s in (0, 11_999, 12_000, 23_999, 24_000, 59_999)]
         assert got == ["shoot", "shoot", "dribble", "dribble", "game", "game"]
+    # explore-starts: random spawns for the first 40% (the drill fraction)
+    got = [exp2.phase_at("explore-starts", s, b)
+           for s in (0, 12_000, 23_999, 24_000, 59_999)]
+    assert got == ["explore", "explore", "explore", "game", "game"]
+
+
+def test_explore_starts_cover_the_full_state_space():
+    rng = np.random.default_rng(0)
+    starts = [exp2.start_state("explore-starts", "explore", rng)
+              for _ in range(3000)]
+    agents = {a for a, _ in starts}
+    balls = {b for _, b in starts}
+    assert all(0 <= r < 7 and 0 <= c < 11 for r, c in agents)
+    assert len(agents) == 77                      # every agent cell reachable
+    assert CARRIED in balls                       # carried spawns included
+    cells = {b for b in balls if b != CARRIED}
+    assert all(0 <= r < 7 and 0 <= c < 11 for r, c in cells)
+    assert len(cells) == 77                       # every ball cell reachable
+
+
+def test_q0_is_optimistic_only_for_whole_optimistic():
+    assert exp2.q0_for("whole-optimistic") == 1.0
+    for cond in ("whole", "drills-varied", "drills-fixed", "explore-starts"):
+        assert exp2.q0_for(cond) == 0.0
+
+
+def test_whole_optimistic_trains_from_q0_one():
+    # A state never visited in training keeps its initialization exactly.
+    env = SoccerGrid(rng=np.random.default_rng(0))
+    s_unvisited = env.state_of((0, 0), SCORED)  # terminal ball state: never a Q row
+    opt = exp2._train(seed=0, condition="whole-optimistic",
+                      budget=120, eval_every=60, cap=30)
+    assert np.all(opt["Q"][s_unvisited] == 1.0)
+    plain = exp2._train(seed=0, condition="whole",
+                        budget=120, eval_every=60, cap=30)
+    assert np.all(plain["Q"][s_unvisited] == 0.0)
 
 
 def test_varied_drill_start_states_cover_their_regions():
@@ -151,6 +195,73 @@ def test_mann_whitney_guard_handles_fully_tied_samples():
     # e.g. every seed censored in both conditions during a smoke run
     res = exp2._mw([201, 201], [201, 201])
     assert res["p"] == 1.0 and np.isfinite(res["u"])
+    assert res["degenerate"] is True
+    assert "degenerate" not in exp2._mw([1, 2, 3], [4, 5, 6])
+
+
+def test_welch_matches_scipy_and_guards_degenerate_samples():
+    a, b = [100, 220, 340, 460], [900, 1000, 1400, 1800]
+    got = exp2._welch(a, b)
+    t, p = scipy.stats.ttest_ind(a, b, equal_var=False)
+    assert got["t"] == float(t) and got["p"] == float(p)
+    assert "degenerate" not in got
+    # fully tied across both samples (all-censored smoke corner): p=1 guard
+    tied = exp2._welch([201, 201], [201, 201])
+    assert tied["p"] == 1.0 and tied["degenerate"] is True
+    # zero within-group variance but different means: finite output, tagged
+    split = exp2._welch([201, 201], [100, 100])
+    assert np.isfinite(split["p"]) and split["degenerate"] is True
+
+
+def _mk_primary(comparison, iqm_a, iqm_b, significant):
+    a, b = comparison.split(" vs ")
+    return {"comparison": comparison,
+            "metric": "time_to_90 (steps; censored -> budget+1)",
+            "u": 0.0, "p": 0.001 if significant else 0.5,
+            "p_holm": 0.005 if significant else 1.0,
+            "welch_t": 0.0, "welch_p": 0.001 if significant else 0.5,
+            "welch_p_holm": 0.005 if significant else 1.0,
+            "iqm": {a: iqm_a, b: iqm_b},
+            "faster": a if iqm_a < iqm_b else (b if iqm_b < iqm_a else "tie"),
+            "significant": significant}
+
+
+def _mk_conditions(iqms):
+    return {c: {"n_seeds": 30, "n_censored": 0, "time_to_90_iqm": v}
+            for c, v in iqms.items()}
+
+
+def test_build_claims_verdict_logic():
+    iqms = {"whole": 38000, "drills-varied": 15000, "drills-fixed": 20000,
+            "whole-optimistic": 15500, "explore-starts": 16000}
+    conds = _mk_conditions(iqms)
+
+    def primary(sig1, opt_iqm, sig4, sig5):
+        return [_mk_primary("drills-varied vs whole", 15000, 38000, sig1),
+                _mk_primary("drills-fixed vs whole", 20000, 38000, True),
+                _mk_primary("drills-varied vs drills-fixed", 15000, 20000, True),
+                _mk_primary("drills-varied vs whole-optimistic", 15000, opt_iqm, sig4),
+                _mk_primary("drills-varied vs explore-starts", 15000, 16000, sig5)]
+
+    # claim 1 supported; claim 2 boundary (reversal); claim 3 null
+    claims = exp2.build_claims(primary(True, 12000, True, False), conds)
+    assert [c["verdict"] for c in claims] == ["supported", "boundary", "null"]
+    assert "revers" in claims[1]["evidence"].lower()
+    # claim 2 boundary via disappearance (no significant difference)
+    claims = exp2.build_claims(primary(True, 15500, False, True), conds)
+    assert claims[1]["verdict"] == "boundary"
+    assert "disappear" in claims[1]["evidence"].lower()
+    assert claims[2]["verdict"] == "supported"  # drills-varied faster + significant
+    # claim 2 refuted: drill advantage persists under optimistic init
+    claims = exp2.build_claims(primary(True, 30000, True, True), conds)
+    assert claims[1]["verdict"] == "refuted"
+    # claim 1 null when headline comparison is not significant
+    claims = exp2.build_claims(primary(False, 12000, True, False), conds)
+    assert claims[0]["verdict"] == "null"
+    # every claim dict has the required keys and a legal verdict
+    for c in claims:
+        assert {"claim", "verdict", "evidence"} <= set(c)
+        assert c["verdict"] in {"supported", "refuted", "null", "boundary"}
 
 
 def test_run_seed_is_picklable_across_fork():
@@ -158,6 +269,15 @@ def test_run_seed_is_picklable_across_fork():
     out = run_seeds(fn, n_seeds=2, n_jobs=2)
     assert [o["seed"] for o in out] == [0, 1]
     assert all("Q" not in o for o in out)  # JSON-safe payload only
+
+
+def test_run_seed_at_applies_seed_offset():
+    fn = partial(exp2.run_seed_at, offset=100, condition="whole",
+                 budget=200, eval_every=100, cap=20)
+    out = run_seeds(fn, n_seeds=2, n_jobs=2)
+    assert [o["seed"] for o in out] == [100, 101]  # fresh confirmatory seeds
+    ref = exp2.run_seed(101, condition="whole", budget=200, eval_every=100, cap=20)
+    assert out[1]["curve"] == ref["curve"]  # offset shifts the seed, nothing else
 
 
 def test_assemble_meets_output_contract():
@@ -180,10 +300,30 @@ def test_assemble_meets_output_contract():
         for k in ("iqm", "ci_lo", "ci_hi"):
             assert np.isfinite(np.asarray(cv[k])).all()
 
-    assert len(out["tests"]["primary"]) == 3
-    for t in out["tests"]["primary"]:
-        assert np.isfinite(t["p"]) and np.isfinite(t["p_holm"])
-    assert {"supported", "summary"} <= set(out["conclusion"])
+    # v2 primary family: 5 registered comparisons, each with MW + Welch p-values
+    primary = out["tests"]["primary"]
+    assert [t["comparison"] for t in primary] == [
+        "drills-varied vs whole", "drills-fixed vs whole",
+        "drills-varied vs drills-fixed", "drills-varied vs whole-optimistic",
+        "drills-varied vs explore-starts"]
+    for t in primary:
+        for k in ("p", "p_holm", "welch_p", "welch_p_holm"):
+            assert np.isfinite(t[k])
+        assert isinstance(t["significant"], bool)
+        assert isinstance(t["welch_significant"], bool)
+    assert len(out["tests"]["secondary_final_success"]) == 5
+    ctx = out["tests"]["secondary_t90_context"]
+    assert [t["comparison"] for t in ctx] == [
+        "whole-optimistic vs whole", "explore-starts vs whole"]
+
+    # v2 conclusion: per-claim verdicts replace the boolean `supported`
+    conclusion = out["conclusion"]
+    assert {"claims", "summary"} <= set(conclusion)
+    assert "supported" not in conclusion
+    assert len(conclusion["claims"]) == 3
+    for c in conclusion["claims"]:
+        assert {"claim", "verdict", "evidence"} <= set(c)
+        assert c["verdict"] in {"supported", "refuted", "null", "boundary"}
 
     viz = out["viz"]
     pitch = viz["pitch"]
@@ -191,7 +331,13 @@ def test_assemble_meets_output_contract():
     assert pitch["goal_cells"] == [[2, 10], [3, 10], [4, 10]]
     assert len(pitch["shot_p"]) == 7 and all(len(row) == 11 for row in pitch["shot_p"])
     assert set(viz["trajectories"]) == set(exp2.CONDITIONS)
+    n_phases = {"whole": 1, "whole-optimistic": 1, "explore-starts": 2,
+                "drills-varied": 3, "drills-fixed": 3}
     for cond in exp2.CONDITIONS:
         assert set(viz["trajectories"][cond]) == {"25", "50", "100"}
-        assert len(viz["phases"][cond]) == (1 if cond == "whole" else 3)
+        assert len(viz["phases"][cond]) == n_phases[cond]
+    assert viz["phases"]["explore-starts"][0]["phase"] == "explore"
+    assert viz["phases"]["explore-starts"][0]["end"] == 160  # 40% of 400
+    assert viz["q0"] == {"whole": 0.0, "drills-varied": 0.0, "drills-fixed": 0.0,
+                         "whole-optimistic": 1.0, "explore-starts": 0.0}
     assert viz["eval_curves"]["checkpoints"] == ckpts

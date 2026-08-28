@@ -1,0 +1,7 @@
+[    1835ms] TypeError: ascii.trim is not a function
+    at home (http://localhost:8137/app.js:387:26)
+    at http://localhost:8137/app.js:404:15
+    at addStage (http://localhost:8137/app.js:287:16)
+    at http://localhost:8137/app.js:384:14
+    at http://localhost:8137/app.js:785:3
+[    1860ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8137/favicon.ico:0

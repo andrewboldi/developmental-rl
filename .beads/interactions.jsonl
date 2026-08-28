@@ -1,0 +1,4 @@
+{"id":"int-d819f7c7","kind":"field_change","created_at":"2026-08-28T21:37:40.198135577Z","actor":"Andrew Boldi","issue_id":"rl-cpd","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Core library complete: 27 tests, merged to main"}}
+{"id":"int-bb436b42","kind":"field_change","created_at":"2026-08-28T21:37:42.125238488Z","actor":"Andrew Boldi","issue_id":"rl-5ax","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"8/8 research topics complete, 193 citations, synthesis in progress"}}
+{"id":"int-9bf17d06","kind":"field_change","created_at":"2026-08-28T21:37:43.159461824Z","actor":"Andrew Boldi","issue_id":"rl-1wa","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
+{"id":"int-d6e8c78c","kind":"field_change","created_at":"2026-08-28T21:37:44.104036004Z","actor":"Andrew Boldi","issue_id":"rl-2u1","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}

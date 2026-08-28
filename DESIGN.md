@@ -213,3 +213,184 @@ matched morphology conditions.
   shown.
 - Every condition sees identical eval protocols; eval steps are excluded from
   training budgets identically across conditions.
+
+---
+
+## Amendments (v2) — EXP2
+
+Adversarial verification (logic lens) confirmed that the drills-vs-whole
+effect REVERSES under optimistic initialization (Q0 = 1.0): an optimistic
+whole-game learner reaches threshold about as fast as the shipped
+drills-varied arm, and the drill curriculum actively delays an optimistic
+explorer. This is a genuine boundary condition the literature predicts —
+the value of guide policies / start-state curricula is capped for
+optimistic explorers (Xie et al. 2021; JSRL) — so the claim must be scoped,
+not merely restated. v2 replaces the single boolean conclusion with
+per-claim verdicts and adds the two conditions needed to test the boundary
+and the mechanism.
+
+**New conditions** (training budget still exactly 60k steps each; eval
+protocol, hyperparameters, and env unchanged):
+
+- `whole-optimistic`: identical to `whole` (all steps full games from
+  kickoff) except the Q-table is initialized at Q0 = 1.0 — a principled
+  upper bound, since the only reward is a single terminal 1 and gamma < 1.
+  All other arms keep Q0 = 0.
+- `explore-starts`: the classic exploring-starts alternative. For the first
+  40% of the budget (exactly the drill fraction, 24k steps) each episode
+  starts from a uniformly random non-terminal state: agent uniform over the
+  77 cells, ball uniform over the 78 non-terminal ball options (77 cells +
+  carried; spawning on the ball's cell picks it up). Remaining 60%: full
+  games from kickoff. Q0 = 0. Start-state diversity without drill structure.
+
+**Registered primary family** (Holm within the family, m = 5; metric
+time-to-90% with censored seeds at budget+1, as before):
+
+1. drills-varied vs whole            (claim 1 headline — unchanged)
+2. drills-fixed  vs whole            (unchanged)
+3. drills-varied vs drills-fixed     (unchanged)
+4. drills-varied vs whole-optimistic (claim 2)
+5. drills-varied vs explore-starts   (claim 3)
+
+Every primary comparison reports BOTH the two-sided Mann-Whitney U and
+Welch's t (scipy `ttest_ind`, `equal_var=False`), each Holm-adjusted within
+the 5-comparison family. Registered decisions ride on the Mann-Whitney Holm
+p at alpha 0.05 (the originally registered test); Welch is reported
+alongside because Colas et al. (2019) show Mann-Whitney's false-positive
+rate inflates under unequal shapes/spreads. Descriptive context (no claim
+rides on them, no Holm): whole-optimistic vs whole and explore-starts vs
+whole on t90; final-success comparisons for the primary pairs.
+
+**Per-claim conclusion** replaces `conclusion.supported`:
+`conclusion = {claims: [{claim, verdict, evidence}], summary}`, verdict in
+{supported, refuted, null, boundary}. Decision rules:
+
+- Claim 1 — "drills beat whole-game practice for epsilon-greedy learners":
+  supported iff comparison 1 is significant with drills-varied faster;
+  refuted iff significant with whole faster; null otherwise.
+- Claim 2 — "the drill benefit is an exploration effect: it disappears or
+  reverses under optimistic initialization": decided on comparison 4.
+  Significant with whole-optimistic faster -> boundary (reversal);
+  non-significant -> boundary (the drill advantage disappears against an
+  optimistic whole-game learner); significant with drills-varied still
+  faster -> refuted (the benefit is not exploration-bound).
+- Claim 3 — "drill structure adds benefit beyond mere start-state
+  diversity": decided on comparison 5, reported whichever way it lands:
+  significant with drills-varied faster -> supported; significant with
+  explore-starts faster -> refuted; otherwise null.
+
+**Fresh confirmatory seeds.** The v2 confirmatory run uses seeds 100-129
+via a new `--seed-offset` flag (default 100) — disjoint from every seed
+ever used for tuning, dev checks, or verification of this experiment
+(0-29, 1000-1029, 3000-3019). Smoke mode keeps 2 seeds at 1/10 budget.
+
+Reporting hygiene from the verification: Mann-Whitney/Welch entries that
+hit a degenerate-sample guard (fully tied, or zero within-group variance)
+are tagged `degenerate` in the JSON; the viz block carries the two new
+conditions (phases, trajectories, eval curves) plus a per-condition `q0`
+map so the site can annotate the optimistic arm.
+
+---
+
+## Amendments (v2) — EXP1
+
+Registered changes mandated by the adversarial verification (3 lenses) of
+the v1 run, written down before the v2 confirmatory run.
+
+**A1 — Symmetric stranger-fails criterion (registered primary).** The v1
+primary `blindA_beats_blindB` (pure dead-reckoning pair) passed on a
+knife-edge (p_holm=0.0404; leave-one-out flips 27/60, paired Wilcoxon
+p=0.061, Welch p=0.148), while the far stronger like-for-like evidence —
+blind-A-touch vs blind-B-touch, the same machinery on both sides
+(verifiers recomputed MW p=1.3e-9) — was registered nowhere. v2 registers
+`blindA_touch_beats_blindB_touch` (predicted a > b) as a PRIMARY test and
+judges the stranger-fails leg on this symmetric strong-variant pair. The
+pure pair `blindA_beats_blindB` is kept as a secondary (predicted a > b).
+
+**A2 — Matched random floor (new condition `random-B`).** v1 cited
+random-A (IQM 0.00) as blind-B's floor, but HOME_B is intrinsically easier
+(shortest path 11 vs 17) and blind-B is significantly above every floor —
+the v1 "collapses to the random floor" wording overstated. v2 adds
+`random-B`: a random policy in HOME_B under the identical episode protocol
+and rng streams. Both floors are reported. The claim is reworded to: in
+the stranger's home the same machinery performs **far below home
+performance, modestly above a matched random floor**. New secondaries:
+`blindB_vs_randomB_matched_floor` (predicted a > b: small residual
+competence — shared start/goal coordinates — above the matched floor) and
+`blindBtouch_vs_randomB_matched_floor` (predicted a > b). The v1
+cross-home secondary `blindB_vs_randomA_chance_floor` is kept, with its
+equivalence-style prediction now explicitly scored (A4).
+
+**A3 — Update-matched replay baseline (new condition `replayq-A`).**
+RESEARCH.md flags this as the central fairness risk (van Hasselt, Hessel &
+Aslanides 2019): DynaQ(planning=20) does 21 Q-updates per env step vs
+Q-learning's 1, so "Dyna is more sample-efficient" may be an update-count
+artifact, not a world-model result. v2 adds `replayq-A`: tabular
+Q-learning + uniform experience replay doing 20 replayed updates per real
+step (drawn uniformly with replacement from its own transition buffer),
+trained in HOME_A with the identical env-step budget (40k), identical
+hyperparameters (lr, eps, gamma, optimistic_init) and its own rng stream —
+update-for-update matched with DynaQ (1 real + 20 extra per env step).
+Implemented as a new module `src/devrl/agents/replayq.py`; `dyna.py` and
+`qlearning.py` are untouched. New registered PRIMARY tests:
+`replay_faster_than_q_t90` (predicted a < b: update count alone should
+reproduce most of the speedup) and `dyna_vs_replay_t90` (predicted a ~ b:
+van Hasselt — in this near-deterministic tabular world the replay buffer
+IS a non-parametric model, so no model-specific advantage is expected).
+
+**A4 — Test reporting.** Every test entry now carries `p_welch` (Welch t,
+scipy.stats.ttest_ind equal_var=False; degenerate zero-variance cases
+guarded: fully tied -> p=1, two distinct constants -> p=0) alongside the
+Mann-Whitney p. Holm is applied within the 5-test primary family to both
+statistics separately (`p_holm` for MW — the registered decision statistic
+— and `p_welch_holm`, reported for robustness). Every test also carries a
+`prediction_met` field: for directional predictions, met iff the decision
+p (p_holm for primaries, raw p for secondaries) is < 0.05 with the IQMs
+ordered as predicted; for equivalence-style predictions ("a ~ b"), met iff
+the RAW (uncorrected — deliberately the harder criterion) MW p >= 0.05,
+documented as "no detectable difference", NOT a formal equivalence test.
+`significant` keeps its v1 meaning (difference detected at the decision
+level; for directional primaries it additionally requires the predicted
+direction, as in v1).
+
+**A5 — Fresh confirmatory seeds.** A `--seed-offset` flag (default 100) is
+added; the v2 confirmatory run uses seeds 100-129 — disjoint from every
+seed ever used for tuning or probing this experiment (0-29) and from the
+verifiers' rerun (1000-1029). Budgets are unchanged and matched exactly
+across all arms (every arm takes exactly 40k env steps; eval and blindfold
+rollouts remain budget-free and identical across conditions).
+
+**A6 — Per-claim verdicts replace the boolean conclusion.** The output
+contract becomes `conclusion = {claims: [{claim, verdict, evidence}],
+summary}` with verdict in {supported, refuted, null, boundary}. Registered
+claims and decision rules (IQMs across seeds; "prediction_met" refers to
+the tests above):
+
+1. *dyna-beats-q*: DynaQ reaches 90% eval success in fewer env steps than
+   sample-matched (update-unmatched) Q-learning. Supported iff
+   `dyna_faster_than_q_t90` prediction_met; refuted iff significant in the
+   opposite direction; else null.
+2. *dyna-advantage-is-model-not-updates*: the Dyna speedup survives an
+   update-matched replay baseline. Supported iff `dyna_vs_replay_t90` is
+   significant (p_holm < 0.05) with Dyna faster; refuted iff significant
+   with replay faster, OR not significant while replay closes >= 80% of
+   Dyna's t90 advantage over plain Q-learning (closure = (q - replay) /
+   (q - dyna) on IQM t90); null otherwise.
+3. *pure-dead-reckoning-works-at-home* (DESIGN v1's literal blind-A
+   prediction, now scored honestly): supported iff IQM(blind-A) >= 0.8 x
+   IQM(sighted-A); refuted iff < 0.5 x; boundary between.
+4. *touch-filtered-blind-works-at-home*: same rule on blind-A-touch.
+5. *stranger-collapse* (symmetric touch pair): supported iff
+   `blindA_touch_beats_blindB_touch` prediction_met AND
+   IQM(blind-B-touch) <= 0.5 x IQM(blind-A-touch); boundary iff
+   prediction_met with ratio in (0.5, 0.8]; refuted iff significant in the
+   opposite direction or ratio > 0.8; null otherwise. Evidence must report
+   both random floors (random-A and random-B).
+6. *touch-helps-at-home*: supported iff `touch_beats_pure_deadreckoning`
+   prediction_met; refuted iff significant in the opposite direction; else
+   null.
+
+The viz block gains the new conditions (`random-B` in the blindfold
+summary and example trajectories; `replayq-A` in the training curves and
+sample-efficiency block) and its predictions list is updated to the v2
+registrations above.

@@ -151,7 +151,7 @@ def main():
         "exp4": exp4(R(4)), "exp5": exp5(R(5)),
     }
     js = "window.DATA = " + json.dumps(data, separators=(",", ":")) + ";\n"
-    out = ROOT / "site" / "data.js"
+    out = ROOT / "docs" / "data.js"
     out.write_text(js)
     print(f"wrote {out} ({len(js)/1024:.0f} KB)")
     for k, v in data.items():

@@ -1,0 +1,329 @@
+- generic [active] [ref=f6e1]:
+  - navigation "Chapters — height marks on a door frame" [ref=f6e2]:
+    - generic [ref=f6e3]:
+      - button "birth" [ref=f6e5] [cursor=pointer]
+      - button "one table" [ref=f6e8] [cursor=pointer]
+      - button "blindfold" [ref=f6e11] [cursor=pointer]
+      - button "drills" [ref=f6e14] [cursor=pointer]
+      - button "variation" [ref=f6e17] [cursor=pointer]
+      - button "teachers" [ref=f6e20] [cursor=pointer]
+      - button "growing" [ref=f6e23] [cursor=pointer]
+      - button "lesson" [ref=f6e26] [cursor=pointer]
+      - button "methods" [ref=f6e29] [cursor=pointer]
+  - status
+  - generic [ref=f6e32]:
+    - generic [ref=f6e33]:
+      - paragraph [ref=f6e34]: Five experiments · 150 seeded runs · all code & data public
+      - heading "Growing Up to Learn" [level=1] [ref=f6e35]
+      - paragraph [ref=f6e36]: What reinforcement learning looks like when you raise it the way children are raised — with maps, drills, mess, teachers, and a body that starts small.
+      - paragraph [ref=f6e37]: developmental-rl · numpy · 179 tests · every claim measured
+    - generic [ref=f6e38]: scroll to begin
+  - generic [ref=f6e40]:
+    - paragraph [ref=f6e41]: "Reinforcement learning is usually told as a story about reward. An agent acts, the world scores it, and a policy slowly bends toward whatever pays. Imitation learning is the opposite story: copy the teacher and hope the world never drifts from the demonstrations."
+    - paragraph [ref=f6e42]:
+      - text: Humans live between those stories. We take
+      - emphasis [ref=f6e43]: instruction
+      - text: — compressed experience handed down by people who practiced before us — and we cash it out through our own trial and error. We keep a model of the world in our heads and rehearse inside it. We drill small pieces before playing whole games. We practice with deliberate variation, because smooth repetition is a comfortable lie. And we do all of it inside a body that starts small and grows on a schedule that seems suspiciously convenient for learning.
+    - paragraph [ref=f6e44]: This page reports five hypotheses about that middle ground, each turned into a falsifiable experiment on deliberately small systems — tabular and linear agents, gridworlds and a torque-limited pendulum — where every step is countable, budgets are matched to the step, and 20–40 seeds per condition make the statistics honest. Small worlds, so the mechanisms have nowhere to hide.
+    - paragraph [ref=f6e45]: "Protocol, in one line: IQM point estimates, 95% percentile-bootstrap CIs, two-sided Mann-Whitney with Holm correction, and identical evaluation for every condition. Full details in the methods section at the end."
+  - generic "A three-by-three gridworld where value arrows grow out of cells as the agent learns" [ref=f6e48]
+  - generic [ref=f6e49]:
+    - generic [ref=f6e50]:
+      - paragraph [ref=f6e51]: H1 · world models — chapter one
+      - heading "The Blindfold Test" [level=2] [ref=f6e52]
+      - paragraph [ref=f6e53]:
+        - text: Close your eyes in your own home and you can still find the fridge. Close your eyes in a stranger's home and you are lost immediately. Your motor neurons didn't change between those two sentences — your
+        - emphasis [ref=f6e54]: map
+        - text: did.
+      - paragraph [ref=f6e55]: "We raised an agent in a 13×11 apartment with 10% motor slip, letting it learn both a policy and a transition model of its home. Then we took its observations away entirely. Blindfolded, it navigates by dead reckoning: it imagines where each action should have taken it, tracks a belief over where it probably is, and asks its value table what to do from there. The test: same blindfold, familiar home versus stranger's home."
+    - generic "A dark apartment diorama. A glowing agent walks with a spotlight; when blindfolded, a ghost shows where it believes it is. In the stranger's home the ghost drifts away from the true body." [ref=f6e57]
+    - generic [ref=f6e59]:
+      - heading "Model-based learning is the other half of H1" [level=3] [ref=f6e60]
+      - paragraph [ref=f6e61]: Greedy success at the fridge, evaluated every 1k steps · 30 seeds · IQM with 95% bootstrap CI
+      - generic [ref=f6e62]:
+        - generic [ref=f6e63]: Dyna-Q (model)
+        - generic [ref=f6e65]: Q-learning
+      - 'img "Learning curves: DynaQ reaches 90 percent success near 2000 steps, Q-learning near 25000" [ref=f6e67]':
+        - generic [ref=f6e68]: "0"
+        - generic [ref=f6e69]: "0.2"
+        - generic [ref=f6e70]: "0.4"
+        - generic [ref=f6e71]: "0.6"
+        - generic [ref=f6e72]: "0.8"
+        - generic [ref=f6e73]: "1"
+        - generic [ref=f6e74]: 10k
+        - generic [ref=f6e75]: 20k
+        - generic [ref=f6e76]: 30k
+        - generic [ref=f6e77]: 40k
+        - generic [ref=f6e78]: 90%
+        - generic [ref=f6e81]: Dyna-Q (model)
+        - generic [ref=f6e84]: Q-learning
+      - paragraph [ref=f6e86]: The same experience, replayed through a learned model (Dyna-Q, 20 imagined updates per real step), reaches 90% success in 2,000 steps vs 24,938 model-free — a 12× gap (Holm p=3.1e-11). The map isn't just for blindfolds; it's a sample-efficiency engine.
+  - generic [ref=f6e87]:
+    - generic [ref=f6e88]:
+      - paragraph [ref=f6e89]: H2 · microtasks — chapter two
+      - heading "Nobody Learns Soccer by Playing Soccer" [level=2] [ref=f6e90]
+      - paragraph [ref=f6e91]: "Coaches don't start with full matches, and piano teachers don't start with the whole piece. They isolate: shoot from close, then dribble, then play. We asked whether the drill structure itself — with no shaping, no hints, no extra reward — is worth anything to a reinforcement learner."
+      - paragraph [ref=f6e92]:
+        - text: Three agents got identical budgets of 60,000 steps on an 11×7 pitch where only goals are ever rewarded. One played full games from kickoff the whole time. One spent 20% of its budget spawning near the goal with the ball (shooting drill), 20% spawning in its own half (dribbling drill), then played full games. The only thing the curriculum changes is
+        - emphasis [ref=f6e93]: where episodes start
+        - text: .
+    - 'generic "A bright pitch diorama. Ghost trajectories accumulate: the whole-game learner wanders; the drilled learner''s paths funnel into the goal." [ref=f6e95]'
+    - generic [ref=f6e97]:
+      - heading "Reverse curriculum over start states" [level=3] [ref=f6e98]
+      - paragraph [ref=f6e99]: Full-game success from kickoff, 20 greedy evals / 2k steps · 30 seeds · IQM ± 95% CI
+      - generic [ref=f6e100]:
+        - generic [ref=f6e101]: drills, varied
+        - generic [ref=f6e103]: drills, fixed
+        - generic [ref=f6e105]: whole games
+      - 'img "Learning curves: drills-varied crosses 90 percent around 15000 steps, drills-fixed around 20000, whole games around 39000" [ref=f6e107]':
+        - generic [ref=f6e108]: "0"
+        - generic [ref=f6e109]: "0.2"
+        - generic [ref=f6e110]: "0.4"
+        - generic [ref=f6e111]: "0.6"
+        - generic [ref=f6e112]: "0.8"
+        - generic [ref=f6e113]: "1"
+        - generic [ref=f6e114]: "0"
+        - generic [ref=f6e115]: 10k
+        - generic [ref=f6e116]: 20k
+        - generic [ref=f6e117]: 30k
+        - generic [ref=f6e118]: 40k
+        - generic [ref=f6e119]: 50k
+        - generic [ref=f6e120]: 60k
+        - generic [ref=f6e121]: 90%
+        - generic [ref=f6e123]: shoot drill
+        - generic [ref=f6e125]: dribble drill
+        - generic [ref=f6e128]: drills, varied
+        - generic [ref=f6e131]: drills, fixed
+        - generic [ref=f6e134]: whole games
+      - paragraph [ref=f6e136]: Same environment, same reward, same total steps. The drilled agents' curves lift off during the drill phases (shaded) and never look back. Four whole-game seeds never reached 90% at all.
+  - generic [ref=f6e137]:
+    - generic [ref=f6e138]:
+      - paragraph [ref=f6e139]: H3 · variation — chapter three
+      - heading "Practice That Feels Worse and Works Better" [level=2] [ref=f6e140]
+      - paragraph [ref=f6e141]:
+        - text: "In 1979, Shea and Morgan split learners into two groups: one drilled each movement pattern in a block, one practiced them shuffled. Blocked practice looked better"
+        - emphasis [ref=f6e142]: during
+        - text: training — and lost on retention and transfer. Motor-learning calls it the contextual-interference effect. We reproduced it in a learner small enough to explain.
+      - paragraph [ref=f6e143]:
+        - text: Three short piano passages share a library of six three-note motifs; each passage has one exception where its fingering breaks the pattern. A linear learner practices either
+        - emphasis [ref=f6e144]: blocked
+        - text: (all of passage A, then B, then C) or
+        - emphasis [ref=f6e145]: interleaved
+        - text: "(a random passage each episode). Same total practice. The interference lives exactly where the skill does: in the shared motif weights."
+    - generic "A vertical piano-roll wall. Two lanes light up notes as practice runs; the blocked lane looks cleaner during practice, then the test flips the ranking." [ref=f6e147]:
+      - generic:
+        - generic: blocked · drill one passage
+        - generic: interleaved · shuffle passages
+    - generic [ref=f6e149]:
+      - heading "The crossover, in silico" [level=3] [ref=f6e150]
+      - paragraph [ref=f6e151]: "Left: score on the currently-practiced passage during training. Right: test with learning off · 40 seeds"
+      - generic [ref=f6e152]:
+        - generic [ref=f6e153]: blocked
+        - generic [ref=f6e155]: interleaved
+      - img "Acquisition curves where blocked leads, next to retention and transfer bars where interleaved leads" [ref=f6e157]:
+        - generic [ref=f6e158]: "0"
+        - generic [ref=f6e159]: "0.25"
+        - generic [ref=f6e160]: "0.5"
+        - generic [ref=f6e161]: "0.75"
+        - generic [ref=f6e162]: "1"
+        - generic [ref=f6e164]: blocked
+        - generic [ref=f6e166]: interleaved
+        - generic [ref=f6e167]: practice episodes (score on currently-practiced passage)
+        - generic [ref=f6e168]: "0"
+        - generic [ref=f6e169]: "0.25"
+        - generic [ref=f6e170]: "0.5"
+        - generic [ref=f6e171]: "0.75"
+        - generic [ref=f6e172]: "1"
+        - generic [ref=f6e174]: ".82"
+        - generic [ref=f6e176]: ".90"
+        - generic [ref=f6e177]: retention
+        - generic [ref=f6e179]: ".64"
+        - generic [ref=f6e181]: ".75"
+        - generic [ref=f6e182]: transfer
+        - generic [ref=f6e183]: test, learning off
+      - paragraph [ref=f6e184]:
+        - text: "Blocked's one honest win: the passage it drilled"
+        - emphasis [ref=f6e185]: last
+        - text: "(retention on C: 0.99). Recency is real; it's just not learning. The crossover pattern — train worse, test better — is the Shea-Morgan signature, reproduced by shared-parameter interference alone."
+  - generic [ref=f6e186]:
+    - generic [ref=f6e187]:
+      - paragraph [ref=f6e188]: H4 · teachers — chapter four
+      - heading "The One Time I Reached the Mountain" [level=2] [ref=f6e189]
+      - paragraph [ref=f6e190]:
+        - text: No pianist learns from scratch. Teachers hand down compressed trajectories —
+        - emphasis [ref=f6e191]: practice this passage, this way
+        - text: "— distilled from their teachers, and theirs. The knowledge crosses generations through a narrow channel: not brains, stories. We built the smallest version of that channel we could measure."
+      - paragraph [ref=f6e192]: "A gridworld hides a big reward far to the right, guarded by candy — small terminal rewards near the start that end episodes early and teach agents to stop looking. Each agent lives 15,000 steps with plasticity that decays as it ages: learning rate and exploration halve every 5,000 steps. Old agents remember their three best episodes ever — but can no longer act on them. At death, those episodes become advice: at most 100 state-action pairs, seeded optimistically into a fresh, fully plastic student."
+    - generic "A dark grid with candy traps near the start and a distant goal. Across five generations an inherited path skeleton thickens into a golden thread reaching the goal." [ref=f6e194]
+    - generic [ref=f6e196]:
+      - heading "Five generations, five conditions" [level=3] [ref=f6e197]
+      - paragraph [ref=f6e198]: Greedy return at each generation's end · 30 seeds · IQM ± 95% CI · all four comparisons Holm p=.014
+      - generic [ref=f6e199]:
+        - generic [ref=f6e200]: distill
+        - generic [ref=f6e202]: weight-copy
+        - generic [ref=f6e204]: one long life
+        - generic [ref=f6e206]: slow decay
+        - generic [ref=f6e208]: no inherit
+      - 'img "Per-generation curves: generational distillation ratchets upward to 8.75 while all four baselines stay flat at 0.3" [ref=f6e210]':
+        - generic [ref=f6e211]: "0"
+        - generic [ref=f6e212]: "2"
+        - generic [ref=f6e213]: "4"
+        - generic [ref=f6e214]: "6"
+        - generic [ref=f6e215]: "8"
+        - generic [ref=f6e216]: "10"
+        - generic [ref=f6e217]: "1"
+        - generic [ref=f6e218]: "2"
+        - generic [ref=f6e219]: "3"
+        - generic [ref=f6e220]: "4"
+        - generic [ref=f6e221]: "5"
+        - generic [ref=f6e224]: distill
+        - generic [ref=f6e225]: weight-copy
+        - generic [ref=f6e226]: one long life
+        - generic [ref=f6e227]: slow decay
+        - generic [ref=f6e228]: no inherit
+      - paragraph [ref=f6e230]:
+        - text: The gap between what long-lived agents
+        - emphasis [ref=f6e231]: remember
+        - text: (best episode ≈ mountain) and what they can
+        - emphasis [ref=f6e232]: do
+        - text: (candy) stays at ~3 points for 75,000 steps — they know the way and cannot walk it. Distillation converts that gap into the next generation's head start; by generation 5 it has closed to 0.7.
+  - generic [ref=f6e233]:
+    - generic [ref=f6e234]:
+      - paragraph [ref=f6e235]: H5 · morphology — chapter five
+      - heading "Small Bodies Fall Cheaply" [level=2] [ref=f6e236]
+      - paragraph [ref=f6e237]: "Toddlers fall about seventeen times an hour and shrug it off — small bodies carry little energy into the ground. By the square-cube law they are also relatively strong: strength scales with s², weight with s³. Falling is how you learn to stand, and evolution priced falling at its cheapest exactly when you need thousands of them."
+      - paragraph [ref=f6e238]:
+        - text: "Our learner balances a torque-limited pendulum whose scale s sets everything honestly: length s, mass 15s³, strength 40s², and fall damage (s)⁴ — impact energy. Six conditions, 120,000 steps each, all evaluated on the"
+        - emphasis [ref=f6e239]: adult
+        - text: body. Some train adult-sized from day one. Some start at half size and grow — on a schedule, or adaptively, growing only when the current body stops falling.
+    - 'generic "Two pendulum creatures side by side: an adult-sized one that falls hard and often, and one that starts small, falls softly, and grows as it stabilizes. Damage counters accumulate." [ref=f6e241]':
+      - generic:
+        - generic: born adult0damage
+        - generic: grows when ready0.0damage
+    - generic [ref=f6e243]:
+      - heading "Damage accumulated on the way to adult competence" [level=3] [ref=f6e244]
+      - paragraph [ref=f6e245]: Cumulative fall damage vs training step · 20 seeds · IQM ± 95% CI · damage = (size)⁴ per fall
+      - generic [ref=f6e246]:
+        - generic [ref=f6e247]: adult, walk
+        - generic [ref=f6e249]: adult, balance-first
+        - generic [ref=f6e251]: grow linear
+        - generic [ref=f6e253]: grow jump
+        - generic [ref=f6e255]: grow adaptive
+      - 'img "Damage curves: adult conditions accumulate roughly 880 units; growing conditions stay far lower, adaptive lowest at 62" [ref=f6e257]':
+        - generic [ref=f6e258]: "0"
+        - generic [ref=f6e259]: "200"
+        - generic [ref=f6e260]: "400"
+        - generic [ref=f6e261]: "600"
+        - generic [ref=f6e262]: "800"
+        - generic [ref=f6e263]: 1k
+        - generic [ref=f6e264]: 20k
+        - generic [ref=f6e265]: 40k
+        - generic [ref=f6e266]: 60k
+        - generic [ref=f6e267]: 80k
+        - generic [ref=f6e268]: 100k
+        - generic [ref=f6e269]: 120k
+        - generic [ref=f6e272]: adult, walk
+        - generic [ref=f6e274]: adult, balance-first
+        - generic [ref=f6e277]: grow linear
+        - generic [ref=f6e279]: grow jump
+        - generic [ref=f6e282]: grow adaptive
+      - paragraph [ref=f6e284]: Growing bodies buy competence with an order of magnitude less damage (Holm p ≤ 2.1e-6). In animals, damage is death, injury, and metabolic cost — the currency evolution actually optimizes.
+    - generic [ref=f6e286]:
+      - heading "What didn't survive contact with the data" [level=3] [ref=f6e287]
+      - paragraph [ref=f6e288]: Two of our own sub-claims failed their tests. They stay in the paper.
+      - generic [ref=f6e289]:
+        - generic [ref=f6e290]:
+          - generic [ref=f6e291]: refuted · balance-first
+          - text: "We predicted \"learn to balance, then walk,\" like infants. Backwards, here: walking-from-the-start reached competence faster (Holm p=3e-4). Weight-shifting practice visits the states balancing needs; a balance-only phase starves the walking half of the table. Infant staging may serve growing bodies and safety — not the value function."
+        - generic [ref=f6e292]:
+          - generic [ref=f6e293]: null · gradualism
+          - text: Growing in small increments wasn't reliably better than one jump from half-size to adult (p=.11, point estimate reversed). The savings come from
+          - emphasis [ref=f6e294]: being small while incompetent
+          - text: — not from the smoothness of the schedule.
+  - generic [ref=f6e295]:
+    - generic [ref=f6e296]:
+      - paragraph [ref=f6e297]: synthesis
+      - heading "Five Curves, One Lesson" [level=2] [ref=f6e298]
+      - paragraph [ref=f6e299]:
+        - text: "Every mechanism that worked, worked the same way: it changed"
+        - emphasis [ref=f6e300]: which experience the learner got
+        - text: ", not how the learner updates. The map replayed experience. Drills repositioned it. Variation shuffled it. Teachers curated it across lifetimes. Small bodies discounted its price."
+      - paragraph [ref=f6e301]: That is what "between imitation and evaluation" means operationally. Pure evaluation wastes lifetimes rediscovering what the last lifetime knew; pure imitation caps the student at the teacher. The productive middle is a narrow, curated channel of experience — a curriculum, an anecdote, a drill, a start state — feeding a learner that remains free to disagree.
+    - generic [ref=f6e303]:
+      - heading "Scorecard" [level=3] [ref=f6e304]
+      - paragraph [ref=f6e305]: Primary comparisons, Holm-corrected within each experiment
+      - generic [ref=f6e306]:
+        - generic [ref=f6e307]:
+          - generic [ref=f6e308]:
+            - text: H1
+            - generic [ref=f6e309]: supported
+          - generic [ref=f6e310]: world models — 12× fewer steps with a model; blind-at-home 96% vs stranger 10%
+        - generic [ref=f6e311]:
+          - generic [ref=f6e312]:
+            - text: H2
+            - generic [ref=f6e313]: supported
+          - generic [ref=f6e314]: microtasks — drills reach mastery in 15.4k steps vs 38.9k (p=1.1e-9)
+        - generic [ref=f6e315]:
+          - generic [ref=f6e316]:
+            - text: H3
+            - generic [ref=f6e317]: supported
+          - generic [ref=f6e318]: variation — train worse, test better — retention p=1.2e-5, transfer p=.006
+        - generic [ref=f6e319]:
+          - generic [ref=f6e320]:
+            - text: H4
+            - generic [ref=f6e321]: supported
+          - generic [ref=f6e322]: teachers — lineage ratchets to 8.75; every control flat at 0.3 (p=.014)
+        - generic [ref=f6e323]:
+          - generic [ref=f6e324]:
+            - text: H5
+            - generic [ref=f6e325]: supported
+          - generic [ref=f6e326]: growing bodies — 14× less damage to adult competence (p≤2.1e-6); 2 sub-claims failed
+  - generic [ref=f6e327]:
+    - generic [ref=f6e328]:
+      - paragraph [ref=f6e329]: methods & colophon
+      - heading "How the Numbers Were Made" [level=2] [ref=f6e330]
+      - table "Experiment parameters" [ref=f6e331]:
+        - rowgroup [ref=f6e332]:
+          - row [ref=f6e333]:
+            - columnheader "exp" [ref=f6e334]
+            - columnheader "world" [ref=f6e335]
+            - columnheader "agent" [ref=f6e336]
+            - columnheader "seeds" [ref=f6e337]
+            - columnheader "budget / condition" [ref=f6e338]
+        - rowgroup [ref=f6e339]:
+          - row [ref=f6e340]:
+            - cell "H1" [ref=f6e341]
+            - cell "GridHome 13×11, slip 0.1" [ref=f6e342]
+            - cell "Q & Dyna-Q(20), belief dead-reckoning + touch filter" [ref=f6e343]
+            - cell "30" [ref=f6e344]
+            - cell "40k steps" [ref=f6e345]
+          - row [ref=f6e346]:
+            - cell "H2" [ref=f6e347]
+            - cell "SoccerGrid 11×7, p(goal)=1−d/5" [ref=f6e348]
+            - cell "tabular Q, shared table across phases" [ref=f6e349]
+            - cell "30" [ref=f6e350]
+            - cell "60k steps" [ref=f6e351]
+          - row [ref=f6e352]:
+            - cell "H3" [ref=f6e353]
+            - cell "3 passages · 6 shared motifs · 8 keys" [ref=f6e354]
+            - cell "linear Q, SGD, ε-greedy" [ref=f6e355]
+            - cell "40" [ref=f6e356]
+            - cell "450 episodes" [ref=f6e357]
+          - row [ref=f6e358]:
+            - cell "H4" [ref=f6e359]
+            - cell "TrapGrid 15×11, candy 0.3, goal 10" [ref=f6e360]
+            - cell "Q with plasticity decay ½ per 5k steps" [ref=f6e361]
+            - cell "30" [ref=f6e362]
+            - cell "5×15k steps" [ref=f6e363]
+          - row [ref=f6e364]:
+            - cell "H5" [ref=f6e365]
+            - cell "Pendulum, l=s, m=15s³, τ=40s², dmg=s⁴" [ref=f6e366]
+            - cell "tabular Q, 765 states × 5 torques" [ref=f6e367]
+            - cell "20" [ref=f6e368]
+            - cell "120k steps" [ref=f6e369]
+      - paragraph [ref=f6e370]: "Statistics: IQM point estimates; 95% percentile bootstrap (10k resamples); two-sided Mann-Whitney with Holm correction within each experiment's primary family; censored time-to-threshold assigned budget+1 with censoring fractions reported. Budgets matched to the step across conditions; evaluation identical across conditions and excluded from budgets."
+      - paragraph [ref=f6e371]: "Everything is reproducible from the repository: environments, agents, experiment scripts, 179 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs."
+      - paragraph [ref=f6e372]:
+        - link "github.com/andrewboldi/developmental-rl" [ref=f6e373] [cursor=pointer]:
+          - /url: https://github.com/andrewboldi/developmental-rl
+    - generic [ref=f6e374]: Growing Up to Learn · an experiment program by Andrew Boldi · built with three.js r147 + GSAP · charts are real data, seeds and all

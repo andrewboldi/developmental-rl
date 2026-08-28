@@ -1,0 +1,6 @@
+[      64ms] TypeError: ascii.trim is not a function
+    at home (http://localhost:8137/app.js:387:57)
+    at http://localhost:8137/app.js:405:15
+    at addStage (http://localhost:8137/app.js:287:16)
+    at http://localhost:8137/app.js:384:14
+    at http://localhost:8137/app.js:787:3
