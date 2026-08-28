@@ -1,0 +1,11583 @@
+{
+ "experiment": "exp1_blindfold",
+ "hypothesis": "H1 (world models): an agent that learned a world model of its home can keep acting when observation is removed \u2014 dead reckoning through the model, sharpened by a learned touch (bump) likelihood \u2014 but the same machinery fails in a stranger's home; and model-based Dyna dominates model-free Q-learning on sample efficiency.",
+ "config": {
+  "slip": 0.1,
+  "gamma": 0.97,
+  "lr": 0.1,
+  "eps": 0.1,
+  "optimistic_init": 1.0,
+  "planning_steps": 20,
+  "cap": 60,
+  "eval_episodes": 20,
+  "threshold": 0.9,
+  "n_traj": 3,
+  "n_boot": 10000,
+  "train_steps": 4000,
+  "eval_every": 400,
+  "blind_episodes": 10,
+  "n_seeds": 2,
+  "smoke": true,
+  "budget_note": "budget counts env steps only; Dyna planning is imagination; eval rollouts are budget-free and identical across conditions"
+ },
+ "conditions": {
+  "qlearning-A": {
+   "phase": "train",
+   "per_seed": {
+    "final_success": [
+     0.0,
+     0.0
+    ],
+    "t90_step": [
+     null,
+     null
+    ]
+   },
+   "t90_censored_frac": 1.0
+  },
+  "dynaq-A": {
+   "phase": "train",
+   "per_seed": {
+    "final_success": [
+     1.0,
+     1.0
+    ],
+    "t90_step": [
+     1200,
+     2000
+    ]
+   },
+   "t90_censored_frac": 0.0
+  },
+  "sighted-A": {
+   "phase": "blindfold",
+   "per_seed": {
+    "success_rate": [
+     1.0,
+     1.0
+    ],
+    "mean_steps": [
+     20.6,
+     19.6
+    ],
+    "mean_steps_success": [
+     20.6,
+     19.6
+    ]
+   }
+  },
+  "blind-A": {
+   "phase": "blindfold",
+   "per_seed": {
+    "success_rate": [
+     0.0,
+     0.0
+    ],
+    "mean_steps": [
+     60.0,
+     60.0
+    ],
+    "mean_steps_success": [
+     null,
+     null
+    ]
+   }
+  },
+  "blind-A-touch": {
+   "phase": "blindfold",
+   "per_seed": {
+    "success_rate": [
+     1.0,
+     0.9
+    ],
+    "mean_steps": [
+     22.0,
+     27.0
+    ],
+    "mean_steps_success": [
+     22.0,
+     23.333333333333332
+    ]
+   }
+  },
+  "blind-B": {
+   "phase": "blindfold",
+   "per_seed": {
+    "success_rate": [
+     0.0,
+     0.0
+    ],
+    "mean_steps": [
+     60.0,
+     60.0
+    ],
+    "mean_steps_success": [
+     null,
+     null
+    ]
+   }
+  },
+  "blind-B-touch": {
+   "phase": "blindfold",
+   "per_seed": {
+    "success_rate": [
+     0.4,
+     0.1
+    ],
+    "mean_steps": [
+     48.4,
+     55.9
+    ],
+    "mean_steps_success": [
+     31.0,
+     19.0
+    ]
+   }
+  },
+  "sighted-B-transfer": {
+   "phase": "blindfold",
+   "per_seed": {
+    "success_rate": [
+     0.0,
+     0.0
+    ],
+    "mean_steps": [
+     60.0,
+     60.0
+    ],
+    "mean_steps_success": [
+     null,
+     null
+    ]
+   }
+  },
+  "random-A": {
+   "phase": "blindfold",
+   "per_seed": {
+    "success_rate": [
+     0.0,
+     0.0
+    ],
+    "mean_steps": [
+     60.0,
+     60.0
+    ],
+    "mean_steps_success": [
+     null,
+     null
+    ]
+   }
+  }
+ },
+ "curves": {
+  "checkpoints": [
+   400,
+   800,
+   1200,
+   1600,
+   2000,
+   2400,
+   2800,
+   3200,
+   3600,
+   4000
+  ],
+  "conditions": {
+   "qlearning-A": {
+    "iqm": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "ci_lo": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "ci_hi": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "dynaq-A": {
+    "iqm": [
+     0.0,
+     0.375,
+     0.825,
+     0.875,
+     0.575,
+     0.975,
+     1.0,
+     0.975,
+     1.0,
+     1.0
+    ],
+    "ci_lo": [
+     0.0,
+     0.0,
+     0.7,
+     0.85,
+     0.15,
+     0.95,
+     1.0,
+     0.95,
+     1.0,
+     1.0
+    ],
+    "ci_hi": [
+     0.0,
+     0.75,
+     0.95,
+     0.9,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  }
+ },
+ "tests": [
+  {
+   "name": "dyna_faster_than_q_t90",
+   "family": "primary",
+   "metric": "env steps to 90% eval success (censored -> budget+1)",
+   "a": "dynaq-A",
+   "b": "qlearning-A",
+   "iqm_a": 1600.0,
+   "iqm_b": 4001.0,
+   "u": 0.0,
+   "p": 0.22067136191984682,
+   "predicted": "a < b",
+   "p_holm": 0.6620140857595405,
+   "significant": false,
+   "censored_frac_a": 0.0,
+   "censored_frac_b": 1.0
+  },
+  {
+   "name": "blindA_beats_blindB",
+   "family": "primary",
+   "metric": "blindfold success rate",
+   "a": "blind-A",
+   "b": "blind-B",
+   "iqm_a": 0.0,
+   "iqm_b": 0.0,
+   "u": 2.0,
+   "p": 1.0,
+   "predicted": "a > b",
+   "p_holm": 1.0,
+   "significant": false
+  },
+  {
+   "name": "touch_beats_pure_deadreckoning",
+   "family": "primary",
+   "metric": "blindfold success rate",
+   "a": "blind-A-touch",
+   "b": "blind-A",
+   "iqm_a": 0.95,
+   "iqm_b": 0.0,
+   "u": 4.0,
+   "p": 0.22067136191984682,
+   "predicted": "a > b",
+   "p_holm": 0.6620140857595405,
+   "significant": false
+  },
+  {
+   "name": "blindB_vs_randomA_chance_floor",
+   "family": "secondary",
+   "metric": "blindfold success rate",
+   "a": "blind-B",
+   "b": "random-A",
+   "iqm_a": 0.0,
+   "iqm_b": 0.0,
+   "u": 2.0,
+   "p": 1.0,
+   "predicted": "a ~ b (chance floor; descriptive)",
+   "significant": false
+  },
+  {
+   "name": "sightedB_transfer_below_sightedA",
+   "family": "secondary",
+   "metric": "blindfold success rate",
+   "a": "sighted-B-transfer",
+   "b": "sighted-A",
+   "iqm_a": 0.0,
+   "iqm_b": 1.0,
+   "u": 0.0,
+   "p": 0.1939308522824107,
+   "predicted": "a < b",
+   "significant": false
+  }
+ ],
+ "conclusion": {
+  "supported": false,
+  "summary": "Blindfolded dead reckoning through the home-learned model keeps working in HOME_A (success IQM: sighted 1.00, blind 0.00, blind+touch 0.95) but collapses in the stranger's HOME_B (blind 0.00 vs random floor 0.00); DynaQ reached 90% eval success by step 1600 (censored 0%) vs 4001 (censored 100%) for Q-learning.",
+  "criteria": {
+   "dyna_sample_efficiency": false,
+   "blind_home_works": true,
+   "blind_stranger_fails": false,
+   "touch_helps": true
+  }
+ },
+ "viz": {
+  "homes": {
+   "A": {
+    "ascii": [
+     "#############",
+     "#S...#......#",
+     "#....#.G....#",
+     "#....#......#",
+     "#.##.####.###",
+     "#...........#",
+     "#.#######.#.#",
+     "#.#.....#.#.#",
+     "#.#.###.#.#.#",
+     "#...#.......#",
+     "#############"
+    ],
+    "shape": [
+     11,
+     13
+    ],
+    "walls": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      1
+     ],
+     [
+      0,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      0,
+      4
+     ],
+     [
+      0,
+      5
+     ],
+     [
+      0,
+      6
+     ],
+     [
+      0,
+      7
+     ],
+     [
+      0,
+      8
+     ],
+     [
+      0,
+      9
+     ],
+     [
+      0,
+      10
+     ],
+     [
+      0,
+      11
+     ],
+     [
+      0,
+      12
+     ],
+     [
+      1,
+      0
+     ],
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      12
+     ],
+     [
+      2,
+      0
+     ],
+     [
+      2,
+      5
+     ],
+     [
+      2,
+      12
+     ],
+     [
+      3,
+      0
+     ],
+     [
+      3,
+      5
+     ],
+     [
+      3,
+      12
+     ],
+     [
+      4,
+      0
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      4,
+      5
+     ],
+     [
+      4,
+      6
+     ],
+     [
+      4,
+      7
+     ],
+     [
+      4,
+      8
+     ],
+     [
+      4,
+      10
+     ],
+     [
+      4,
+      11
+     ],
+     [
+      4,
+      12
+     ],
+     [
+      5,
+      0
+     ],
+     [
+      5,
+      12
+     ],
+     [
+      6,
+      0
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      6,
+      6
+     ],
+     [
+      6,
+      7
+     ],
+     [
+      6,
+      8
+     ],
+     [
+      6,
+      10
+     ],
+     [
+      6,
+      12
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      7,
+      8
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      7,
+      12
+     ],
+     [
+      8,
+      0
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      8,
+      4
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      8,
+      8
+     ],
+     [
+      8,
+      10
+     ],
+     [
+      8,
+      12
+     ],
+     [
+      9,
+      0
+     ],
+     [
+      9,
+      4
+     ],
+     [
+      9,
+      12
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      1
+     ],
+     [
+      10,
+      2
+     ],
+     [
+      10,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      10,
+      5
+     ],
+     [
+      10,
+      6
+     ],
+     [
+      10,
+      7
+     ],
+     [
+      10,
+      8
+     ],
+     [
+      10,
+      9
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      10,
+      11
+     ],
+     [
+      10,
+      12
+     ]
+    ],
+    "start": [
+     1,
+     1
+    ],
+    "goal": [
+     2,
+     7
+    ],
+    "shortest_path_len": 17
+   },
+   "B": {
+    "ascii": [
+     "#############",
+     "#S.#........#",
+     "#..#...G#...#",
+     "#..#.###....#",
+     "#...........#",
+     "###.#####.###",
+     "#....#......#",
+     "#.##.#.####.#",
+     "#.#..#....#.#",
+     "#...........#",
+     "#############"
+    ],
+    "shape": [
+     11,
+     13
+    ],
+    "walls": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      1
+     ],
+     [
+      0,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      0,
+      4
+     ],
+     [
+      0,
+      5
+     ],
+     [
+      0,
+      6
+     ],
+     [
+      0,
+      7
+     ],
+     [
+      0,
+      8
+     ],
+     [
+      0,
+      9
+     ],
+     [
+      0,
+      10
+     ],
+     [
+      0,
+      11
+     ],
+     [
+      0,
+      12
+     ],
+     [
+      1,
+      0
+     ],
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      12
+     ],
+     [
+      2,
+      0
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      2,
+      8
+     ],
+     [
+      2,
+      12
+     ],
+     [
+      3,
+      0
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      3,
+      5
+     ],
+     [
+      3,
+      6
+     ],
+     [
+      3,
+      7
+     ],
+     [
+      3,
+      12
+     ],
+     [
+      4,
+      0
+     ],
+     [
+      4,
+      12
+     ],
+     [
+      5,
+      0
+     ],
+     [
+      5,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      5,
+      6
+     ],
+     [
+      5,
+      7
+     ],
+     [
+      5,
+      8
+     ],
+     [
+      5,
+      10
+     ],
+     [
+      5,
+      11
+     ],
+     [
+      5,
+      12
+     ],
+     [
+      6,
+      0
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      6,
+      12
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      7,
+      7
+     ],
+     [
+      7,
+      8
+     ],
+     [
+      7,
+      9
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      7,
+      12
+     ],
+     [
+      8,
+      0
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      8,
+      10
+     ],
+     [
+      8,
+      12
+     ],
+     [
+      9,
+      0
+     ],
+     [
+      9,
+      12
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      1
+     ],
+     [
+      10,
+      2
+     ],
+     [
+      10,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      10,
+      5
+     ],
+     [
+      10,
+      6
+     ],
+     [
+      10,
+      7
+     ],
+     [
+      10,
+      8
+     ],
+     [
+      10,
+      9
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      10,
+      11
+     ],
+     [
+      10,
+      12
+     ]
+    ],
+    "start": [
+     1,
+     1
+    ],
+    "goal": [
+     2,
+     7
+    ],
+    "shortest_path_len": 11
+   }
+  },
+  "action_names": [
+   "up",
+   "right",
+   "down",
+   "left"
+  ],
+  "cap": 60,
+  "slip": 0.1,
+  "blind_summary": [
+   {
+    "name": "sighted-A",
+    "success_iqm": 1.0,
+    "success_ci": [
+     1.0,
+     1.0
+    ],
+    "steps_iqm": 20.1,
+    "steps_ci": [
+     19.6,
+     20.6
+    ]
+   },
+   {
+    "name": "blind-A",
+    "success_iqm": 0.0,
+    "success_ci": [
+     0.0,
+     0.0
+    ],
+    "steps_iqm": 60.0,
+    "steps_ci": [
+     60.0,
+     60.0
+    ]
+   },
+   {
+    "name": "blind-A-touch",
+    "success_iqm": 0.95,
+    "success_ci": [
+     0.9,
+     1.0
+    ],
+    "steps_iqm": 24.5,
+    "steps_ci": [
+     22.0,
+     27.0
+    ]
+   },
+   {
+    "name": "blind-B",
+    "success_iqm": 0.0,
+    "success_ci": [
+     0.0,
+     0.0
+    ],
+    "steps_iqm": 60.0,
+    "steps_ci": [
+     60.0,
+     60.0
+    ]
+   },
+   {
+    "name": "blind-B-touch",
+    "success_iqm": 0.25,
+    "success_ci": [
+     0.1,
+     0.4
+    ],
+    "steps_iqm": 52.15,
+    "steps_ci": [
+     48.4,
+     55.9
+    ]
+   },
+   {
+    "name": "sighted-B-transfer",
+    "success_iqm": 0.0,
+    "success_ci": [
+     0.0,
+     0.0
+    ],
+    "steps_iqm": 60.0,
+    "steps_ci": [
+     60.0,
+     60.0
+    ]
+   },
+   {
+    "name": "random-A",
+    "success_iqm": 0.0,
+    "success_ci": [
+     0.0,
+     0.0
+    ],
+    "steps_iqm": 60.0,
+    "steps_ci": [
+     60.0,
+     60.0
+    ]
+   }
+  ],
+  "sample_efficiency": {
+   "threshold": 0.9,
+   "t90": {
+    "dynaq-A": {
+     "iqm": 1600.0,
+     "ci": [
+      1200.0,
+      2000.0
+     ],
+     "censored_frac": 0.0
+    },
+    "qlearning-A": {
+     "iqm": 4001.0,
+     "ci": [
+      4001.0,
+      4001.0
+     ],
+     "censored_frac": 1.0
+    }
+   },
+   "final_success": {
+    "qlearning-A": {
+     "iqm": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ]
+    },
+    "dynaq-A": {
+     "iqm": 1.0,
+     "ci": [
+      1.0,
+      1.0
+     ]
+    }
+   }
+  },
+  "blind_trajectories": {
+   "blind-A": [
+    {
+     "episode": 0,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0678224341390343,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3532865784582213,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8295978874925751,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 5,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.9160489849967142,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.8828276620317164,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 7,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.9520617656854844,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.1269537652676758,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.259355835251543,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 10,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 2.2752951863557174,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 11,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.258111584196182,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 12,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.2634843566814618,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 13,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.3161623353693006,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 14,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 2.461097559362956,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 15,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.6018589047052254,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.017113159470056,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 3.2765549863082146,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 3.4976739309445777,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.583392454835691,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.7959282350510994,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 3.9083164455230204,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 4.14923035412987,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 4.191150588240781,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.3023897353363845,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.37811277071299,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.437426164463906,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470704447460417,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 28,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.476367212766303,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 29,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470839266094121,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 30,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.191710576170076,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.232569850730865,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.231242419948135,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 33,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        2,
+        10
+       ],
+       "entropy_bits": 4.226631738134576,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 34,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.226308007978282,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 35,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.018376196806688,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 36,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.034191411878617,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 37,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.084535753480559,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 38,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 3.8840573692528744,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.9339052388428395,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 40,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.081570646569598,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 41,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.206125502085783,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 4.100976880273825,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 43,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236435726106185,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 44,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.212617288862019,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 45,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 3.9908460412375977,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 46,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.015577671606689,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 47,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8173434594738356,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8854576681574273,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.778652401673036,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 50,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.087076447827594,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.088576097666604,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.18955842303738,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.199548370576613,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.264979543298983,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.253251778756196,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 56,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.154135753798427,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 57,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236779743593745,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.271806867278174,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 59,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.419782005584958,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 60,
+       "true": [
+        5,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 4.216574119309684,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 1,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0678224341390343,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3532865784582213,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8295978874925751,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.9160489849967142,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.8828276620317164,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 7,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.9520617656854844,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.1269537652676758,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.259355835251543,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 10,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 2.2752951863557174,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 11,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.258111584196182,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 12,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.2634843566814618,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 13,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.3161623353693006,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 2.461097559362956,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.6018589047052254,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 16,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.017113159470056,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 3.2765549863082146,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 18,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 3.4976739309445777,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 19,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.583392454835691,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 20,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.7959282350510994,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 3.9083164455230204,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 4.14923035412987,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 4.191150588240781,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.3023897353363845,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 25,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.37811277071299,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 26,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.437426164463906,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 27,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470704447460417,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 28,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.476367212766303,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 29,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470839266094121,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 30,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.191710576170076,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 31,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.232569850730865,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 32,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.231242419948135,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 33,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        2,
+        10
+       ],
+       "entropy_bits": 4.226631738134576,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 34,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.226308007978282,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 35,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.018376196806688,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 36,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.034191411878617,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 37,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.084535753480559,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 38,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 3.8840573692528744,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.9339052388428395,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 40,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.081570646569598,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 41,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.206125502085783,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 42,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 4.100976880273825,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 43,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236435726106185,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 44,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.212617288862019,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 45,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 3.9908460412375977,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 46,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.015577671606689,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 47,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8173434594738356,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8854576681574273,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.778652401673036,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 50,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.087076447827594,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.088576097666604,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.18955842303738,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.199548370576613,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.264979543298983,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.253251778756196,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 56,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.154135753798427,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 57,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236779743593745,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.271806867278174,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 59,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.419782005584958,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 60,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 4.216574119309684,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 2,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0678224341390343,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3532865784582213,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8295978874925751,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.9160489849967142,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.8828276620317164,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 7,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.9520617656854844,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.1269537652676758,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.259355835251543,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 10,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 2.2752951863557174,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 11,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.258111584196182,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 12,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.2634843566814618,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 13,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.3161623353693006,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 14,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 2.461097559362956,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 15,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.6018589047052254,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.017113159470056,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 17,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 3.2765549863082146,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 3.4976739309445777,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 19,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.583392454835691,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.7959282350510994,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 3.9083164455230204,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 4.14923035412987,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 4.191150588240781,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.3023897353363845,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 25,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.37811277071299,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.437426164463906,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470704447460417,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 28,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.476367212766303,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 29,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470839266094121,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 30,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.191710576170076,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.232569850730865,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.231242419948135,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 33,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        2,
+        10
+       ],
+       "entropy_bits": 4.226631738134576,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 34,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.226308007978282,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 35,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.018376196806688,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 36,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.034191411878617,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 37,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.084535753480559,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 38,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 3.8840573692528744,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.9339052388428395,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 40,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.081570646569598,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 41,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.206125502085783,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 4.100976880273825,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 43,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236435726106185,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 44,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.212617288862019,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 45,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 3.9908460412375977,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.015577671606689,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 47,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8173434594738356,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 48,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8854576681574273,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.778652401673036,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 50,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.087076447827594,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.088576097666604,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.18955842303738,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.199548370576613,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.264979543298983,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.253251778756196,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 56,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.154135753798427,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 57,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236779743593745,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.271806867278174,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 59,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.419782005584958,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 60,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 4.216574119309684,
+       "action": null,
+       "bump": null
+      }
+     ]
+    }
+   ],
+   "blind-A-touch": [
+    {
+     "episode": 0,
+     "success": true,
+     "steps": 33,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0624317203936913,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3606344245066109,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8383504964484632,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 5,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        3,
+        3
+       ],
+       "entropy_bits": 1.5010415344995225,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.0870096976753523,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.2893628633460401,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.1365443017423609,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 0.9595860832915489,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 0.8804614935726847,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 0.9315309390289932,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        5,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.11586289757289,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.2526288632754015,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        5,
+        10
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.0374448161504397,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 15,
+       "true": [
+        5,
+        10
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 2.052889380928501,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        5,
+        11
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 2.119435808541982,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        5,
+        11
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 2.0375186730072063,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 18,
+       "true": [
+        5,
+        11
+       ],
+       "believed": [
+        5,
+        11
+       ],
+       "entropy_bits": 1.5757997903069572,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        6,
+        11
+       ],
+       "believed": [
+        6,
+        11
+       ],
+       "entropy_bits": 1.599090181082611,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        7,
+        11
+       ],
+       "believed": [
+        7,
+        11
+       ],
+       "entropy_bits": 1.4367594622283446,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        8,
+        11
+       ],
+       "believed": [
+        8,
+        11
+       ],
+       "entropy_bits": 1.5952703498216847,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        9,
+        11
+       ],
+       "believed": [
+        9,
+        11
+       ],
+       "entropy_bits": 1.450185431412719,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        9,
+        10
+       ],
+       "believed": [
+        9,
+        10
+       ],
+       "entropy_bits": 0.8826356026008667,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        9,
+        9
+       ],
+       "believed": [
+        9,
+        9
+       ],
+       "entropy_bits": 0.571704675290823,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        8,
+        9
+       ],
+       "believed": [
+        8,
+        9
+       ],
+       "entropy_bits": 0.550191893377852,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        7,
+        9
+       ],
+       "believed": [
+        7,
+        9
+       ],
+       "entropy_bits": 0.4928177566262778,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        6,
+        9
+       ],
+       "believed": [
+        6,
+        9
+       ],
+       "entropy_bits": 0.32190654512798766,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 28,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 0.818252445366227,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 29,
+       "true": [
+        4,
+        9
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.169535755028876,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 30,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 1.178455397355841,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 1.3038500830820665,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        2,
+        8
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 1.5196649812743404,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 33,
+       "true": [
+        2,
+        7
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 1.608422560849338,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 1,
+     "success": true,
+     "steps": 20,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0624317203936913,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3606344245066109,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8383504964484632,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.8164892721506012,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.6726799432992607,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 7,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        3,
+        3
+       ],
+       "entropy_bits": 1.8404527661300047,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.8638219623258865,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.7322868977953474,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.2220225747397946,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 1.1068961323480708,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 1.0480451268458795,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 1.086293405317687,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        5,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.2526763220942967,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.377558924255613,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        4,
+        9
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.07452149584612,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 17,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 0.9357262211822777,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 0.9561627445388899,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        2,
+        8
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 1.2329928509056467,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        2,
+        7
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 1.3625567631758198,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 2,
+     "success": true,
+     "steps": 22,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0624317203936913,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        4
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3606344245066109,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8383504964484632,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        3
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.8164892721506012,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.6726799432992607,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 7,
+       "true": [
+        3,
+        3
+       ],
+       "believed": [
+        3,
+        3
+       ],
+       "entropy_bits": 1.8404527661300047,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.8638219623258865,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.7322868977953474,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        5,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.2220225747397946,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        5,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 1.1068961323480708,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        5,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 1.0480451268458795,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 1.086293405317687,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 14,
+       "true": [
+        5,
+        7
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.4793510328695483,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        5,
+        8
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.3123388325738143,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 16,
+       "true": [
+        5,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.4758615986301686,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 17,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.5070728628377212,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        4,
+        9
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.2285888971539896,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 1.0482653929081218,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 1.0171072870054025,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        2,
+        8
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 1.2830411279427214,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        2,
+        7
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 1.4070514900330053,
+       "action": null,
+       "bump": null
+      }
+     ]
+    }
+   ],
+   "blind-B": [
+    {
+     "episode": 0,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0678224341390343,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        2,
+        2
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3532865784582213,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        3,
+        2
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8295978874925751,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.9160489849967142,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 6,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.8828276620317164,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 7,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.9520617656854844,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        4,
+        3
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.1269537652676758,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.259355835251543,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 10,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 2.2752951863557174,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 11,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.258111584196182,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 12,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.2634843566814618,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 13,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.3161623353693006,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 14,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 2.461097559362956,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 15,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.6018589047052254,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        4,
+        3
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.017113159470056,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 17,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 3.2765549863082146,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 3.4976739309445777,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        2,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.583392454835691,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.7959282350510994,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 21,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 3.9083164455230204,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 22,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 4.14923035412987,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 23,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 4.191150588240781,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 24,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.3023897353363845,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.37811277071299,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.437426164463906,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470704447460417,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 28,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.476367212766303,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 29,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470839266094121,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 30,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.191710576170076,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.232569850730865,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.231242419948135,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 33,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        2,
+        10
+       ],
+       "entropy_bits": 4.226631738134576,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 34,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.226308007978282,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 35,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.018376196806688,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 36,
+       "true": [
+        3,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.034191411878617,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 37,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.084535753480559,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 38,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 3.8840573692528744,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        4,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.9339052388428395,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 40,
+       "true": [
+        4,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.081570646569598,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 41,
+       "true": [
+        4,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.206125502085783,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 4.100976880273825,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 43,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236435726106185,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 44,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.212617288862019,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 45,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 3.9908460412375977,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 46,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.015577671606689,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 47,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8173434594738356,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8854576681574273,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.778652401673036,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 50,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.087076447827594,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.088576097666604,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.18955842303738,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.199548370576613,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.264979543298983,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.253251778756196,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 56,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.154135753798427,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 57,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236779743593745,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.271806867278174,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 59,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.419782005584958,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 60,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 4.216574119309684,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 1,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0678224341390343,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3532865784582213,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8295978874925751,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        1
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.9160489849967142,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        1
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.8828276620317164,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        4,
+        1
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.9520617656854844,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.1269537652676758,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.259355835251543,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        4,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 2.2752951863557174,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.258111584196182,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        4,
+        5
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.2634843566814618,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.3161623353693006,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 14,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 2.461097559362956,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.6018589047052254,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 16,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.017113159470056,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 3.2765549863082146,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 18,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 3.4976739309445777,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 19,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.583392454835691,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 20,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.7959282350510994,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 3.9083164455230204,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 4.14923035412987,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 4.191150588240781,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.3023897353363845,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 25,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.37811277071299,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 26,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.437426164463906,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 27,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470704447460417,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 28,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.476367212766303,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 29,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470839266094121,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 30,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.191710576170076,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 31,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.232569850730865,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 32,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.231242419948135,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 33,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        2,
+        10
+       ],
+       "entropy_bits": 4.226631738134576,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 34,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.226308007978282,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 35,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.018376196806688,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 36,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.034191411878617,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 37,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.084535753480559,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 38,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 3.8840573692528744,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.9339052388428395,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 40,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.081570646569598,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 41,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.206125502085783,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 42,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 4.100976880273825,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 43,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236435726106185,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 44,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.212617288862019,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 45,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 3.9908460412375977,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.015577671606689,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 47,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8173434594738356,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8854576681574273,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.778652401673036,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 50,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.087076447827594,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.088576097666604,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.18955842303738,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.199548370576613,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.264979543298983,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.253251778756196,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 56,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.154135753798427,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 57,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236779743593745,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.271806867278174,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 59,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.419782005584958,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 60,
+       "true": [
+        4,
+        9
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 4.216574119309684,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 2,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.0678224341390343,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.3532865784582213,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        2,
+        2
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.8295978874925751,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        1
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.9160489849967142,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        1
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.8828276620317164,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        4,
+        1
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.9520617656854844,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.1269537652676758,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.259355835251543,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        4,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 2.2752951863557174,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.258111584196182,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        4,
+        5
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.2634843566814618,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 2.3161623353693006,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 2.461097559362956,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 2.6018589047052254,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.017113159470056,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 3.2765549863082146,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 18,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 3.4976739309445777,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 19,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.583392454835691,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 3.7959282350510994,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 3.9083164455230204,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 4.14923035412987,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 4.191150588240781,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 24,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.3023897353363845,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 25,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.37811277071299,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 26,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.437426164463906,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 27,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470704447460417,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 28,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.476367212766303,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 29,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.470839266094121,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 30,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.191710576170076,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 31,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.232569850730865,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 32,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.231242419948135,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 33,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        2,
+        10
+       ],
+       "entropy_bits": 4.226631738134576,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 34,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        3,
+        10
+       ],
+       "entropy_bits": 4.226308007978282,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 35,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.018376196806688,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 36,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 4.034191411878617,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 37,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 4.084535753480559,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 38,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 3.8840573692528744,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 3.9339052388428395,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 40,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.081570646569598,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 41,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 4.206125502085783,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 4.100976880273825,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 43,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236435726106185,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 44,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.212617288862019,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 45,
+       "true": [
+        4,
+        9
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 3.9908460412375977,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.015577671606689,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 47,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8173434594738356,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 48,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.8854576681574273,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        1,
+        11
+       ],
+       "entropy_bits": 3.778652401673036,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 50,
+       "true": [
+        1,
+        10
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.087076447827594,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.088576097666604,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        1,
+        10
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.18955842303738,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.199548370576613,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        1,
+        10
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.264979543298983,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.253251778756196,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 56,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.154135753798427,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 57,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 4.236779743593745,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        1,
+        10
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.271806867278174,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 59,
+       "true": [
+        2,
+        10
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 4.419782005584958,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 60,
+       "true": [
+        2,
+        11
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 4.216574119309684,
+       "action": null,
+       "bump": null
+      }
+     ]
+    }
+   ],
+   "blind-B-touch": [
+    {
+     "episode": 0,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.1575300048720252,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        2,
+        2
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.4393525435354222,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        3,
+        2
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.9546418285126739,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.9308829468156503,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 6,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        3,
+        3
+       ],
+       "entropy_bits": 1.5478256399597434,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        4,
+        3
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.1683433661583318,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        5,
+        3
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.3151325505548161,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        6,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.0992836859552708,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        6,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 0.9665409866753558,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 11,
+       "true": [
+        6,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 1.74775180271334,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 12,
+       "true": [
+        6,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.1638737116675568,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        7,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.1610883452907999,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        8,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 0.9250013123961942,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 15,
+       "true": [
+        8,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 1.6765061880657153,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 16,
+       "true": [
+        8,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 0.9821383989580897,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 17,
+       "true": [
+        8,
+        3
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.0095040186192996,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        8,
+        4
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 0.8606958039266774,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 19,
+       "true": [
+        8,
+        4
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 1.6571665424090196,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 20,
+       "true": [
+        8,
+        4
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.0739016610366245,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        9,
+        4
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.0970752324318493,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        9,
+        5
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 0.9416275513898531,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        9,
+        6
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 0.9399943982399044,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        9,
+        7
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 1.0632285569925095,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        9,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.272142218101463,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        9,
+        9
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.346937556204322,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        8,
+        9
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.0544526775971592,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 28,
+       "true": [
+        8,
+        9
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 2.081735528800728,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 29,
+       "true": [
+        8,
+        9
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 2.4504195607698924,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 30,
+       "true": [
+        8,
+        9
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 2.105181273611725,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 31,
+       "true": [
+        8,
+        9
+       ],
+       "believed": [
+        5,
+        11
+       ],
+       "entropy_bits": 1.5262450457342407,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        9,
+        9
+       ],
+       "believed": [
+        6,
+        11
+       ],
+       "entropy_bits": 1.4889662636649885,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 33,
+       "true": [
+        9,
+        9
+       ],
+       "believed": [
+        7,
+        11
+       ],
+       "entropy_bits": 2.583188018344084,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 34,
+       "true": [
+        9,
+        9
+       ],
+       "believed": [
+        5,
+        10
+       ],
+       "entropy_bits": 2.772411784457034,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 35,
+       "true": [
+        9,
+        10
+       ],
+       "believed": [
+        5,
+        11
+       ],
+       "entropy_bits": 2.3391016872527945,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 36,
+       "true": [
+        9,
+        10
+       ],
+       "believed": [
+        5,
+        11
+       ],
+       "entropy_bits": 1.3628920687568813,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 37,
+       "true": [
+        9,
+        10
+       ],
+       "believed": [
+        6,
+        11
+       ],
+       "entropy_bits": 2.8212057082836663,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 38,
+       "true": [
+        9,
+        11
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 2.489926264905634,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        8,
+        11
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 2.1056192479632965,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 40,
+       "true": [
+        7,
+        11
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 1.5873493665308913,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 41,
+       "true": [
+        6,
+        11
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 1.353805545752606,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        6,
+        10
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 1.4794634122904824,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 43,
+       "true": [
+        6,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 1.5098170748311752,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 44,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 1.3075533176116425,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 45,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.33836594860931885,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        6,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.3363597407957437,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 47,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.43061906702916564,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.31077537222049867,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 49,
+       "true": [
+        4,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.4007498793338621,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 50,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.4960568428330477,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.7251237613755499,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 52,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.1876049073585688,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.2688542138792453,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        4,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.3724214155691651,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        5,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.43923502494088407,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 56,
+       "true": [
+        6,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.5103536014369765,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 57,
+       "true": [
+        6,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.3240889602886011,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        6,
+        10
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.4202058995809795,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 59,
+       "true": [
+        6,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.44251941912966697,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 60,
+       "true": [
+        7,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.523385020848046,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 1,
+     "success": true,
+     "steps": 27,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.1575300048720252,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.1589770531952484,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.6878902101658677,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        1
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.802556146602492,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        1
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.683295449115426,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        4,
+        1
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.55431705825386,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 1.2662624726152294,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 1.0808122846316253,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 1.0509418650812699,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        4,
+        5
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.1799215464515473,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.286773080691554,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 13,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.2442353912467763,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.3604584215407125,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 15,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.1547660896001184,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.2978612383647259,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 17,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.1594712136449141,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 18,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.9968813911971632,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 2.096869440551659,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.819984602335319,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 1.6680309547404142,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        1,
+        8
+       ],
+       "believed": [
+        3,
+        8
+       ],
+       "entropy_bits": 1.884990483068927,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        1,
+        7
+       ],
+       "believed": [
+        3,
+        7
+       ],
+       "entropy_bits": 2.2710620257564655,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 24,
+       "true": [
+        1,
+        7
+       ],
+       "believed": [
+        1,
+        8
+       ],
+       "entropy_bits": 1.7763904205512238,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        1,
+        6
+       ],
+       "believed": [
+        1,
+        7
+       ],
+       "entropy_bits": 1.7882470369570675,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        2,
+        6
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 1.693217160278955,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        2,
+        7
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 2.1800013630704287,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 2,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": [
+        1,
+        1
+       ],
+       "entropy_bits": 0.0,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        2
+       ],
+       "entropy_bits": 0.724238811642856,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        3
+       ],
+       "entropy_bits": 1.1575300048720252,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        2
+       ],
+       "believed": [
+        1,
+        4
+       ],
+       "entropy_bits": 1.1589770531952484,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        2,
+        2
+       ],
+       "believed": [
+        2,
+        4
+       ],
+       "entropy_bits": 1.6878902101658677,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        1
+       ],
+       "believed": [
+        3,
+        4
+       ],
+       "entropy_bits": 1.802556146602492,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        1
+       ],
+       "believed": [
+        4,
+        4
+       ],
+       "entropy_bits": 1.683295449115426,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        4,
+        1
+       ],
+       "believed": [
+        5,
+        4
+       ],
+       "entropy_bits": 1.55431705825386,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        4,
+        2
+       ],
+       "believed": [
+        5,
+        5
+       ],
+       "entropy_bits": 1.2662624726152294,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        4,
+        3
+       ],
+       "believed": [
+        5,
+        6
+       ],
+       "entropy_bits": 1.0808122846316253,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        4,
+        4
+       ],
+       "believed": [
+        5,
+        7
+       ],
+       "entropy_bits": 1.0509418650812699,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        4,
+        5
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.1799215464515473,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.286773080691554,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 13,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.2442353912467763,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 14,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.809940332015031,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 15,
+       "true": [
+        4,
+        6
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.4334611791915153,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.4516874114377591,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        4,
+        7
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 1.304423980804941,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        4,
+        8
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 1.3555206914052385,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.2068644583834243,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 20,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        5,
+        8
+       ],
+       "entropy_bits": 2.1652296704516916,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        5,
+        9
+       ],
+       "entropy_bits": 2.143444223153959,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.8277839056757936,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 23,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        4,
+        9
+       ],
+       "entropy_bits": 1.1897660341512155,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        2,
+        10
+       ],
+       "believed": [
+        3,
+        9
+       ],
+       "entropy_bits": 1.0668313564530472,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        1,
+        10
+       ],
+       "believed": [
+        2,
+        9
+       ],
+       "entropy_bits": 1.0324768549802776,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        2,
+        8
+       ],
+       "entropy_bits": 1.27965651824928,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        1,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 1.420863028775341,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 28,
+       "true": [
+        1,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.7254088774072607,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 29,
+       "true": [
+        1,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.32295727561058385,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 30,
+       "true": [
+        1,
+        7
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.2948501768820266,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        1,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.45922220809038383,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 32,
+       "true": [
+        1,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.289323708415527,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 33,
+       "true": [
+        1,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.18804653836760252,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 34,
+       "true": [
+        1,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.28801071401298417,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 35,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.18693173310953778,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 36,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.10424746922743568,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 37,
+       "true": [
+        2,
+        10
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.14637160890951909,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 38,
+       "true": [
+        3,
+        10
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.10840931391212236,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.12599417826198556,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 40,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.1762073678036719,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 41,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.08318076609949891,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 42,
+       "true": [
+        3,
+        8
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.08319960620587598,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 43,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.13394871817703066,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 44,
+       "true": [
+        3,
+        10
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.20728918927060253,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 45,
+       "true": [
+        3,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.2989454923911353,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        2,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.27446510579357386,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 47,
+       "true": [
+        1,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.2829198080733516,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        1,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.1818445634903333,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        1,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.1276839928504096,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 50,
+       "true": [
+        2,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.18062496275985063,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        2,
+        10
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.2591450041357503,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.3775103627754705,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 53,
+       "true": [
+        2,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.14975216484649637,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        3,
+        9
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.15735684110783327,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        3,
+        10
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.22224918615196787,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 56,
+       "true": [
+        4,
+        10
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.23670232916883588,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 57,
+       "true": [
+        4,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.3316471411110174,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 58,
+       "true": [
+        4,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.14282017810081366,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 59,
+       "true": [
+        4,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.07430315577160922,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 60,
+       "true": [
+        4,
+        11
+       ],
+       "believed": [
+        2,
+        7
+       ],
+       "entropy_bits": 0.08045741456251623,
+       "action": null,
+       "bump": null
+      }
+     ]
+    }
+   ],
+   "random-A": [
+    {
+     "episode": 0,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 10,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        3,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 17,
+       "true": [
+        3,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 18,
+       "true": [
+        3,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        3,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 21,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 22,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 26,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 28,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 29,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 30,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 33,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 34,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 35,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 36,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 37,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 38,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 40,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 41,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 43,
+       "true": [
+        3,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 44,
+       "true": [
+        3,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 45,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 47,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 48,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 50,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 51,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 56,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 57,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 58,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 59,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 60,
+       "true": [
+        5,
+        5
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 1,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        2,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 8,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        2,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 10,
+       "true": [
+        2,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 13,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 16,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 18,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 20,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 21,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 22,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 24,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 25,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 28,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 29,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 30,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 33,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 34,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 35,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 36,
+       "true": [
+        5,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 37,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 38,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        5,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 40,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 41,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        5,
+        5
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 43,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 44,
+       "true": [
+        5,
+        5
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 45,
+       "true": [
+        5,
+        5
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 47,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 49,
+       "true": [
+        5,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 50,
+       "true": [
+        5,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 51,
+       "true": [
+        5,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        5,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 53,
+       "true": [
+        5,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 54,
+       "true": [
+        5,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 55,
+       "true": [
+        5,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 56,
+       "true": [
+        5,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 57,
+       "true": [
+        5,
+        5
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 58,
+       "true": [
+        5,
+        6
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 59,
+       "true": [
+        5,
+        5
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 60,
+       "true": [
+        5,
+        5
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": null,
+       "bump": null
+      }
+     ]
+    },
+    {
+     "episode": 2,
+     "success": false,
+     "steps": 60,
+     "path": [
+      {
+       "t": 0,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 1,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 2,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 3,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 4,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 5,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 6,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 7,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 8,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 9,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 10,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 11,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 12,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 13,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 14,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 15,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 16,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 17,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 18,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 19,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 20,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 21,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 22,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 23,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 24,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 25,
+       "true": [
+        3,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 26,
+       "true": [
+        3,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 27,
+       "true": [
+        2,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": true
+      },
+      {
+       "t": 28,
+       "true": [
+        2,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 29,
+       "true": [
+        2,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 30,
+       "true": [
+        2,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 31,
+       "true": [
+        1,
+        1
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 32,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 33,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 34,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 35,
+       "true": [
+        1,
+        2
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 36,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 37,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 38,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 39,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 40,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 41,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 42,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": false
+      },
+      {
+       "t": 43,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 44,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 45,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 46,
+       "true": [
+        2,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 47,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 48,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": true
+      },
+      {
+       "t": 49,
+       "true": [
+        1,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 50,
+       "true": [
+        1,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 51,
+       "true": [
+        2,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 52,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 53,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 54,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": false
+      },
+      {
+       "t": 55,
+       "true": [
+        4,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 0,
+       "bump": false
+      },
+      {
+       "t": 56,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 57,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 1,
+       "bump": true
+      },
+      {
+       "t": 58,
+       "true": [
+        3,
+        4
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 3,
+       "bump": false
+      },
+      {
+       "t": 59,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": 2,
+       "bump": true
+      },
+      {
+       "t": 60,
+       "true": [
+        3,
+        3
+       ],
+       "believed": null,
+       "entropy_bits": null,
+       "action": null,
+       "bump": null
+      }
+     ]
+    }
+   ]
+  },
+  "trajectory_legend": {
+   "true": "actual [row, col] before the action at t",
+   "believed": "argmax of the belief, [row, col]; null for random-A",
+   "entropy_bits": "belief Shannon entropy in bits; null for random-A",
+   "action": "0=up 1=right 2=down 3=left; null on the terminal row",
+   "bump": "touch signal felt after the action; null on terminal row"
+  },
+  "predictions": [
+   "blind-A close to sighted-A; touch closes most of the slip gap",
+   "blind-B at or near the random-A chance floor",
+   "DynaQ reaches 90% success in fewer env steps than Q-learning"
+  ]
+ },
+ "wall_clock_s": 0.9757809638977051
+}
