@@ -50,7 +50,7 @@ def fig1():
            [max(0, s["success_ci"][1] - s["success_iqm"]) for s in summ]]
     cols = [C["green"] if "touch" in n else C["blue"] if "blind" in n else C["gold"] if "sighted" in n else C["red"] for n in names2]
     b.bar(range(len(vals)), vals, yerr=err, color=cols, width=.7, capsize=2, error_kw={"lw": .7})
-    b.set_xticks(range(len(vals)), [n.replace("-", "\n") for n in names2], fontsize=6.2)
+    b.set_xticks(range(len(vals)), names2, fontsize=5.6, rotation=35, ha="right")
     b.set(ylabel="success rate", title="(b) The blindfold test")
     fig.tight_layout(); fig.savefig(FIGS / "fig1_blindfold.pdf"); plt.close(fig)
 
