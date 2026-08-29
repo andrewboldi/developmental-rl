@@ -1,16 +1,21 @@
+import itertools
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
+from scipy.stats import ttest_ind
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from devrl.agents.linearq import LinearQ
 from devrl.envs.piano import PianoPiece
-from experiments.exp3_variation import (aggregate, greedy_score, holm,
-                                        make_schedule, run_seed)
+from experiments.exp3_variation import (BLOCK_ORDERS, CONDITIONS,
+                                        CONTROL_CONDITIONS, MAIN_CONDITIONS,
+                                        _seed_job, aggregate, claim_verdict,
+                                        greedy_score, holm, make_schedule,
+                                        mechanism_verdict, run_seed, welch)
 
 
 # ---------------------------------------------------------------- LinearQ
@@ -90,12 +95,22 @@ def test_learns_contextual_bandit():
 
 # ---------------------------------------------------------------- schedules
 
+def test_block_orders_are_the_six_permutations():
+    assert BLOCK_ORDERS == tuple(itertools.permutations(range(3)))
+
+
 def test_blocked_schedule_is_three_contiguous_phases():
     s = make_schedule("blocked", 90, np.random.default_rng(0))
     assert len(s) == 90
     assert list(s[:30]) == [0] * 30
     assert list(s[30:60]) == [1] * 30
     assert list(s[60:]) == [2] * 30
+
+
+def test_blocked_schedule_respects_order():
+    # v2 counterbalancing: the block order is a parameter
+    s = make_schedule("blocked", 9, np.random.default_rng(0), order=(2, 0, 1))
+    assert list(s) == [2, 2, 2, 0, 0, 0, 1, 1, 1]
 
 
 def test_blocked_schedule_requires_divisible_budget():
@@ -131,14 +146,50 @@ def test_greedy_score_untrained_agent_sits_at_chance():
     assert abs(np.mean(scores) - 1 / 8) < 0.04  # all-tie greedy = uniform
 
 
+def test_local_features_keep_novel_passage_q_at_zero():
+    # The mechanism-control guarantee: with pair-onehot features, training on
+    # passages 0-2 provably never touches any novel-passage weight, so
+    # nomotif transfer sits at exact chance (greedy over all-zero Q).
+    ss = np.random.SeedSequence(3)
+    env = PianoPiece(rng=np.random.default_rng(ss), feature_map="local")
+    ag = LinearQ(env.n_features, env.n_actions, lr=0.4, gamma=0.9, eps=0.1,
+                 rng=np.random.default_rng(0))
+    for ep in range(30):
+        s = env.reset(ep % 3)
+        done = False
+        while not done:
+            phi = env.features(*s)
+            a = ag.act(phi)
+            s2, r, done, _ = env.step(a)
+            ag.update(phi, a, r, None if done else env.features(*s2), done)
+            s = s2
+    assert np.abs(ag.W).sum() > 0.0  # training did learn something
+    for i in range(env.passage_len):
+        assert np.all(ag.q(env.features(3, i)) == 0.0)
+
+
 # ---------------------------------------------------------------- run_seed
+
+def test_run_seed_has_all_four_conditions():
+    r = run_seed(0, episodes=6, eval_every=3)
+    assert set(CONDITIONS) <= set(r)
+    assert MAIN_CONDITIONS == ("blocked", "interleaved")
+    assert CONTROL_CONDITIONS == ("blocked-nomotif", "interleaved-nomotif")
+
+
+def test_block_order_counterbalanced_by_seed_mod_six():
+    for seed in (0, 1, 4, 5, 6, 103):
+        r = run_seed(seed, episodes=6, eval_every=3)
+        assert r["block_order"] == list(BLOCK_ORDERS[seed % 6])
+
 
 def test_budgets_match_exactly_and_eval_is_free():
     res = run_seed(0, episodes=30, eval_every=10)
-    b, i = res["blocked"], res["interleaved"]
+    steps = {res[c]["train_steps"] for c in CONDITIONS}
     # eval rollouts happened at every checkpoint but consumed zero budget
-    assert b["train_steps"] == i["train_steps"] == 30 * 12
-    assert b["checkpoint_episodes"] == i["checkpoint_episodes"] == [0, 10, 20, 30]
+    assert steps == {30 * 12}
+    for c in CONDITIONS:
+        assert res[c]["checkpoint_episodes"] == [0, 10, 20, 30]
 
 
 def test_run_seed_is_deterministic():
@@ -147,17 +198,24 @@ def test_run_seed_is_deterministic():
     assert a == b  # pure-python payload, bitwise reproducible
 
 
+def test_seed_job_applies_offset():
+    # --seed-offset support: pool index i runs true seed i + offset
+    assert _seed_job(3, offset=100, episodes=6, eval_every=3) == \
+        run_seed(103, episodes=6, eval_every=3)
+
+
 def test_run_seed_metric_shapes_and_ranges():
     r = run_seed(0, episodes=30, eval_every=10)
     assert set(r["structure"]) >= {"motif_table", "passages", "exceptions",
                                    "correct_keys"}
-    for cond in ("blocked", "interleaved"):
+    assert sorted(r["block_order"]) == [0, 1, 2]
+    for cond in CONDITIONS:
         c = r[cond]
         assert len(c["acquisition_curve"]) == 4
         assert len(c["eval_scores"]) == 4
         assert all(len(row) == 4 for row in c["eval_scores"])
         assert all(0.0 <= v <= 1.0 for row in c["eval_scores"] for v in row)
-        assert set(c["retention"]) == {"A", "B", "C", "mean"}
+        assert set(c["retention"]) == {"A", "B", "C", "mean", "last", "earlier"}
         assert 0.0 <= c["transfer"] <= 1.0
         assert len(c["practice_curve"]) == 3
         assert set(c["final_rollouts"]) == {"A", "B", "C", "novel"}
@@ -166,11 +224,13 @@ def test_run_seed_metric_shapes_and_ranges():
 
 def test_acquisition_tracks_currently_practiced_passage():
     r = run_seed(1, episodes=30, eval_every=10)
-    b = r["blocked"]  # phases: A = ep 0-9, B = 10-19, C = 20-29
+    order = r["block_order"]
+    assert order == list(BLOCK_ORDERS[1])  # (0, 2, 1) — a non-identity order
+    b = r["blocked"]  # phases follow the counterbalanced order
     ev = b["eval_scores"]
-    assert b["acquisition_curve"][1] == ev[1][0]  # after A phase -> score on A
-    assert b["acquisition_curve"][2] == ev[2][1]  # after B phase -> score on B
-    assert b["acquisition_curve"][3] == ev[3][2]  # after C phase -> score on C
+    assert b["acquisition_curve"][1] == ev[1][order[0]]
+    assert b["acquisition_curve"][2] == ev[2][order[1]]
+    assert b["acquisition_curve"][3] == ev[3][order[2]]
     i = r["interleaved"]  # practices all three at once
     assert i["acquisition_curve"][2] == pytest.approx(
         np.mean(i["eval_scores"][2][:3]))
@@ -178,13 +238,25 @@ def test_acquisition_tracks_currently_practiced_passage():
 
 def test_retention_and_transfer_come_from_final_checkpoint():
     r = run_seed(2, episodes=30, eval_every=10)
-    for cond in ("blocked", "interleaved"):
+    for cond in CONDITIONS:
         c = r[cond]
         last = c["eval_scores"][-1]
         assert c["retention"]["A"] == last[0]
         assert c["retention"]["C"] == last[2]
         assert c["retention"]["mean"] == pytest.approx(np.mean(last[:3]))
         assert c["transfer"] == last[3]
+
+
+def test_retention_last_and_earlier_are_order_relative():
+    r = run_seed(4, episodes=30, eval_every=10)  # order (2, 0, 1)
+    o = r["block_order"]
+    assert o == [2, 0, 1]
+    for cond in CONDITIONS:  # same per-seed order aligns all conditions
+        c = r[cond]
+        final = c["eval_scores"][-1]
+        assert c["retention"]["last"] == final[o[2]]
+        assert c["retention"]["earlier"] == pytest.approx(
+            np.mean([final[o[0]], final[o[1]]]))
 
 
 # ---------------------------------------------------------------- stats/output
@@ -194,6 +266,64 @@ def test_holm_adjustment_hand_computed():
     assert holm([0.9, 0.8]) == pytest.approx([1.0, 1.0])  # capped at 1
 
 
+def test_welch_matches_scipy_and_handles_degenerate_groups():
+    a, b = [1.0, 2.0, 3.0, 4.0], [2.0, 3.0, 4.0, 6.0]
+    got = welch(a, b)
+    ref = ttest_ind(a, b, equal_var=False)
+    assert got["t"] == pytest.approx(float(ref.statistic))
+    assert got["p"] == pytest.approx(float(ref.pvalue))
+    # both groups constant and equal (e.g. saturated retention): no evidence
+    same = welch([1.0, 1.0, 1.0], [1.0, 1.0, 1.0])
+    assert same["p"] == 1.0 and np.isfinite(same["t"])
+    # both constant but different: maximal evidence, still JSON-finite
+    diff = welch([1.0, 1.0, 1.0], [0.5, 0.5, 0.5])
+    assert diff["p"] == 0.0 and np.isfinite(diff["t"])
+
+
+def _fake_test(direction_ok, sig_mw, sig_welch):
+    return {"direction_ok": direction_ok, "significant_mw": sig_mw,
+            "significant_welch": sig_welch}
+
+
+def test_claim_verdict_registered_rules():
+    assert claim_verdict(_fake_test(True, True, True)) == "supported"
+    assert claim_verdict(_fake_test(True, False, False)) == "boundary"
+    assert claim_verdict(_fake_test(True, True, False)) == "boundary"
+    assert claim_verdict(_fake_test(True, False, True)) == "boundary"
+    assert claim_verdict(_fake_test(False, True, True)) == "refuted"
+    assert claim_verdict(_fake_test(False, False, False)) == "null"
+    assert claim_verdict(_fake_test(False, True, False)) == "null"
+
+
+def _fake_mech(p_ret, pw_ret, p_tra, pw_tra, tra_b=0.125, tra_i=0.125,
+               ret_b=1.0, ret_i=1.0):
+    return {
+        "nomotif_retention_gap": {
+            "p": p_ret, "p_welch": pw_ret,
+            "iqm": {"blocked-nomotif": ret_b, "interleaved-nomotif": ret_i}},
+        "nomotif_transfer_gap": {
+            "p": p_tra, "p_welch": pw_tra,
+            "iqm": {"blocked-nomotif": tra_b, "interleaved-nomotif": tra_i}},
+    }
+
+
+def test_mechanism_verdict_registered_rules():
+    # crossover vanishes: gaps n.s. on both tests, transfer at chance
+    assert mechanism_verdict(_fake_mech(0.8, 0.9, 0.5, 0.6)) == "supported"
+    # crossover survives without shared slots: doubly significant gap in the
+    # main-pair direction (interleaved > blocked) refutes the mechanism claim
+    assert mechanism_verdict(
+        _fake_mech(0.001, 0.002, 0.5, 0.6, ret_b=0.8, ret_i=0.95)) == "refuted"
+    assert mechanism_verdict(
+        _fake_mech(0.8, 0.9, 0.001, 0.002, tra_b=0.2, tra_i=0.4)) == "refuted"
+    # off-chance transfer, or a one-test-only / reversed gap: boundary
+    assert mechanism_verdict(
+        _fake_mech(0.8, 0.9, 0.5, 0.6, tra_b=0.4, tra_i=0.42)) == "boundary"
+    assert mechanism_verdict(_fake_mech(0.001, 0.9, 0.5, 0.6)) == "boundary"
+    assert mechanism_verdict(
+        _fake_mech(0.001, 0.002, 0.5, 0.6, ret_b=0.95, ret_i=0.8)) == "boundary"
+
+
 def test_output_contract_keys_and_json_clean():
     results = [run_seed(s, episodes=12, eval_every=6) for s in range(2)]
     out = aggregate(results, {"n_boot": 200})
@@ -201,26 +331,58 @@ def test_output_contract_keys_and_json_clean():
                 "conclusion", "viz"):
         assert key in out
     assert out["experiment"] == "exp3_variation"
-    assert set(out["conditions"]) == {"blocked", "interleaved"}
+    assert set(out["conditions"]) == set(CONDITIONS)
     assert len(out["conditions"]["blocked"]["seeds"]) == 2
     s0 = out["conditions"]["interleaved"]["seeds"][0]
-    for key in ("seed", "retention", "transfer", "acquisition_mean",
-                "acquisition_curve", "eval_scores", "train_steps",
-                "final_rollouts"):
+    for key in ("seed", "block_order", "retention", "transfer",
+                "acquisition_mean", "acquisition_curve", "eval_scores",
+                "train_steps", "final_rollouts"):
         assert key in s0
-    # three Holm-corrected primary comparisons
+    # three Holm-corrected primaries, each with BOTH MW and Welch p-values
     prim = [t for t in out["tests"].values() if t["family"] == "primary"]
     assert len(prim) == 3
-    assert all("p_holm" in t and "significant" in t for t in prim)
-    assert isinstance(out["conclusion"]["supported"], bool)
-    assert isinstance(out["conclusion"]["summary"], str)
-    # curves ride the shared checkpoint grid
+    for t in prim:
+        for key in ("u", "p", "t", "p_welch", "p_holm", "p_holm_welch",
+                    "significant_mw", "significant_welch", "significant"):
+            assert key in t
+        assert t["significant"] == (t["significant_mw"]
+                                    and t["significant_welch"])
+    # order-relative secondaries replace the per-passage ones; blocked is the
+    # DESIGN-predicted winner on the just-drilled passage (recency)
+    sec = {k: t for k, t in out["tests"].items() if t["family"] == "secondary"}
+    assert set(sec) == {"retention_last_blocked_gt_interleaved",
+                        "retention_earlier_interleaved_gt_blocked"}
+    assert sec["retention_last_blocked_gt_interleaved"][
+        "predicted_winner"] == "blocked"
+    assert "recency" in sec["retention_last_blocked_gt_interleaved"]["note"]
+    for t in sec.values():
+        assert "p" in t and "p_welch" in t
+    # mechanism-control family: nomotif pair comparisons, prediction = no gap
+    mech = {k: t for k, t in out["tests"].items() if t["family"] == "mechanism"}
+    assert set(mech) == {"nomotif_acquisition_gap", "nomotif_retention_gap",
+                         "nomotif_transfer_gap"}
+    for t in mech.values():
+        assert set(t["iqm"]) == set(CONTROL_CONDITIONS)
+        assert "p" in t and "p_welch" in t and "prediction" in t
+    # per-claim verdicts replace the boolean conclusion
+    con = out["conclusion"]
+    assert "supported" not in con
+    assert isinstance(con["summary"], str)
+    claims = con["claims"]
+    assert [c["name"] for c in claims] == ["acquisition", "retention",
+                                           "transfer", "mechanism"]
+    for c in claims:
+        assert c["verdict"] in {"supported", "refuted", "null", "boundary"}
+        assert isinstance(c["claim"], str) and isinstance(c["evidence"], str)
+    # curves ride the shared checkpoint grid, now including order-relative
+    # retention metrics and the nomotif control conditions
     ck = results[0]["blocked"]["checkpoint_episodes"]
     assert out["curves"]["episodes"] == ck
     assert out["curves"]["steps"] == [e * 12 for e in ck]
     for metric in ("acquisition", "retention_A", "retention_B", "retention_C",
-                   "retention_mean", "transfer"):
-        for cond in ("blocked", "interleaved"):
+                   "retention_mean", "retention_last", "retention_earlier",
+                   "transfer"):
+        for cond in CONDITIONS:
             series = out["curves"]["metrics"][metric][cond]
             assert len(series["iqm"]) == len(ck)
             assert len(series["lo"]) == len(series["hi"]) == len(ck)
@@ -229,8 +391,21 @@ def test_output_contract_keys_and_json_clean():
     viz = out["viz"]
     for key in ("example_structure", "retention_bars", "transfer_bars",
                 "crossover", "curves", "practice_curves", "example_rollouts",
-                "phase_boundaries_episodes", "per_seed_points"):
+                "phase_boundaries_episodes", "per_seed_points",
+                "block_orders", "order_relative_bars"):
         assert key in viz
+    assert viz["conditions"] == list(CONDITIONS)
+    assert viz["main_conditions"] == list(MAIN_CONDITIONS)
+    assert viz["control_conditions"] == list(CONTROL_CONDITIONS)
+    for cond in CONDITIONS:
+        assert cond in viz["transfer_bars"]
+        assert cond in viz["retention_bars"]
+        assert cond in viz["crossover"]
+        assert cond in viz["per_seed_points"]
+        assert cond in viz["example_rollouts"]
+        assert cond in viz["order_relative_bars"]
+    assert viz["order_relative_bars"]["labels"] == ["earlier", "last"]
+    assert len(viz["block_orders"]) == 2
     assert len(viz["example_structure"]["passages"]) == 4
     assert len(viz["example_structure"]["motif_table"]) == 6
     json.dumps(out, allow_nan=False)

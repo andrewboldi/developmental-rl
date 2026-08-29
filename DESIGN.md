@@ -394,3 +394,342 @@ The viz block gains the new conditions (`random-B` in the blindfold
 summary and example trajectories; `replayq-A` in the training curves and
 sample-efficiency block) and its predictions list is updated to the v2
 registrations above.
+
+---
+
+## Amendments (v2) — EXP3
+
+Registered changes mandated by the adversarial verification (3 lenses) of
+the v1 run, written down before the v2 confirmatory run.
+
+**A1 — Counterbalanced block order.** v1 drilled A, B, C in a fixed order
+for every seed, so blocked's retention deficit on A/B and advantage on C
+were partly an order/recency artifact by construction (flagged in
+RESEARCH.md and by all three lenses). v2 counterbalances: `seed % 6`
+selects one of the 6 permutations of (A, B, C) as the blocked phase
+order. Retention gains two order-relative metrics computed under each
+seed's own order and applied identically to every condition:
+`retention_last` (the passage drilled last) and `retention_earlier`
+(mean of the other two). The v1 fixed per-passage secondaries
+(retention_A/B/C, all labeled predicted_winner=interleaved — including
+retention_C, which mislabeled the DESIGN-anticipated recency effect as a
+failed prediction) are replaced by two order-relative secondaries:
+`retention_last_blocked_gt_interleaved` (predicted winner BLOCKED —
+just-drilled recency, the anticipated mechanism, with an explanatory
+note) and `retention_earlier_interleaved_gt_blocked` (predicted winner
+interleaved — where the overwriting cost lives). With 40 seeds, 40 = 6x6
++ 4, so four orders appear 7 times and two appear 6 times — disclosed,
+and orthogonal to the conditions since every condition of a seed shares
+the seed's order.
+
+**A2 — Mechanism-control pair (new conditions `blocked-nomotif`,
+`interleaved-nomotif`).** The logic lens confirmed a mechanism-attribution
+confound: the v1 hypothesis credited "shared motif weights", but the
+featurization has a second shared channel (the position onehot), and a
+position-only ablation reproduced the acquisition/retention crossover.
+The umbrella mechanism (shared-parameter interference) and the
+motif-specificity of transfer both survived. v2 (a) rewords the
+mechanism claim to "shared feature slots (motif and position onehots)",
+noting transfer alone isolates the motif channel, and (b) adds the
+registered mechanism control: the identical protocol run with
+`PianoPiece(feature_map="local")` — phi = onehot((passage, position)),
+one indicator per state, NO shared slots, a passage-local tabular
+equivalent. Implemented as a feature-map option on the env (the agent
+and protocol are unchanged), not as a copy of the agent. Same piece
+structure per seed (same env seed child), same schedules, same budgets
+(450 episodes x 12 steps per condition). Registered prediction: the
+retention/transfer crossover VANISHES and nomotif transfer sits at
+chance (1/8 +- 0.05), because the novel passage's local features are
+never trained. The nomotif acquisition gap is reported descriptively but
+does not gate the verdict (blocked's concentration advantage on
+currently-practiced material need not require shared slots).
+Mechanism-control tests use RAW (uncorrected) p-values — deliberately
+the harder criterion for a vanishing prediction.
+
+**A3 — Both test statistics everywhere.** Every registered test reports
+the two-sided Mann-Whitney U (u, p) AND Welch's t (scipy
+`stats.ttest_ind`, `equal_var=False`; t, p_welch), with degenerate
+samples guarded (fully tied -> p=1; two distinct constants -> p=0 with t
+reported as the bare sign; both tagged `degenerate`). Holm is applied
+within the 3-test primary family to each statistic separately (`p_holm`,
+`p_holm_welch`). A primary's `significant` requires BOTH Holm-adjusted
+p-values below alpha — the conjunction is deliberately the harder
+criterion. Secondary `significant_uncorrected` likewise requires both
+raw p-values below alpha.
+
+**A4 — Per-claim verdicts replace the boolean conclusion.** The output
+contract becomes `conclusion = {claims: [{name, claim, verdict,
+evidence}], summary}` with verdict in {supported, refuted, null,
+boundary}. Registered decision rules for the three directional primaries
+(acquisition: blocked > interleaved; retention_mean and transfer:
+interleaved > blocked): direction as predicted AND significant (per A3
+conjunction) -> supported; direction as predicted but not significant ->
+BOUNDARY — registered in advance because verification showed the
+acquisition effect is real but alpha-marginal at n=40 (direction held in
+13/13 fresh 40-seed batches, pooled n=400 p=1.7e-28, yet one fresh batch
+missed alpha at p=0.0998): a directionally-consistent miss at this n is
+a power boundary, not a null; direction reversed and significant ->
+refuted; otherwise null. Mechanism claim: supported iff neither the
+nomotif retention gap nor the nomotif transfer gap is detectable by
+EITHER test (all raw p >= alpha) and nomotif transfer is at chance for
+both conditions; refuted iff a gap is doubly significant (MW and Welch)
+in the main-pair direction (interleaved > blocked); boundary otherwise.
+
+**A5 — Fresh confirmatory seeds.** A `--seed-offset` flag (default 100)
+is added; the v2 confirmatory run uses seeds 100-139 — disjoint from
+every seed ever used for tuning this experiment (0-39). (Seeds 100-139
+appeared once in the verifiers' out-of-sample replication of the v1
+protocol — where acquisition was directionally correct but missed alpha,
+the disclosed fragility A4 scores honestly — and the v2 protocol draws
+different rng streams in any case: counterbalanced orders and four
+arms.) Budgets are unchanged and matched exactly across all four arms
+(450 episodes x 12 steps = 5400 training steps per condition per seed;
+greedy evals remain budget-free and identical across conditions).
+
+**A6 — Comment correction (no behavior change).** The v1 code comment
+justified the 450-episode budget as "before saturation washes out the
+acquisition half"; verification found the acquisition gap replicates
+(and is stronger) at 600 episodes on fresh seeds. The comment now states
+the budget is a v1-comparability convention, not load-bearing.
+
+The viz block gains the two nomotif conditions (curves, practice curves,
+bars, crossover, rollouts, per-seed points), the per-seed block orders,
+and `order_relative_bars` (earlier vs last) alongside the per-passage
+retention bars.
+
+---
+
+## Amendments (v2) — EXP5
+
+Registered changes mandated by the adversarial verification (3 lenses) of
+the v1 run, written down before the v2 confirmatory run. The verification's
+invalidating finding was about CLAIM STRUCTURE, not the damage effect: v1's
+single `supported` boolean encoded "less damage AND no slower" while the
+JSON's hypothesis string was a longer conjunction whose other parts the same
+data refuted (balance-first significantly reversed, gradualism directionally
+reversed); the "no slower" conjunct rested on accepting a null that failed
+to replicate on fresh seeds (tuning seeds 0-9 overlapped confirmatory 0-19),
+and the headline pairing (grow-linear vs adult-walk) confounded morphology
+with the independently-refuted balance-first task staging.
+
+**A1 — New condition `grow-adaptive-walk`** (the missing factorial cell):
+the grow-adaptive size gate (grow s by 0.05 when the rolling 20-episode
+no-fall rate exceeds 70%) with the walking task from the start. This
+completes the growth {none, linear, adaptive} x staging {balance-first,
+walk-direct} cells needed to isolate morphology from task staging. Training
+budget exactly 120k steps, identical eval protocol, shared hyperparameters —
+all unchanged.
+
+**A2 — Primary family re-registered as the confound-free walk-direct
+pairing** (Holm within family, m=4): grow-linear-walk vs adult-walk and
+grow-adaptive-walk vs adult-walk, on damage-at-competence AND
+steps-to-competence. Both sides walk from the start, so the pairing isolates
+the morphological curriculum — v1's headline pairing (grow-linear vs
+adult-walk) differed in BOTH morphology and staging, and the verification
+showed its fresh-seed slowdown traces to the refuted balance-first factor
+riding inside grow-linear. The full v1 family (4 damage + 4 steps
+comparisons) is retained unchanged as a SECONDARY family (Holm within, m=8).
+
+**A3 — Per-claim verdicts replace the boolean.**
+`conclusion = {claims: [{key, claim, verdict, evidence}], summary}`,
+verdict in {supported, refuted, null, boundary}. Registered claims and
+decision rules (`directional_verdict`: both MW and Welch significant ->
+supported/refuted by direction; exactly one -> boundary; neither -> null;
+two-comparison claims combine per-comparison verdicts: supported+refuted ->
+boundary, any refuted -> refuted, any boundary -> boundary, all supported ->
+supported, supported+null -> boundary, all null -> null):
+
+1. `damage_at_competence` — growth (walk-direct) reaches adult competence
+   with less cumulative damage: directional_verdict on the two primary
+   damage tests, combined. Evidence must carry the censoring-sensitivity
+   checks (drop-censored and worst-case-rank MW p) and the standing-only
+   guard (lean-target time at competence).
+2. `steps_parity` — growth (walk-direct) is no slower: scored by
+   `parity_verdict`, an equivalence view that NEVER accepts a null. With
+   diff = IQM(growth) - IQM(adult) steps (censored = budget+1), its 95%
+   bootstrap CI, and a pre-registered margin of +20% of the adult IQM:
+   slowdown detected (either statistic, Holm) with CI upper bound beyond
+   the margin -> refuted; detected but bounded within the margin ->
+   boundary; no detected slowdown and CI upper bound within the margin ->
+   supported (equivalence shown); otherwise null (underpowered — reported
+   as such, not as "no effect").
+3. `gradualism` — grow-linear < grow-jump on damage (secondary family),
+   directional_verdict; the summary must state the DIRECTION of the point
+   estimate (v1's "not significant" concealed a reversal).
+4. `balance_first` — adult-balance-first < adult-walk and grow-linear <
+   grow-linear-walk on steps (secondary family), directional_verdict per
+   comparison, combined. A reversal is reported plainly as refuted.
+
+**A4 — Both test statistics everywhere.** Every comparison reports the
+two-sided Mann-Whitney U AND Welch's t (scipy `ttest_ind`,
+`equal_var=False`; degenerate guard: fully tied -> p=1, two distinct
+constants -> p=0), each Holm-adjusted within its family (`p_holm`,
+`p_welch_holm`). Verdicts use both (see A3) per Colas et al. (2019):
+Mann-Whitney miscalibrates under unequal shapes/spreads, the expected
+regime here (bimodal solved/unsolved seeds).
+
+**A5 — Physics-robustness arms** (reduced seed count, clearly labeled, NOT
+confirmatory — they probe whether the damage ordering is an artifact of two
+physics choices):
+
+- `tau3`: tau_max = 40 s^3 — muscle torque ~ L^3 (force ~ L^2 x lever arm
+  ~ L, per RESEARCH.md), replacing the v1 s^2 law whose relative authority
+  ~ 1/s^2 over-assists small bodies relative to biology (~1/s).
+- `damp2`: damping b = 1.0 s^2 — size-scaled damping. DISCLOSURE of a v1
+  deviation: the env applied a constant damping coefficient b = 1.0 at
+  every size, absent from DESIGN v1; relative damping b/(m l^2) =
+  1/(15 s^5) is ~32x stronger for s=0.5 than for the adult, an undeclared
+  stabilization aid to small bodies. The default is now documented in the
+  env docstring; damp2 shrinks the advantage to ~s^-3. (Full scale
+  invariance would need b ~ s^5 at fixed dt; s^2 is the physically motivated
+  viscous-joint law and a strict reduction of the aid.)
+
+Also disclosed from verification: falls yield a fixed -5 reward at every
+size (uniform across conditions; damage is recorded separately and is the
+metric). Now stated in the env docstring and viz.meta.reward.
+
+Each variant runs the four growth conditions (grow-linear, grow-adaptive,
+grow-linear-walk, grow-adaptive-walk) at 20 seeds, same seed offset, same
+budget/eval. The adult-walk comparator is reused from the main arm
+restricted to those seeds: both variant laws coincide with the default at
+s=1.0 and rng streams are variant-independent, so a variant rerun of an
+adult-only condition is bit-identical. Reported per variant: per-condition
+damage, MW+Welch damage tests vs adult-walk (Holm, m=4), and the damage
+ordering. No registered claim rides on these arms.
+
+**A6 — Fresh confirmatory seeds.** A `--seed-offset` flag (default 100) is
+added; the v2 confirmatory run uses seeds 100-139 (40 seeds — doubled from
+v1's 20 because the verification's non-replication concerned the
+underpowered steps conjunct) — disjoint from the v1 tuning seeds (0-9) and
+the v1 confirmatory range (0-19). Verifier probes touched 20-39 and
+100-119 read-only (no tuning decisions were derived from them); no
+hyperparameter, threshold, or schedule was changed from v1, so seed 100+
+data never informed any analysis choice. Robustness arms use the first 20
+of the same range. Budgets stay matched exactly (every condition trains
+exactly 120k env steps; eval excluded identically).
+
+**A7 — Transience and reward-hacking guards.** Eval records time-on-target
+fractions (overall, and restricted to nonzero lean targets — unearnable by
+a pure stander), reported per seed at competence and as viz curves; a
+durable-competence variant (two consecutive checkpoints >= 500,
+`steps_to_durable`) is reported descriptively per condition alongside
+first-crossing competence. Claims continue to ride on the registered
+first-crossing metric.
+
+The viz block gains the new condition everywhere, `ontarget` curves, a
+`robustness` summary (damage orderings under each variant), and meta
+disclosures for reward and damping.
+
+---
+
+## Amendments (v2) — EXP4
+
+Registered changes mandated by the adversarial verification (3 lenses) of
+the v1 run. The decision rules below were fixed in `tests/test_exp4.py`
+(TDD) before the v2 confirmatory run was executed.
+
+**Why.** (1) The v1 headline was fragile: 21/30 successes was exactly the
+minimum clearing Holm at n=30, a same-protocol disjoint-seed rerun landed
+19/30 (n.s.), and the EpisodicMemory tie-break (DESIGN-silent, empirically
+calibrated: "earliest tied episode wins") flipped significance under the
+rejected "shortest" variant. (2) RESEARCH.md (and the verifiers) flag the
+central confound: Q=5.0 advice priming is optimism, so "advice content
+helps" was confounded with "optimism at 100 entries helps" — no
+optimism-matched control existed. (3) The smoke JSON silently concluded
+the opposite of the full run. v2 addresses all three: more seeds on a
+fresh range, both tie-breaks reported, content-vs-optimism controls added,
+per-claim verdicts, and dual test statistics.
+
+**New conditions** (training budget still exactly 5 x 15k = 75k env steps
+each; env, hyperparameters, eval protocol, and the original five arms
+unchanged — the originals keep their v1 rng stream indices, verified
+bit-identical on overlapping seeds):
+
+- `generational-distill-shortest`: identical to `generational-distill`
+  except the episodic memory breaks return ties by SHORTEST episode
+  (equal lengths: earlier wins) instead of earliest. `EpisodicMemory`
+  gains a `tie_break` parameter ("earliest" remains the default and the
+  primary arm); the v1 fragility to this choice is now reported, not
+  hidden.
+- `random-advice`: optimism-matched control. Every generation (gen 1
+  included — the control always receives its full dose, which can only
+  flatter it relative to distill's advice-free gen 1), the fresh student
+  is primed Q[s, a] = 5.0 on 100 RANDOM distinct (s, a) pairs drawn from
+  its condition rng over actable non-terminal cells (walls, candy, goal
+  excluded — the agent never acts from those, so including them would
+  dilute the dose). Same pair count, same blessing value, no content.
+- `optimistic-init`: one long life (75k steps, standard halflife-5k
+  decay), Q0 = 5.0 EVERYWHERE — maximal content-free optimism in the
+  long-life format (the classic optimistic-initialization fix).
+- `constant-eps-life`: one long life, eps fixed at 0.4 forever, lr
+  decaying as usual (halflife 5k) — the rescue test for "plasticity decay
+  is what strands the long life": if undying exploration does not
+  un-strand the long life, exploration decay was not the binding
+  constraint.
+
+**Registered test families** (metric unchanged: final greedy return at
+generation 5; Holm-Bonferroni within each family, applied separately to
+each statistic). Every comparison reports BOTH two-sided Mann-Whitney U
+and Welch's t (scipy `ttest_ind`, `equal_var=False`; degenerate guards:
+fully tied -> p=1, two distinct constants -> p=0 with t=null).
+Registered significance requires BOTH Holm-adjusted p values < 0.05.
+
+Primary family (m=7): distill vs weight-copy / one-long-life /
+one-long-life-slow / no-inheritance (the four v1 comparisons), distill vs
+random-advice, distill vs optimistic-init, and constant-eps-life vs
+one-long-life. Robustness family (m=7): distill-shortest vs the same six
+baselines, and distill vs distill-shortest (tie-break sensitivity,
+reported whichever way it lands).
+
+**Per-claim conclusion** replaces `conclusion.supported`:
+`conclusion = {claims: [{claim, verdict, evidence}], summary}`, verdict in
+{supported, refuted, null, boundary}. Per-comparison verdict rule:
+supported iff both tests significant with the first arm above (IQM,
+falling back to means on IQM ties); refuted iff both significant the
+other way; boundary iff exactly one test significant; null iff neither.
+
+1. *peak-experience distillation ratchets across generations* — decided
+   on distill vs no-inheritance. Evidence must report the ratchet as
+   retention-of-peaks (goal-bearing advice hand-offs, consolidations,
+   peak-loss events) and the bimodal final distribution (failed lineages
+   end at 0.0, below the 0.3 trap floor), per the verifiers.
+2. *the bottleneck beats weight copying* — decided on distill vs
+   weight-copy.
+3. *advice content matters beyond optimism scatter* — conjunctive over
+   distill vs random-advice AND distill vs optimistic-init: any leg
+   refuted -> refuted; both supported -> supported; both null -> null;
+   otherwise boundary. This is the decisive new test: the strong reading
+   of H4 requires the advice CHANNEL to beat content-free optimism at
+   matched dose (random-advice) and at maximal dose (optimistic-init).
+4. *plasticity decay is what strands the long life* — decided on
+   constant-eps-life vs one-long-life, mapped as a rescue test:
+   comparison supported -> supported; boundary -> boundary; null OR
+   refuted -> refuted. A null rescue is registered as refutation, not
+   absence of evidence: with 60 seeds of a near-deterministic outcome,
+   undying exploration failing to lift the long life off the 0.3 floor
+   is a positive demonstration that exploration decay was not the
+   binding constraint (the lr-still-decays caveat is carried in the
+   evidence, alongside weight-copy — fresh schedules, inherited values —
+   and one-long-life-slow as the complementary plasticity probes).
+
+**Fresh confirmatory seeds, n=60.** A `--seed-offset` flag (default 100)
+shifts the whole stream family; the v2 confirmatory run uses 60 seeds =
+range 100-159 (`--seeds 60 --seed-offset 100`), disjoint from every seed
+ever used for tuning or calibrating this experiment (0-29, plus the
+tie-break calibration on prototype code at 0-9). Disclosure: verifiers
+reran the UNMODIFIED v1 code on 100-129 and 300-329 while probing; no v2
+design choice derives from those outcomes beyond the mandates listed
+here, and the v2 range is fixed by the harmonized cross-experiment
+protocol (100..100+N-1). n=60 also fixes the v1 power problem (the
+one-seed significance margin at n=30).
+
+**Reporting hygiene.** Seed numbers in the JSON carry the offset (seed
+100 is stream [100, ci]); `config.eval_protocol` states that eval is a
+single deterministic argmax rollout (a fixed-tie-break proxy for the
+agent's randomized-tie greedy policy — per-seed 0.0 finals mean the
+argmax policy loops); `curves.big_goal.stat_note` says to plot the mean
+(P(big goal)), not the IQM of a 0/1 variable; smoke runs stamp
+`config.smoke=true` and a `conclusion.note` marking them non-confirmatory
+(v1's smoke JSON silently concluded the opposite of the full run). The
+viz block gains the four new conditions everywhere (curves, final greedy
+paths, per-generation records) plus a `condition_labels` map.

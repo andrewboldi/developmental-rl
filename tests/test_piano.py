@@ -128,6 +128,39 @@ def test_shared_motif_features_are_identical_across_passages():
     assert a[m * 3] == 1.0
 
 
+def test_local_feature_map_is_pair_onehot():
+    # mechanism control (v2): phi = onehot((passage, position)) — tabular
+    env = PianoPiece(rng=np.random.default_rng(0), feature_map="local")
+    assert env.n_features == 4 * 12
+    phi = env.features(2, 7)
+    assert phi.shape == (48,) and phi.sum() == 1.0
+    assert phi[2 * 12 + 7] == 1.0
+
+
+def test_local_feature_map_shares_nothing_across_states():
+    # NO shared slots: every (passage, position) pair activates a disjoint
+    # feature — the no-interference control substrate.
+    env = PianoPiece(rng=np.random.default_rng(1), feature_map="local")
+    feats = [env.features(p, i) for p in range(4) for i in range(12)]
+    for i, a in enumerate(feats):
+        for b in feats[i + 1:]:
+            assert float(a @ b) == 0.0
+
+
+def test_local_feature_map_generates_identical_structure():
+    # same seed sequence -> same piece, whichever feature map is used
+    ss = np.random.SeedSequence(5)
+    a = PianoPiece(rng=np.random.default_rng(ss))
+    b = PianoPiece(rng=np.random.default_rng(ss), feature_map="local")
+    assert a.structure() == b.structure()
+    assert a.n_features == 34 and b.n_features == 48
+
+
+def test_unknown_feature_map_rejected():
+    with pytest.raises(ValueError):
+        PianoPiece(rng=np.random.default_rng(0), feature_map="huh")
+
+
 def test_random_play_scores_at_chance_one_eighth():
     # statistical: uniform key presses earn 1/8 per note in expectation
     env = make_env(0)

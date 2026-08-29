@@ -13,6 +13,12 @@ exception, isolating what the motif features alone have stored.
 An episode plays one passage start to finish: 12 key presses, +1 per correct
 note, errors do not end the episode. Score = fraction correct. Structure is
 generated from the constructor rng; the dynamics themselves are deterministic.
+
+Feature maps (v2): `feature_map="motif"` (default) is the shared-feature
+representation above. `feature_map="local"` is the mechanism control —
+phi = onehot((passage, position)) pair, one indicator per state, NO shared
+slots (a passage-local tabular equivalent): interference and transfer are
+both impossible by construction. The piece structure is identical either way.
 """
 
 import numpy as np
@@ -28,10 +34,18 @@ class PianoPiece:
     n_train_passages = 3
     n_passages = 4
     NOVEL = 3  # passage index of the novel transfer passage
-    # phi = onehot(motif, pos-in-motif) ++ onehot(passage) ++ onehot(position)
+    # "motif" map: onehot(motif, pos-in-motif) ++ onehot(passage) ++
+    # onehot(position); "local" map: onehot((passage, position)) pair only
     n_features = n_motifs * motif_len + n_passages + passage_len
+    FEATURE_MAPS = ("motif", "local")
 
-    def __init__(self, rng=None):
+    def __init__(self, rng=None, feature_map="motif"):
+        if feature_map not in self.FEATURE_MAPS:
+            raise ValueError(f"unknown feature_map {feature_map!r}")
+        self.feature_map = feature_map
+        self.n_features = (self.n_passages * self.passage_len
+                           if feature_map == "local"
+                           else type(self).n_features)
         rng = rng if rng is not None else np.random.default_rng()
         # 6 distinct motifs: rows of 3 keys
         while True:
@@ -75,12 +89,20 @@ class PianoPiece:
         return int(self.motif_table[m, j])
 
     def features(self, passage, position):
-        """onehot(motif, pos-in-motif) ++ onehot(passage) ++ onehot(position).
+        """Feature vector for a state; only valid for position < passage_len.
 
-        The motif block is shared across passages — that is where contextual
-        interference lives. Only valid for position < passage_len.
+        "motif" map: onehot(motif, pos-in-motif) ++ onehot(passage) ++
+        onehot(position). The motif and position blocks are shared across
+        passages — that is where contextual interference lives.
+
+        "local" map (mechanism control): onehot((passage, position)) — one
+        indicator per state, NO shared slots, so cross-passage interference
+        and transfer are impossible by construction.
         """
         phi = np.zeros(self.n_features)
+        if self.feature_map == "local":
+            phi[passage * self.passage_len + position] = 1.0
+            return phi
         m, j = self.motif_at(passage, position)
         phi[m * self.motif_len + j] = 1.0
         phi[self.n_motifs * self.motif_len + passage] = 1.0
