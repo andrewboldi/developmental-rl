@@ -13,21 +13,41 @@ mountain") without transmitting trap-shaped mediocrity or rigid habits.
 class EpisodicMemory:
     """Top-k episodes by return, with their (s, a) sequences.
 
-    Ranking is by return alone; ties keep the EARLIER episode (stable,
-    deterministic). This matters scientifically: a trapped teacher's
-    tied-return episodes are its earliest ones — long exploratory meanders —
-    so even mediocre advice transmits breadth rather than a distilled habit.
+    Ranking is by return first; `tie_break` decides among tied returns:
+
+    - "earliest" (default, the registered primary rule): ties keep the
+      EARLIER episode. A trapped teacher's tied-return episodes are its
+      earliest ones — long exploratory meanders — so even mediocre advice
+      transmits breadth rather than a distilled habit.
+    - "shortest": ties keep the SHORTEST episode (equal lengths: earlier
+      wins) — the rejected alternative the adversarial verification found
+      the v1 headline sensitive to. EXP4 v2 runs BOTH rules as separate
+      conditions so the choice is reported, not hidden.
+
+    Both rules are deterministic and stable.
     """
 
-    def __init__(self, k=3):
+    TIE_BREAKS = ("earliest", "shortest")
+
+    def __init__(self, k=3, tie_break="earliest"):
+        if tie_break not in self.TIE_BREAKS:
+            raise ValueError("unknown tie_break %r (want one of %s)"
+                             % (tie_break, ", ".join(self.TIE_BREAKS)))
         self.k = k
+        self.tie_break = tie_break
         self._eps = []  # (-return, arrival index, [(s, a), ...])
         self._n = 0
+
+    def _key(self, e):
+        negr, arrival, sa = e
+        if self.tie_break == "shortest":
+            return (negr, len(sa), arrival)
+        return (negr, arrival)
 
     def add(self, ep_return, sa_pairs):
         self._eps.append((-float(ep_return), self._n, list(sa_pairs)))
         self._n += 1
-        self._eps.sort(key=lambda e: e[:2])
+        self._eps.sort(key=self._key)
         del self._eps[self.k:]
 
     @property

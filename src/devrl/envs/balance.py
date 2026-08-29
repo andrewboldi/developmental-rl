@@ -10,6 +10,22 @@ damage* scales as (s / s_adult)^4 (impact energy ~ m g l ~ s^4) and is
 recorded separately from reward: the reward landscape is identical at every
 size; only the wear on the body differs.
 
+Damping (default, disclosed): joint damping torque is b * theta_dot with
+b = B = 1.0 CONSTANT across sizes. Because the inertia is m l^2 = 15 s^5,
+the *relative* damping b / (m l^2) = 1 / (15 s^5) is ~32x stronger for the
+s=0.5 body than for the adult — an extra stabilization aid for small bodies
+that is NOT part of the square-cube story. This was an undeclared v1 choice
+(flagged in adversarial verification); it is now documented here and probed
+by the `damp_exp` robustness variant below.
+
+Physics-robustness variants (v2): `tau_exp` sets the torque law
+tau_max = 40 s^tau_exp (2 = DESIGN default; 3 = muscle-torque ~ L^3, force
+~ L^2 x lever arm ~ L, per RESEARCH.md), and `damp_exp` sets the damping law
+b = B s^damp_exp (0 = constant default; 2 = size-scaled damping b = s^2,
+which shrinks the small-body relative-damping advantage from s^-5 to s^-3).
+All variants coincide exactly at s = 1.0, so adult-body evaluation and
+adult-only conditions are variant-independent.
+
 "Walking" = tracking a lean target in {-0.15, 0, +0.15} rad that switches
 every 40 steps (weight transfer); "balance" fixes the target at 0. Reward is
 +1 per upright step, +2 extra within 0.05 rad of the target. Episodes cap at
@@ -25,7 +41,7 @@ import numpy as np
 
 DT = 0.02
 G = 9.8
-B = 1.0  # damping coefficient
+B = 1.0  # base damping coefficient (b = B * s^damp_exp; default damp_exp=0)
 FALL_ANGLE = np.pi / 5
 CAP = 400
 TARGETS = (-0.15, 0.0, 0.15)
@@ -39,12 +55,15 @@ class BalanceBot:
     n_actions = 5
     n_states = N_THETA * N_THDOT * len(TARGETS)
 
-    def __init__(self, s=1.0, mode="walk", rng=None, noise_std_frac=0.05):
+    def __init__(self, s=1.0, mode="walk", rng=None, noise_std_frac=0.05,
+                 tau_exp=2, damp_exp=0):
         if mode not in ("walk", "balance"):
             raise ValueError(f"mode must be 'walk' or 'balance', got {mode!r}")
         self.mode = mode
         self.noise_std_frac = noise_std_frac
         self.rng = rng if rng is not None else np.random.default_rng()
+        self.tau_exp = int(tau_exp)
+        self.damp_exp = int(damp_exp)
         self.set_size(s)
         self.theta = 0.0
         self.theta_dot = 0.0
@@ -52,11 +71,13 @@ class BalanceBot:
         self.t = 0
 
     def set_size(self, s):
-        """Square-cube morphology: l = s, m = 15 s^3, tau_max = 40 s^2."""
+        """Morphology laws: l = s, m = 15 s^3, tau_max = 40 s^tau_exp,
+        b = B s^damp_exp (defaults tau_exp=2, damp_exp=0 — see module doc)."""
         self.s = float(s)
         self.l = self.s
         self.m = 15.0 * self.s ** 3
-        self.tau_max = 40.0 * self.s ** 2
+        self.tau_max = 40.0 * self.s ** self.tau_exp
+        self.b = B * self.s ** self.damp_exp
 
     def set_mode(self, mode):
         if mode not in ("walk", "balance"):
@@ -100,7 +121,7 @@ class BalanceBot:
             tau += self.rng.normal(0.0, self.noise_std_frac * self.tau_max)
         ml2 = self.m * self.l ** 2
         theta_dd = (G / self.l) * np.sin(self.theta) + tau / ml2 \
-            - B * self.theta_dot / ml2
+            - self.b * self.theta_dot / ml2
         self.theta_dot += DT * theta_dd          # semi-implicit Euler
         self.theta += DT * self.theta_dot
         self.t += 1

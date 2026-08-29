@@ -211,6 +211,14 @@ def run_seed(seed, condition, budget=BUDGET, eval_every=EVAL_EVERY, cap=CAP):
     return out
 
 
+def run_seed_at(i, offset, condition, budget=BUDGET, eval_every=EVAL_EVERY,
+                cap=CAP):
+    """Runs seed offset+i (top-level for fork pickling). Confirmatory runs use
+    offset 100 so seeds are disjoint from all tuning/dev/verification seeds."""
+    return run_seed(offset + i, condition=condition, budget=budget,
+                    eval_every=eval_every, cap=cap)
+
+
 def t90_stats(checkpoints, curves, budget, threshold=THRESHOLD):
     """Per-seed time to threshold; censored -> None, imputed at budget+1."""
     t90 = [stats.time_to_threshold(checkpoints, c, threshold) for c in curves]
@@ -230,20 +238,102 @@ def holm(pvals):
 
 
 def _mw(a, b):
-    """Mann-Whitney, tolerant of fully tied samples (p=1 by convention)."""
+    """Mann-Whitney, tolerant of fully tied samples (p=1 by convention,
+    tagged `degenerate` in the output)."""
     if np.ptp(np.concatenate([np.asarray(a, float), np.asarray(b, float)])) == 0:
-        return {"u": len(a) * len(b) / 2.0, "p": 1.0}
+        return {"u": len(a) * len(b) / 2.0, "p": 1.0, "degenerate": True}
     return stats.mann_whitney(a, b)
 
 
+def _welch(a, b):
+    """Welch's t (unequal variances), tolerant of degenerate samples.
+
+    Fully tied across both groups -> p=1 by convention (mirrors _mw). Two
+    distinct constants (zero within-group variance) -> t is undefined
+    (infinite), reported as None with p=0 by convention. Both tagged
+    `degenerate` so the JSON marks conventional rather than computed values.
+    """
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    if np.ptp(np.concatenate([a, b])) == 0:
+        return {"t": 0.0, "p": 1.0, "degenerate": True}
+    if np.ptp(a) == 0 and np.ptp(b) == 0:
+        return {"t": None, "p": 0.0, "degenerate": True}
+    t, p = ttest_ind(a, b, equal_var=False)
+    return {"t": float(t), "p": float(p)}
+
+
 def phase_blocks(condition, budget):
-    if condition == "whole":
+    if condition in ("whole", "whole-optimistic"):
         return [{"phase": "game", "start": 0, "end": budget}]
+    if condition == "explore-starts":
+        e = round(EXPLORE_FRAC * budget)
+        return [{"phase": "explore", "start": 0, "end": e},
+                {"phase": "game", "start": e, "end": budget}]
     return [{"phase": "shoot", "start": 0, "end": round(SHOOT_FRAC * budget)},
             {"phase": "dribble", "start": round(SHOOT_FRAC * budget),
              "end": round((SHOOT_FRAC + DRIBBLE_FRAC) * budget)},
             {"phase": "game", "start": round((SHOOT_FRAC + DRIBBLE_FRAC) * budget),
              "end": budget}]
+
+
+def build_claims(primary, conditions):
+    """Per-claim verdicts from the registered primary comparisons.
+
+    Decision rules registered in DESIGN.md "Amendments (v2) — EXP2": every
+    verdict rides on the Mann-Whitney Holm p at alpha 0.05 (`significant`);
+    Welch p-values appear in the evidence as robustness.
+    """
+    by = {t["comparison"]: t for t in primary}
+
+    def ev(t, extra=""):
+        a, b = t["comparison"].split(" vs ")
+        return (f"t90 IQM {a}={t['iqm'][a]:.0f} vs {b}={t['iqm'][b]:.0f} steps; "
+                f"MW p_holm={t['p_holm']:.3g}, Welch p_holm={t['welch_p_holm']:.3g}; "
+                f"censored {a} {conditions[a]['n_censored']}/{conditions[a]['n_seeds']}, "
+                f"{b} {conditions[b]['n_censored']}/{conditions[b]['n_seeds']}"
+                + (f". {extra}" if extra else "."))
+
+    c1 = by["drills-varied vs whole"]
+    if c1["significant"] and c1["faster"] == "drills-varied":
+        v1 = "supported"
+    elif c1["significant"] and c1["faster"] == "whole":
+        v1 = "refuted"
+    else:
+        v1 = "null"
+    claims = [{"claim": ("drills beat whole-game practice for epsilon-greedy "
+                         "learners: drills-varied reaches 90% full-game eval "
+                         "success in fewer total env steps than whole"),
+               "verdict": v1, "evidence": ev(c1)}]
+
+    c2 = by["drills-varied vs whole-optimistic"]
+    if c2["significant"] and c2["faster"] == "whole-optimistic":
+        v2, how = "boundary", ("The drill advantage REVERSES: optimistic "
+                               "whole-game training beats the drill curriculum.")
+    elif not c2["significant"]:
+        v2, how = "boundary", ("The drill advantage DISAPPEARS: no significant "
+                               "difference against optimistic whole-game "
+                               "training.")
+    else:
+        v2, how = "refuted", ("The drill advantage persists even against "
+                              "optimistic whole-game training.")
+    claims.append({"claim": ("the drill benefit is an exploration effect: it "
+                             "disappears or reverses when whole-game training "
+                             "starts from optimistic initialization (Q0=1.0)"),
+                   "verdict": v2, "evidence": ev(c2, how)})
+
+    c3 = by["drills-varied vs explore-starts"]
+    if c3["significant"] and c3["faster"] == "drills-varied":
+        v3 = "supported"
+    elif c3["significant"] and c3["faster"] == "explore-starts":
+        v3 = "refuted"
+    else:
+        v3 = "null"
+    claims.append({"claim": ("drill structure adds benefit beyond mere "
+                             "start-state diversity: drills-varied faster than "
+                             "uniform exploring starts over the same 40% of "
+                             "budget"),
+                   "verdict": v3, "evidence": ev(c3)})
+    return claims
 
 
 def assemble(results, budget, n_boot=10_000, meta=None):
@@ -284,31 +374,55 @@ def assemble(results, budget, n_boot=10_000, meta=None):
         viz_seed[cond] = runs[mid]["seed"]
         viz_trajs[cond] = runs[mid]["trajs"]
 
-    pairs = [("drills-varied", "whole"), ("drills-fixed", "whole"),
-             ("drills-varied", "drills-fixed")]
-    raw = [_mw(imputed[a], imputed[b]) for a, b in pairs]
+    raw = [_mw(imputed[a], imputed[b]) for a, b in PRIMARY_PAIRS]
+    welch = [_welch(imputed[a], imputed[b]) for a, b in PRIMARY_PAIRS]
     adj = holm([r["p"] for r in raw])
+    wadj = holm([w["p"] for w in welch])
     primary = []
-    for (a, b), r, ph in zip(pairs, raw, adj):
+    for (a, b), r, ph, w, wph in zip(PRIMARY_PAIRS, raw, adj, welch, wadj):
         ia, ib = stats.iqm(imputed[a]), stats.iqm(imputed[b])
-        primary.append({"comparison": f"{a} vs {b}",
-                        "metric": "time_to_90 (steps; censored -> budget+1)",
-                        "u": r["u"], "p": r["p"], "p_holm": float(ph),
-                        "iqm": {a: ia, b: ib},
-                        "faster": a if ia < ib else (b if ib < ia else "tie"),
-                        "significant": bool(ph < 0.05)})
+        entry = {"comparison": f"{a} vs {b}",
+                 "metric": "time_to_90 (steps; censored -> budget+1)",
+                 "u": r["u"], "p": r["p"], "p_holm": float(ph),
+                 "welch_t": w["t"], "welch_p": w["p"],
+                 "welch_p_holm": float(wph),
+                 "iqm": {a: ia, b: ib},
+                 "faster": a if ia < ib else (b if ib < ia else "tie"),
+                 "significant": bool(ph < 0.05),
+                 "welch_significant": bool(wph < 0.05)}
+        if r.get("degenerate") or w.get("degenerate"):
+            entry["degenerate"] = {"mw": bool(r.get("degenerate", False)),
+                                   "welch": bool(w.get("degenerate", False))}
+        primary.append(entry)
     secondary = [{"comparison": f"{a} vs {b}", "metric": "final_success",
                   **_mw(conditions[a]["final_success"], conditions[b]["final_success"])}
-                 for a, b in pairs]
+                 for a, b in PRIMARY_PAIRS]
+    context = []
+    for a, b in CONTEXT_PAIRS:   # descriptive, no claim rides on them (no Holm)
+        mw, w = _mw(imputed[a], imputed[b]), _welch(imputed[a], imputed[b])
+        entry = {"comparison": f"{a} vs {b}",
+                 "metric": "time_to_90 (steps; censored -> budget+1)",
+                 "u": mw["u"], "p": mw["p"],
+                 "welch_t": w["t"], "welch_p": w["p"],
+                 "iqm": {a: stats.iqm(imputed[a]), b: stats.iqm(imputed[b])}}
+        if mw.get("degenerate") or w.get("degenerate"):
+            entry["degenerate"] = {"mw": bool(mw.get("degenerate", False)),
+                                   "welch": bool(w.get("degenerate", False))}
+        context.append(entry)
 
+    claims = build_claims(primary, conditions)
     head = primary[0]
-    supported = bool(head["significant"] and head["faster"] == "drills-varied")
     summary = ("Time to 90% eval success (IQM steps): "
                + ", ".join(f"{c}={conditions[c]['time_to_90_iqm']:.0f}"
                            for c in CONDITIONS)
-               + f". drills-varied vs whole: Holm p={head['p_holm']:.3g} — "
-               + ("supports" if supported else "does not support") + " H2. "
-               + "Censored: "
+               + f". drills-varied vs whole: MW Holm p={head['p_holm']:.3g}, "
+               + f"Welch Holm p={head['welch_p_holm']:.3g}. Verdicts: "
+               + "; ".join(f"claim {i} ({label}) — {c['verdict']}"
+                           for i, (label, c) in enumerate(
+                               zip(("drills beat whole",
+                                    "exploration boundary under optimistic init",
+                                    "structure vs start diversity"), claims), 1))
+               + ". Censored: "
                + ", ".join(f"{c} {conditions[c]['n_censored']}/{conditions[c]['n_seeds']}"
                            for c in CONDITIONS) + ".")
 
@@ -327,6 +441,7 @@ def assemble(results, budget, n_boot=10_000, meta=None):
                              for r in range(geom.H)]},
         "action_names": ["up", "right", "down", "left", "shoot"],
         "phases": {c: phase_blocks(c, budget) for c in CONDITIONS},
+        "q0": {c: q0_for(c) for c in CONDITIONS},
         "trajectories": viz_trajs,
         "viz_seed": viz_seed,
         "eval_curves": {"checkpoints": ckpts, "threshold": THRESHOLD,
@@ -338,10 +453,14 @@ def assemble(results, budget, n_boot=10_000, meta=None):
             "conditions": conditions,
             "curves": {"checkpoints": ckpts, "conditions": curve_block},
             "tests": {"alpha": 0.05,
-                      "correction": "holm-bonferroni over the primary family",
+                      "correction": ("holm-bonferroni over the 5-comparison "
+                                     "primary family (MW and Welch families "
+                                     "adjusted separately; registered "
+                                     "decisions ride on the MW Holm p)"),
                       "primary": primary,
-                      "secondary_final_success": secondary},
-            "conclusion": {"supported": supported, "summary": summary},
+                      "secondary_final_success": secondary,
+                      "secondary_t90_context": context},
+            "conclusion": {"claims": claims, "summary": summary},
             "viz": viz}
 
 
@@ -352,19 +471,26 @@ def main():
     ap.add_argument("--smoke", action="store_true",
                     help="2 seeds, 10x reduced budget")
     ap.add_argument("--jobs", type=int, default=20)
+    ap.add_argument("--seed-offset", type=int, default=100,
+                    help="first seed; confirmatory runs use 100..(100+N-1), "
+                         "disjoint from all tuning/dev/verification seeds")
     args = ap.parse_args()
     n_seeds, budget, eval_every = ((2, BUDGET // 10, EVAL_EVERY // 10)
                                    if args.smoke else (args.seeds, BUDGET, EVAL_EVERY))
     t0 = time.time()
     results = {}
     for cond in CONDITIONS:
-        fn = functools.partial(run_seed, condition=cond, budget=budget,
+        fn = functools.partial(run_seed_at, offset=args.seed_offset,
+                               condition=cond, budget=budget,
                                eval_every=eval_every, cap=CAP)
         results[cond] = run_seeds(fn, n_seeds, n_jobs=args.jobs)
         print(f"{cond}: {n_seeds} seeds done at {time.time() - t0:.1f}s", flush=True)
-    meta = {"seeds": n_seeds, "budget": budget, "eval_every": eval_every,
+    meta = {"seeds": n_seeds, "seed_offset": args.seed_offset,
+            "seed_list": list(range(args.seed_offset, args.seed_offset + n_seeds)),
+            "budget": budget, "eval_every": eval_every,
             "cap": CAP, "n_eval_episodes": N_EVAL_EPISODES, "threshold": THRESHOLD,
             "lr": LR, "gamma": GAMMA, "eps": EPS,
+            "optimistic_q0": OPTIMISTIC_Q0, "explore_frac": EXPLORE_FRAC,
             "smoke": args.smoke, "jobs": args.jobs}
     out = assemble(results, budget, meta=meta)
     out["meta"]["wall_clock_s"] = round(time.time() - t0, 2)

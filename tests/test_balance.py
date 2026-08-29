@@ -288,3 +288,71 @@ def test_state_reflects_current_target_index():
 def test_bad_mode_raises():
     with pytest.raises(ValueError):
         BalanceBot(mode="fly")
+
+
+# ------------------------------------------------- physics-robustness variants
+
+def test_default_damping_coefficient_constant_across_sizes():
+    # documented default: b = 1.0 regardless of s (relative damping 1/(15 s^5))
+    env = make()
+    for s in (0.5, 0.75, 1.0):
+        env.set_size(s)
+        assert env.b == pytest.approx(1.0)
+
+
+def test_tau_exp3_variant_scales_torque_cubically():
+    env = BalanceBot(s=1.0, mode="balance", rng=np.random.default_rng(0),
+                     noise_std_frac=0.0, tau_exp=3)
+    for s in (0.5, 0.75, 1.0):
+        env.set_size(s)
+        assert env.tau_max == pytest.approx(40 * s ** 3)
+        assert env.m == pytest.approx(15 * s ** 3)   # mass law unchanged
+        assert env.b == pytest.approx(1.0)           # damping law unchanged
+
+
+def test_damp_exp2_variant_scales_damping_quadratically():
+    env = BalanceBot(s=1.0, mode="balance", rng=np.random.default_rng(0),
+                     noise_std_frac=0.0, damp_exp=2)
+    for s in (0.5, 0.75, 1.0):
+        env.set_size(s)
+        assert env.b == pytest.approx(s ** 2)
+        assert env.tau_max == pytest.approx(40 * s ** 2)  # torque law unchanged
+
+
+def test_variants_identical_at_adult_size():
+    # at s=1.0 all variants coincide: tau_max=40, b=1.0 — adult physics is
+    # unchanged, so eval on the adult body is variant-independent.
+    def rollout(tau_exp, damp_exp):
+        env = BalanceBot(s=1.0, mode="walk", rng=np.random.default_rng(42),
+                         noise_std_frac=0.05, tau_exp=tau_exp,
+                         damp_exp=damp_exp)
+        env.reset()
+        out = []
+        for t in range(100):
+            _, r, done, info = env.step(t % 5)
+            out.append((info["theta"], r, done))
+            if done:
+                break
+        return out
+
+    base = rollout(2, 0)
+    assert rollout(3, 0) == base
+    assert rollout(2, 2) == base
+
+
+def test_variants_change_child_size_dynamics():
+    def one_step(tau_exp, damp_exp, action):
+        env = BalanceBot(s=0.5, mode="balance", rng=np.random.default_rng(0),
+                         noise_std_frac=0.0, tau_exp=tau_exp,
+                         damp_exp=damp_exp)
+        env.reset()
+        pin(env, theta=0.1, theta_dot=1.0)
+        env.step(action)
+        return env.theta_dot
+
+    # torque variant differs when torque is applied (tau_max 5 vs 10 at s=0.5)
+    assert one_step(3, 0, 4) != pytest.approx(one_step(2, 0, 4))
+    # damping variant differs whenever theta_dot != 0 (b 0.25 vs 1.0 at s=0.5)
+    assert one_step(2, 2, 2) != pytest.approx(one_step(2, 0, 2))
+    # damp2 damps LESS at small size (b = 0.25 < 1.0): spins down more slowly
+    assert one_step(2, 2, 2) > one_step(2, 0, 2)

@@ -1,0 +1,1149 @@
+<title>Growing Up to Learn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+html{scroll-behavior:auto!important}
+:root{
+  --bg:#0E1420; --bg2:#131B2B; --panel:rgba(19,27,43,.86); --card:rgba(24,34,56,.92);
+  --ink:#F2EDE4; --muted:#9FA8B8; --faint:#5C6678; --hair:#263049; --accent:#E8C468;
+  --blue:#4C86D8; --orange:#C77B2F; --green:#4F9E6E; --violet:#AA64C8; --gold:#AD8F2E; --red:#C75F6B;
+  --serif:"Newsreader",Georgia,serif; --disp:"Young Serif","Iowan Old Style",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.7;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:#3a4a6b;color:var(--ink)}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(232,196,104,.35)}
+a:hover{border-bottom-color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+#gl{position:fixed;inset:0;z-index:0;pointer-events:none}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- the growth ruler (signature) ---------- */
+#ruler{position:fixed;left:0;top:0;bottom:0;width:74px;z-index:40;display:flex;flex-direction:column;
+  justify-content:space-between;padding:18vh 0 10vh;border-right:1px solid var(--hair);
+  background:linear-gradient(90deg,rgba(14,20,32,.9),rgba(14,20,32,0))}
+#ruler .tickwrap{position:relative;flex:1;margin:0 0 0 0}
+#ruler .lead{position:absolute;left:26px;top:0;bottom:0;width:2px;background:var(--hair)}
+#ruler .pencil{position:absolute;left:26px;bottom:0;width:2px;height:0;background:var(--accent)}
+#ruler button{position:absolute;left:0;transform:translateY(50%);display:flex;align-items:center;gap:8px;
+  background:none;border:0;color:var(--faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  cursor:pointer;padding:6px 4px;white-space:nowrap}
+#ruler button .mark{display:inline-block;width:18px;height:2px;background:currentColor}
+#ruler button:hover,#ruler button.active{color:var(--accent)}
+#ruler button .nm{writing-mode:vertical-rl;transform:rotate(180deg)}
+#topbar{display:none;position:fixed;top:0;left:0;right:0;height:3px;z-index:40;background:var(--hair)}
+#topbar .fill{height:100%;width:0;background:var(--accent)}
+@media(max-width:1099px){#ruler{display:none}#topbar{display:block}}
+
+/* ---------- layout ---------- */
+.chapter{position:relative}
+.scrolly{position:relative}
+.stage{height:100vh;width:100%;position:sticky;top:0;overflow:hidden}
+.stage .hud{position:absolute;inset:0;pointer-events:none}
+.prose{position:relative;z-index:2;max-width:700px;margin:0 auto;padding:9rem 24px 7rem}
+@media(min-width:1100px){.prose{padding-left:0;padding-right:0}}
+.prose p{margin:0 0 1.4em}
+.prose .lede{font-size:1.22em;line-height:1.65;color:var(--ink)}
+h1,h2,h3{font-family:var(--disp);font-weight:400;line-height:1.15;margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 1.2rem}
+.eyebrow .hyp{color:var(--faint)}
+h2{font-size:clamp(1.9rem,4.2vw,3rem);margin-bottom:1.6rem}
+.figure-note{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.6;margin-top:.6rem}
+.marginal{font-family:var(--mono);font-size:12.5px;color:var(--muted);border-left:2px solid var(--hair);padding-left:14px;margin:1.6em 0}
+.stat-inline{font-family:var(--mono);font-size:.86em;color:var(--accent);white-space:nowrap}
+
+/* step cards over stages */
+.steps{position:relative;z-index:3;pointer-events:none}
+.step{min-height:88vh;display:flex;align-items:center;justify-content:flex-start;padding:0 24px}
+.step .card{pointer-events:auto;max-width:330px;background:var(--card);border:1px solid var(--hair);
+  border-radius:10px;padding:18px 20px;font-size:15.5px;line-height:1.6;color:var(--ink);
+  box-shadow:0 12px 40px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
+.step .card .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px}
+.step .card p{margin:0}
+.step.center{justify-content:center;align-items:flex-end;padding:0 24px 9vh}
+@media(min-width:1100px){.step.center{padding-left:24px}}
+@media(min-width:1100px){.step{padding-left:calc(50% + 180px)}.step.left{padding-left:120px;justify-content:flex-start}}
+
+/* charts */
+.figure{position:relative;z-index:2;max-width:860px;margin:0 auto;padding:2rem 24px 4rem}
+.figure .panel{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:22px 22px 16px}
+.figure h3{font-size:1.15rem;margin-bottom:4px}
+.figure .sub{font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 0 14px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 6px}
+.legend .sw{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+svg.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+svg.chart .dl{font-size:11.5px;font-weight:500}
+.tooltip{position:fixed;z-index:60;pointer-events:none;background:#0b101b;border:1px solid var(--hair);
+  border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:12px;color:var(--ink);opacity:0;
+  box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.tooltip .trow{display:flex;justify-content:space-between;gap:14px}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:1.4rem 0}
+.tile{background:var(--card);border:1px solid var(--hair);border-radius:10px;padding:14px 16px}
+.tile .v{font-family:var(--mono);font-size:1.7rem;color:var(--ink)}
+.tile .l{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);margin-top:4px;line-height:1.5}
+.tile.win{border-color:rgba(232,196,104,.5)}
+.chip{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:3px 10px;border-radius:99px;border:1px solid}
+.chip.ok{color:#7CC79A;border-color:#2E5C42}
+.chip.no{color:#E09A93;border-color:#6b3a36}
+
+/* hero */
+#hero{height:100vh;position:relative;display:flex;align-items:center;justify-content:center;text-align:center}
+#hero .inner{position:relative;z-index:2;padding:0 24px;max-width:900px;text-shadow:0 2px 30px rgba(14,20,32,.95),0 0 80px rgba(14,20,32,.8)}
+#hero::after{content:"";position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 60% 45% at 50% 46%,rgba(14,20,32,.68),rgba(14,20,32,0) 70%)}
+#hero h1{font-size:clamp(2.6rem,7vw,5.2rem);letter-spacing:.01em}
+#hero .sub{font-size:clamp(1.05rem,2.2vw,1.35rem);color:var(--muted);margin-top:1.4rem;font-style:italic}
+#hero .meta{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:2.6rem}
+#hero .scrollcue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-family:var(--mono);
+  font-size:11px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase}
+
+/* honest failures */
+.fails{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin:1.5rem 0}
+.fail{background:linear-gradient(180deg,rgba(199,95,107,.08),rgba(24,34,56,.9));border:1px solid #4a3040;border-radius:10px;padding:16px 18px;font-size:15px}
+.fail .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:#E09A93;text-transform:uppercase;display:block;margin-bottom:6px}
+
+/* methods table */
+.mtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin:1rem 0}
+.mtable th,.mtable td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--hair);vertical-align:top}
+.mtable th{color:var(--muted);font-weight:500;letter-spacing:.06em}
+.mtable td:first-child{color:var(--accent);white-space:nowrap}
+footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4rem;padding:3rem 24px 5rem;
+  font-family:var(--mono);font-size:12.5px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion: reduce){#hero .scrollcue{display:none}}
+</style>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div id="topbar" aria-hidden="true"><div class="fill"></div></div>
+<nav id="ruler" aria-label="Chapters — height marks on a door frame">
+  <div class="tickwrap"><div class="lead"></div><div class="pencil"></div></div>
+</nav>
+<div class="tooltip" id="tooltip" role="status"></div>
+
+<!-- ══════════ HERO ══════════ -->
+<section id="hero" class="chapter" data-scene="hero">
+  <div class="inner">
+    <p class="eyebrow">Five experiments · 150 seeded runs · all code &amp; data public</p>
+    <h1>Growing Up to&nbsp;Learn</h1>
+    <p class="sub">What reinforcement learning looks like when you raise it the way children are raised — with maps, drills, mess, teachers, and a body that starts small.</p>
+    <p class="meta">developmental-rl · numpy · 179 tests · every claim measured</p>
+  </div>
+  <div class="scrollcue">scroll to begin</div>
+</section>
+
+<!-- ══════════ INTRO PROSE ══════════ -->
+<section class="chapter">
+  <div class="prose">
+    <p class="lede">Reinforcement learning is usually told as a story about reward. An agent acts, the world scores it, and a policy slowly bends toward whatever pays. Imitation learning is the opposite story: copy the teacher and hope the world never drifts from the demonstrations.</p>
+    <p>Humans live between those stories. We take <em>instruction</em> — compressed experience handed down by people who practiced before us — and we cash it out through our own trial and error. We keep a model of the world in our heads and rehearse inside it. We drill small pieces before playing whole games. We practice with deliberate variation, because smooth repetition is a comfortable lie. And we do all of it inside a body that starts small and grows on a schedule that seems suspiciously convenient for learning.</p>
+    <p>This page reports five hypotheses about that middle ground, each turned into a falsifiable experiment on deliberately small systems — tabular and linear agents, gridworlds and a torque-limited pendulum — where every step is countable, budgets are matched to the step, and 20–40 seeds per condition make the statistics honest. Small worlds, so the mechanisms have nowhere to hide.</p>
+    <p class="marginal">Protocol, in one line: IQM point estimates, 95% percentile-bootstrap CIs, two-sided Mann-Whitney with Holm correction, and identical evaluation for every condition. Full details in the methods section at the end.</p>
+  </div>
+</section>
+
+<!-- ══════════ PRIMER ══════════ -->
+<section class="chapter" id="ch-primer" data-scene="primer">
+  <div class="scrolly"><div class="stage" data-stage="primer" aria-label="A three-by-three gridworld where value arrows grow out of cells as the agent learns"></div>
+  <div class="steps">
+    <div class="step left"><div class="card"><span class="k">the one idea you need</span><p>Every experiment here is tabular Q-learning: a table with one row per situation, one column per action, holding a running guess of long-run reward.</p></div></div>
+    <div class="step left"><div class="card"><span class="k">learning = leaking value backward</span><p>Reach the goal once and its value leaks one step back along the path. Arrows grow as the table converges. That's the whole engine.</p></div></div>
+    <div class="step left"><div class="card"><span class="k">why so small?</span><p>Because the hypotheses are about <em>structure around</em> the learner — models, drills, teachers, bodies. A small learner keeps the structure visible.</p></div></div>
+  </div></div><!-- /scrolly -->
+</section>
+
+<!-- ══════════ H1 BLINDFOLD ══════════ -->
+<section class="chapter" id="ch1">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H1 · world models</span> — chapter one</p>
+    <h2>The Blindfold Test</h2>
+    <p class="lede">Close your eyes in your own home and you can still find the fridge. Close your eyes in a stranger's home and you are lost immediately. Your motor neurons didn't change between those two sentences — your <em>map</em> did.</p>
+    <p>We raised an agent in a 13×11 apartment with 10% motor slip, letting it learn both a policy and a transition model of its home. Then we took its observations away entirely. Blindfolded, it navigates by dead reckoning: it imagines where each action should have taken it, tracks a belief over where it probably is, and asks its value table what to do from there. The test: same blindfold, familiar home versus stranger's home.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h1" aria-label="A dark apartment diorama. A glowing agent walks with a spotlight; when blindfolded, a ghost shows where it believes it is. In the stranger's home the ghost drifts away from the true body."></div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">sighted · home A</span><p>With eyes open, the trained agent reaches the fridge in 99% of episodes. The spotlight is its observation.</p></div></div>
+    <div class="step"><div class="card"><span class="k">lights out · home A</span><p>Blindfolded, pure dead reckoning drops to 21% — slip noise compounds, the belief drifts. Sound familiar? Add <em>touch</em> — a bump signal filtering the belief, a hand trailing the wall — and success returns to <strong>96%</strong>, nearly sighted-level.</p></div></div>
+    <div class="step"><div class="card"><span class="k">a stranger's home</span><p>Same agent, same blindfold, same touch — new floor plan. Success: 10%. Watch the ghost: the belief marches confidently through walls that aren't where it thinks they are.</p></div></div>
+    <div class="step"><div class="card"><span class="k">the model is the difference</span><p>Sighted transfer to home B with home A's values also fails (0%). It was never about vision. It's the map.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Model-based learning is the other half of H1</h3>
+      <p class="sub">Greedy success at the fridge, evaluated every 1k steps · 30 seeds · IQM with 95% bootstrap CI</p>
+      <div class="legend" id="lg-exp1"></div>
+      <svg class="chart" id="chart-exp1" role="img" aria-label="Learning curves: DynaQ reaches 90 percent success near 2000 steps, Q-learning near 25000"></svg>
+      <p class="figure-note">The same experience, replayed through a learned model (Dyna-Q, 20 imagined updates per real step), reaches 90% success in <span class="stat-inline">2,000 steps</span> vs <span class="stat-inline">24,938</span> model-free — a 12× gap (Holm p=3.1e-11). The map isn't just for blindfolds; it's a sample-efficiency engine.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H2 DRILLS ══════════ -->
+<section class="chapter" id="ch2">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H2 · microtasks</span> — chapter two</p>
+    <h2>Nobody Learns Soccer by Playing Soccer</h2>
+    <p class="lede">Coaches don't start with full matches, and piano teachers don't start with the whole piece. They isolate: shoot from close, then dribble, then play. We asked whether the drill structure itself — with no shaping, no hints, no extra reward — is worth anything to a reinforcement learner.</p>
+    <p>Three agents got identical budgets of 60,000 steps on an 11×7 pitch where only goals are ever rewarded. One played full games from kickoff the whole time. One spent 20% of its budget spawning near the goal with the ball (shooting drill), 20% spawning in its own half (dribbling drill), then played full games. The only thing the curriculum changes is <em>where episodes start</em>.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h2" aria-label="A bright pitch diorama. Ghost trajectories accumulate: the whole-game learner wanders; the drilled learner's paths funnel into the goal."></div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">whole games</span><p>From kickoff, a goal is a long corridor of luck away. The value table waits most of the run for its first win.</p></div></div>
+    <div class="step"><div class="card"><span class="k">drills first</span><p>Near the goal, wins are cheap — value pools around scoring. The dribble drill then connects midfield to that pool. Full games inherit a table that already knows how stories end.</p></div></div>
+    <div class="step"><div class="card"><span class="k">the same steps, spent better</span><p>Time to 90% success: drilled <strong>15,375</strong> steps vs whole-game <strong>38,875</strong> (p=1.1e-9). Fixed-spawn drills land between — variety inside the drill matters too.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Reverse curriculum over start states</h3>
+      <p class="sub">Full-game success from kickoff, 20 greedy evals / 2k steps · 30 seeds · IQM ± 95% CI</p>
+      <div class="legend" id="lg-exp2"></div>
+      <svg class="chart" id="chart-exp2" role="img" aria-label="Learning curves: drills-varied crosses 90 percent around 15000 steps, drills-fixed around 20000, whole games around 39000"></svg>
+      <p class="figure-note">Same environment, same reward, same total steps. The drilled agents' curves lift off during the drill phases (shaded) and never look back. Four whole-game seeds never reached 90% at all.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H3 VARIATION ══════════ -->
+<section class="chapter" id="ch3">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H3 · variation</span> — chapter three</p>
+    <h2>Practice That Feels Worse and Works Better</h2>
+    <p class="lede">In 1979, Shea and Morgan split learners into two groups: one drilled each movement pattern in a block, one practiced them shuffled. Blocked practice looked better <em>during</em> training — and lost on retention and transfer. Motor-learning calls it the contextual-interference effect. We reproduced it in a learner small enough to explain.</p>
+    <p>Three short piano passages share a library of six three-note motifs; each passage has one exception where its fingering breaks the pattern. A linear learner practices either <em>blocked</em> (all of passage A, then B, then C) or <em>interleaved</em> (a random passage each episode). Same total practice. The interference lives exactly where the skill does: in the shared motif weights.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h3" aria-label="A vertical piano-roll wall. Two lanes light up notes as practice runs; the blocked lane looks cleaner during practice, then the test flips the ranking.">
+    <div class="hud" style="font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase">
+      <span style="position:absolute;top:12%;left:25%;transform:translateX(-50%);color:#C77B2F">blocked · drill one passage</span>
+      <span style="position:absolute;top:12%;left:75%;transform:translateX(-50%);color:#4C86D8">interleaved · shuffle passages</span>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">watch the fool's progress</span><p>The blocked lane looks immaculate: every rep on the same passage, score climbing. Acquisition IQM 0.80 vs 0.77 — blocked genuinely wins the practice room (p=.006).</p></div></div>
+    <div class="step"><div class="card"><span class="k">then comes the recital</span><p>Test everything. The passage drilled first has decayed under two passages of shared-weight drift: retention on A — blocked 0.73, interleaved <strong>0.92</strong> (p=7e-10).</p></div></div>
+    <div class="step"><div class="card"><span class="k">and a new piece</span><p>On a never-practiced passage built from the same motifs, interleaved transfers 0.75 vs 0.64 (p=.006). Variation forced the weights to encode the <em>motifs</em>, not the last passage rehearsed.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>The crossover, in silico</h3>
+      <p class="sub">Left: score on the currently-practiced passage during training. Right: test with learning off · 40 seeds</p>
+      <div class="legend" id="lg-exp3"></div>
+      <svg class="chart" id="chart-exp3" role="img" aria-label="Acquisition curves where blocked leads, next to retention and transfer bars where interleaved leads"></svg>
+      <p class="figure-note">Blocked's one honest win: the passage it drilled <em>last</em> (retention on C: 0.99). Recency is real; it's just not learning. The crossover pattern — train worse, test better — is the Shea-Morgan signature, reproduced by shared-parameter interference alone.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H4 GENERATIONS ══════════ -->
+<section class="chapter" id="ch4">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H4 · teachers</span> — chapter four</p>
+    <h2>The One Time I Reached the Mountain</h2>
+    <p class="lede">No pianist learns from scratch. Teachers hand down compressed trajectories — <em>practice this passage, this way</em> — distilled from their teachers, and theirs. The knowledge crosses generations through a narrow channel: not brains, stories. We built the smallest version of that channel we could measure.</p>
+    <p>A gridworld hides a big reward far to the right, guarded by candy — small terminal rewards near the start that end episodes early and teach agents to stop looking. Each agent lives 15,000 steps with plasticity that decays as it ages: learning rate and exploration halve every 5,000 steps. Old agents remember their three best episodes ever — but can no longer act on them. At death, those episodes become advice: at most 100 state-action pairs, seeded optimistically into a fresh, fully plastic student.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h4" aria-label="A dark grid with candy traps near the start and a distant goal. Across five generations an inherited path skeleton thickens into a golden thread reaching the goal."></div>
+  <div class="steps">
+    <div class="step"><div class="card"><span class="k">generation 1</span><p>Lives, gorges on candy, stumbles onto the mountain once late in life — too rigid to consolidate it. Greedy performance at death: candy (0.3). Best memory: the mountain (10).</p></div></div>
+    <div class="step"><div class="card"><span class="k">the bottleneck</span><p>Its advice is not its brain. It's the skeleton of its best days — the one lucky deep run — passed to a student plastic enough to finish the thought.</p></div></div>
+    <div class="step"><div class="card"><span class="k">generation 5</span><p>The lineage ratchets: 0.3 → 1.25 → 4.4 → 7.5 → <strong>8.75</strong> IQM. 70% of lineages end at the mountain. Every control — weight-copy, one long life, slow decay, no inheritance — stays at candy forever, on every seed.</p></div></div>
+    <div class="step"><div class="card"><span class="k">why copying fails</span><p>The weight-copy makes the student inherit the whole trap-shaped value table — consolidated mediocrity. The bottleneck transmits only the peak. Losing almost everything is the feature.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Five generations, five conditions</h3>
+      <p class="sub">Greedy return at each generation's end · 30 seeds · IQM ± 95% CI · all four comparisons Holm p=.014</p>
+      <div class="legend" id="lg-exp4"></div>
+      <svg class="chart" id="chart-exp4" role="img" aria-label="Per-generation curves: generational distillation ratchets upward to 8.75 while all four baselines stay flat at 0.3"></svg>
+      <p class="figure-note">The gap between what long-lived agents <em>remember</em> (best episode ≈ mountain) and what they can <em>do</em> (candy) stays at ~3 points for 75,000 steps — they know the way and cannot walk it. Distillation converts that gap into the next generation's head start; by generation 5 it has closed to 0.7.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ H5 GROWING BODIES ══════════ -->
+<section class="chapter" id="ch5">
+  <div class="prose">
+    <p class="eyebrow"><span class="hyp">H5 · morphology</span> — chapter five</p>
+    <h2>Small Bodies Fall Cheaply</h2>
+    <p class="lede">Toddlers fall about seventeen times an hour and shrug it off — small bodies carry little energy into the ground. By the square-cube law they are also relatively strong: strength scales with s², weight with s³. Falling is how you learn to stand, and evolution priced falling at its cheapest exactly when you need thousands of them.</p>
+    <p>Our learner balances a torque-limited pendulum whose scale s sets everything honestly: length s, mass 15s³, strength 40s², and fall damage (s)⁴ — impact energy. Six conditions, 120,000 steps each, all evaluated on the <em>adult</em> body. Some train adult-sized from day one. Some start at half size and grow — on a schedule, or adaptively, growing only when the current body stops falling.</p>
+  </div>
+  <div class="scrolly"><div class="stage" data-stage="h5" aria-label="Two pendulum creatures side by side: an adult-sized one that falls hard and often, and one that starts small, falls softly, and grows as it stabilizes. Damage counters accumulate."></div>
+  <div class="steps">
+    <div class="step center"><div class="card"><span class="k">born adult</span><p>Every early mistake lands at full mass and full height. Damage meter: spinning. It does learn — at a price of <strong>880</strong> damage units to reach competence.</p></div></div>
+    <div class="step center"><div class="card"><span class="k">grow when ready</span><p>The adaptive grower masters each body before earning the next. Falls happen — at toddler prices. Damage to the same adult competence: <strong>62</strong>. Fourteen times cheaper, and no slower in steps (p=.30).</p></div></div>
+    <div class="step center"><div class="card"><span class="k">skills survive growth</span><p>The policy transfers across nearby bodies as the dynamics shift smoothly under it — competence rides the growth curve up to a body it has barely trained on.</p></div></div>
+  </div></div><!-- /scrolly -->
+  <div class="figure">
+    <div class="panel">
+      <h3>Damage accumulated on the way to adult competence</h3>
+      <p class="sub">Cumulative fall damage vs training step · 20 seeds · IQM ± 95% CI · damage = (size)⁴ per fall</p>
+      <div class="legend" id="lg-exp5"></div>
+      <svg class="chart" id="chart-exp5" role="img" aria-label="Damage curves: adult conditions accumulate roughly 880 units; growing conditions stay far lower, adaptive lowest at 62"></svg>
+      <p class="figure-note">Growing bodies buy competence with an order of magnitude less damage (Holm p ≤ 2.1e-6). In animals, damage is death, injury, and metabolic cost — the currency evolution actually optimizes.</p>
+    </div>
+  </div>
+  <div class="figure">
+    <div class="panel">
+      <h3>What didn't survive contact with the data</h3>
+      <p class="sub">Two of our own sub-claims failed their tests. They stay in the paper.</p>
+      <div class="fails">
+        <div class="fail"><span class="k">refuted · balance-first</span>We predicted "learn to balance, then walk," like infants. Backwards, here: walking-from-the-start reached competence faster (Holm p=3e-4). Weight-shifting practice visits the states balancing needs; a balance-only phase starves the walking half of the table. Infant staging may serve growing bodies and safety — not the value function.</div>
+        <div class="fail"><span class="k">null · gradualism</span>Growing in small increments wasn't reliably better than one jump from half-size to adult (p=.11, point estimate reversed). The savings come from <em>being small while incompetent</em> — not from the smoothness of the schedule.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SYNTHESIS ══════════ -->
+<section class="chapter" id="ch6">
+  <div class="prose">
+    <p class="eyebrow">synthesis</p>
+    <h2>Five Curves, One Lesson</h2>
+    <p class="lede">Every mechanism that worked, worked the same way: it changed <em>which experience the learner got</em>, not how the learner updates. The map replayed experience. Drills repositioned it. Variation shuffled it. Teachers curated it across lifetimes. Small bodies discounted its price.</p>
+    <p>That is what "between imitation and evaluation" means operationally. Pure evaluation wastes lifetimes rediscovering what the last lifetime knew; pure imitation caps the student at the teacher. The productive middle is a narrow, curated channel of experience — a curriculum, an anecdote, a drill, a start state — feeding a learner that remains free to disagree.</p>
+  </div>
+  <div class="figure">
+    <div class="panel">
+      <h3>Scorecard</h3>
+      <p class="sub">Primary comparisons, Holm-corrected within each experiment</p>
+      <div class="tiles" id="scorecard"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ METHODS ══════════ -->
+<section class="chapter" id="ch7">
+  <div class="prose">
+    <p class="eyebrow">methods &amp; colophon</p>
+    <h2>How the Numbers Were Made</h2>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table class="mtable" aria-label="Experiment parameters">
+      <thead><tr><th>exp</th><th>world</th><th>agent</th><th>seeds</th><th>budget / condition</th></tr></thead>
+      <tbody>
+        <tr><td>H1</td><td>GridHome 13×11, slip 0.1</td><td>Q &amp; Dyna-Q(20), belief dead-reckoning + touch filter</td><td>30</td><td>40k steps</td></tr>
+        <tr><td>H2</td><td>SoccerGrid 11×7, p(goal)=1−d/5</td><td>tabular Q, shared table across phases</td><td>30</td><td>60k steps</td></tr>
+        <tr><td>H3</td><td>3 passages · 6 shared motifs · 8 keys</td><td>linear Q, SGD, ε-greedy</td><td>40</td><td>450 episodes</td></tr>
+        <tr><td>H4</td><td>TrapGrid 15×11, candy 0.3, goal 10</td><td>Q with plasticity decay ½ per 5k steps</td><td>30</td><td>5×15k steps</td></tr>
+        <tr><td>H5</td><td>Pendulum, l=s, m=15s³, τ=40s², dmg=s⁴</td><td>tabular Q, 765 states × 5 torques</td><td>20</td><td>120k steps</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="marginal">Statistics: IQM point estimates; 95% percentile bootstrap (10k resamples); two-sided Mann-Whitney with Holm correction within each experiment's primary family; censored time-to-threshold assigned budget+1 with censoring fractions reported. Budgets matched to the step across conditions; evaluation identical across conditions and excluded from budgets.</p>
+    <p>Everything is reproducible from the repository: environments, agents, experiment scripts, 179 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs.</p>
+    <p><a href="https://github.com/andrewboldi/developmental-rl">github.com/andrewboldi/developmental-rl</a></p>
+  </div>
+  <footer>
+    Growing Up to Learn · an experiment program by Andrew Boldi · built with three.js r147 + GSAP · charts are real data, seeds and all
+  </footer>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineSegmentsGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineMaterial.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/LineSegments2.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/lines/Line2.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollToPlugin.min.js"></script>
+<script>
+window.DATA = {"exp1":{"homes":{"A":{"ascii":["#############","#S...#......#","#....#.G....#","#....#......#","#.##.####.###","#...........#","#.#######.#.#","#.#.....#.#.#","#.#.###.#.#.#","#...#.......#","#############"],"shape":[11,13],"walls":[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[1,0],[1,5],[1,12],[2,0],[2,5],[2,12],[3,0],[3,5],[3,12],[4,0],[4,2],[4,3],[4,5],[4,6],[4,7],[4,8],[4,10],[4,11],[4,12],[5,0],[5,12],[6,0],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7],[6,8],[6,10],[6,12],[7,0],[7,2],[7,8],[7,10],[7,12],[8,0],[8,2],[8,4],[8,5],[8,6],[8,8],[8,10],[8,12],[9,0],[9,4],[9,12],[10,0],[10,1],[10,2],[10,3],[10,4],[10,5],[10,6],[10,7],[10,8],[10,9],[10,10],[10,11],[10,12]],"start":[1,1],"goal":[2,7],"shortest_path_len":17},"B":{"ascii":["#############","#S.#........#","#..#...G#...#","#..#.###....#","#...........#","###.#####.###","#....#......#","#.##.#.####.#","#.#..#....#.#","#...........#","#############"],"shape":[11,13],"walls":[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[1,0],[1,3],[1,12],[2,0],[2,3],[2,8],[2,12],[3,0],[3,3],[3,5],[3,6],[3,7],[3,12],[4,0],[4,12],[5,0],[5,1],[5,2],[5,4],[5,5],[5,6],[5,7],[5,8],[5,10],[5,11],[5,12],[6,0],[6,5],[6,12],[7,0],[7,2],[7,3],[7,5],[7,7],[7,8],[7,9],[7,10],[7,12],[8,0],[8,2],[8,5],[8,10],[8,12],[9,0],[9,12],[10,0],[10,1],[10,2],[10,3],[10,4],[10,5],[10,6],[10,7],[10,8],[10,9],[10,10],[10,11],[10,12]],"start":[1,1],"goal":[2,7],"shortest_path_len":11}},"slip":0.1,"summary":[{"name":"sighted-A","success_iqm":0.994,"success_ci":[0.954,1.0],"steps_iqm":20.706,"steps_ci":[19.44,25.561]},{"name":"blind-A","success_iqm":0.206,"success_ci":[0.131,0.308],"steps_iqm":55.094,"steps_ci":[52.225,57.065]},{"name":"blind-A-touch","success_iqm":0.965,"success_ci":[0.912,0.99],"steps_iqm":25.085,"steps_ci":[23.663,27.434]},{"name":"blind-B","success_iqm":0.104,"success_ci":[0.056,0.173],"steps_iqm":57.842,"steps_ci":[56.171,58.756]},{"name":"blind-B-touch","success_iqm":0.233,"success_ci":[0.177,0.296],"steps_iqm":54.935,"steps_ci":[53.187,56.31]},{"name":"sighted-B-transfer","success_iqm":0.0,"success_ci":[0.0,0.0],"steps_iqm":60.0,"steps_ci":[60.0,60.0]},{"name":"random-A","success_iqm":0.0,"success_ci":[0.0,0.0],"steps_iqm":60.0,"steps_ci":[60.0,60.0]}],"curves":{"checkpoints":[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000,31000,32000,33000,34000,35000,36000,37000,38000,39000,40000],"dyna":{"iqm":[0.016,0.947,0.997,1.0,0.991,0.988,0.997,0.953,0.944,0.991,0.959,0.9,0.988,0.969,0.919,1.0,0.975,0.956,0.975,0.984,0.981,0.934,0.963,1.0,0.991,0.994,0.963,0.969,0.975,0.959,0.997,0.959,0.931,0.975,0.9,0.95,0.922,0.988,0.909,0.984],"ci_lo":[0.0,0.747,0.947,0.975,0.906,0.922,0.981,0.866,0.812,0.894,0.841,0.713,0.931,0.863,0.781,0.988,0.884,0.859,0.853,0.938,0.881,0.834,0.838,0.978,0.869,0.947,0.859,0.909,0.906,0.866,0.925,0.841,0.809,0.912,0.8,0.828,0.816,0.906,0.766,0.941],"ci_hi":[0.131,0.988,1.0,1.0,1.0,1.0,1.0,0.994,1.0,1.0,0.991,0.991,1.0,1.0,0.991,1.0,1.0,1.0,1.0,1.0,1.0,0.994,1.0,1.0,1.0,1.0,0.997,0.997,1.0,1.0,1.0,1.0,0.994,1.0,0.962,1.0,0.984,1.0,0.984,1.0]},"q":{"iqm":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.013,0.0,0.013,0.044,0.087,0.134,0.4,0.388,0.438,0.556,0.691,0.797,0.862,0.828,0.947,0.941,0.969,0.966,0.988,0.978,0.969,0.988,0.997,0.988,0.988,1.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.013,0.016,0.038,0.213,0.197,0.247,0.381,0.488,0.7,0.703,0.688,0.878,0.897,0.941,0.934,0.962,0.959,0.938,0.966,0.975,0.972,0.972,0.984],"ci_hi":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.006,0.044,0.022,0.053,0.147,0.219,0.278,0.603,0.581,0.644,0.7,0.806,0.872,0.922,0.894,0.981,0.969,0.988,0.988,1.0,0.994,0.991,1.0,1.0,1.0,1.0,1.0]}},"t90":{"dynaq-A":{"iqm":2000.0,"ci":[2000.0,2312.5],"censored_frac":0.0},"qlearning-A":{"iqm":24937.5,"ci":[23687.5,26062.5],"censored_frac":0.0}},"trajs":{"blind-A":{"success":false,"steps":60,"path":[{"t":0,"true":[1,1],"bel":[1,1],"H":0.0,"bump":false},{"t":1,"true":[1,2],"bel":[1,2],"H":0.65,"bump":false},{"t":2,"true":[2,2],"bel":[2,2],"H":1.24,"bump":false},{"t":3,"true":[3,2],"bel":[2,3],"H":1.56,"bump":true},{"t":4,"true":[3,2],"bel":[3,3],"H":1.74,"bump":false},{"t":5,"true":[3,3],"bel":[3,4],"H":1.95,"bump":true},{"t":6,"true":[3,3],"bel":[4,4],"H":1.88,"bump":true},{"t":7,"true":[3,3],"bel":[5,4],"H":1.93,"bump":false},{"t":8,"true":[3,4],"bel":[5,5],"H":2.15,"bump":true},{"t":9,"true":[3,4],"bel":[5,6],"H":2.23,"bump":true},{"t":10,"true":[3,4],"bel":[5,7],"H":2.4,"bump":true},{"t":11,"true":[3,4],"bel":[5,8],"H":2.59,"bump":true},{"t":12,"true":[3,4],"bel":[5,9],"H":2.76,"bump":false},{"t":13,"true":[2,4],"bel":[4,9],"H":2.97,"bump":false},{"t":14,"true":[3,4],"bel":[4,9],"H":3.05,"bump":false},{"t":15,"true":[2,4],"bel":[1,4],"H":2.97,"bump":false},{"t":16,"true":[1,4],"bel":[1,4],"H":2.87,"bump":true},{"t":17,"true":[1,4],"bel":[1,3],"H":3.49,"bump":true},{"t":18,"true":[1,4],"bel":[1,3],"H":3.41,"bump":true},{"t":19,"true":[1,4],"bel":[1,8],"H":3.08,"bump":false},{"t":20,"true":[1,3],"bel":[1,7],"H":3.51,"bump":false},{"t":21,"true":[1,2],"bel":[1,6],"H":3.5,"bump":false},{"t":22,"true":[2,2],"bel":[2,6],"H":3.71,"bump":false},{"t":23,"true":[2,1],"bel":[2,1],"H":3.46,"bump":true},{"t":24,"true":[2,1],"bel":[2,1],"H":3.3,"bump":true},{"t":25,"true":[2,1],"bel":[2,1],"H":3.23,"bump":true},{"t":26,"true":[2,1],"bel":[2,1],"H":3.21,"bump":true},{"t":27,"true":[2,1],"bel":[2,1],"H":3.19,"bump":true},{"t":28,"true":[2,1],"bel":[2,1],"H":3.18,"bump":true},{"t":29,"true":[2,1],"bel":[2,1],"H":3.17,"bump":true},{"t":30,"true":[2,1],"bel":[2,1],"H":3.16,"bump":true},{"t":31,"true":[2,1],"bel":[2,1],"H":3.15,"bump":true},{"t":32,"true":[2,1],"bel":[3,1],"H":3.15,"bump":true},{"t":33,"true":[2,1],"bel":[3,1],"H":3.16,"bump":true},{"t":34,"true":[2,1],"bel":[5,1],"H":3.16,"bump":true},{"t":35,"true":[2,1],"bel":[5,1],"H":3.16,"bump":true},{"t":36,"true":[2,1],"bel":[5,1],"H":3.16,"bump":true},{"t":37,"true":[2,1],"bel":[5,1],"H":3.15,"bump":true},{"t":38,"true":[2,1],"bel":[5,1],"H":3.15,"bump":true},{"t":39,"true":[2,1],"bel":[5,1],"H":3.14,"bump":true},{"t":40,"true":[2,1],"bel":[5,1],"H":3.13,"bump":true},{"t":41,"true":[2,1],"bel":[5,1],"H":3.12,"bump":true},{"t":42,"true":[2,1],"bel":[5,1],"H":3.11,"bump":true},{"t":43,"true":[2,1],"bel":[5,1],"H":3.1,"bump":true},{"t":44,"true":[2,1],"bel":[5,1],"H":3.09,"bump":true},{"t":45,"true":[2,1],"bel":[5,1],"H":3.08,"bump":true},{"t":46,"true":[2,1],"bel":[5,1],"H":3.06,"bump":true},{"t":47,"true":[2,1],"bel":[5,1],"H":3.05,"bump":true},{"t":48,"true":[2,1],"bel":[5,1],"H":3.04,"bump":true},{"t":49,"true":[2,1],"bel":[5,1],"H":3.02,"bump":true},{"t":50,"true":[2,1],"bel":[5,1],"H":3.01,"bump":true},{"t":51,"true":[2,1],"bel":[5,1],"H":2.99,"bump":true},{"t":52,"true":[2,1],"bel":[5,1],"H":2.98,"bump":true},{"t":53,"true":[2,1],"bel":[5,1],"H":2.96,"bump":true},{"t":54,"true":[2,1],"bel":[5,1],"H":2.94,"bump":true},{"t":55,"true":[2,1],"bel":[5,1],"H":2.93,"bump":true},{"t":56,"true":[2,1],"bel":[5,1],"H":2.91,"bump":true},{"t":57,"true":[2,1],"bel":[5,1],"H":2.9,"bump":true},{"t":58,"true":[2,1],"bel":[5,1],"H":2.88,"bump":true},{"t":59,"true":[2,1],"bel":[5,1],"H":2.86,"bump":true}]},"blind-A-touch":{"success":true,"steps":28,"path":[{"t":0,"true":[1,1],"bel":[1,1],"H":0.0,"bump":false},{"t":1,"true":[1,2],"bel":[1,2],"H":0.65,"bump":false},{"t":2,"true":[2,2],"bel":[2,2],"H":1.22,"bump":false},{"t":3,"true":[3,2],"bel":[2,3],"H":1.52,"bump":true},{"t":4,"true":[3,2],"bel":[3,2],"H":1.22,"bump":false},{"t":5,"true":[3,3],"bel":[3,3],"H":1.39,"bump":false},{"t":6,"true":[3,4],"bel":[3,4],"H":1.18,"bump":false},{"t":7,"true":[4,4],"bel":[4,4],"H":1.15,"bump":false},{"t":8,"true":[5,4],"bel":[5,4],"H":0.99,"bump":false},{"t":9,"true":[5,5],"bel":[5,5],"H":1.0,"bump":false},{"t":10,"true":[5,6],"bel":[5,6],"H":0.93,"bump":false},{"t":11,"true":[5,7],"bel":[5,7],"H":0.97,"bump":false},{"t":12,"true":[5,8],"bel":[5,8],"H":1.1,"bump":false},{"t":13,"true":[5,9],"bel":[5,9],"H":1.25,"bump":false},{"t":14,"true":[5,10],"bel":[4,9],"H":0.87,"bump":true},{"t":15,"true":[5,10],"bel":[3,9],"H":2.18,"bump":true},{"t":16,"true":[5,10],"bel":[5,8],"H":1.76,"bump":true},{"t":17,"true":[5,10],"bel":[5,9],"H":1.95,"bump":true},{"t":18,"true":[5,10],"bel":[5,11],"H":1.85,"bump":false},{"t":19,"true":[5,11],"bel":[5,9],"H":2.01,"bump":true},{"t":20,"true":[5,11],"bel":[5,11],"H":1.84,"bump":true},{"t":21,"true":[5,11],"bel":[5,11],"H":0.64,"bump":false},{"t":22,"true":[5,10],"bel":[5,10],"H":0.71,"bump":false},{"t":23,"true":[5,9],"bel":[5,9],"H":1.22,"bump":false},{"t":24,"true":[4,9],"bel":[4,9],"H":0.99,"bump":false},{"t":25,"true":[3,9],"bel":[3,9],"H":0.8,"bump":false},{"t":26,"true":[3,8],"bel":[3,8],"H":0.98,"bump":false},{"t":27,"true":[3,7],"bel":[3,7],"H":1.15,"bump":false},{"t":28,"true":[2,7],"bel":[2,7],"H":1.4,"bump":null}]},"blind-B":{"success":false,"steps":60,"path":[{"t":0,"true":[1,1],"bel":[1,1],"H":0.0,"bump":false},{"t":1,"true":[1,2],"bel":[1,2],"H":0.65,"bump":false},{"t":2,"true":[2,2],"bel":[2,2],"H":1.24,"bump":false},{"t":3,"true":[3,2],"bel":[2,3],"H":1.56,"bump":false},{"t":4,"true":[4,2],"bel":[3,3],"H":1.74,"bump":false},{"t":5,"true":[4,3],"bel":[3,4],"H":1.95,"bump":false},{"t":6,"true":[5,3],"bel":[4,4],"H":1.88,"bump":false},{"t":7,"true":[6,3],"bel":[5,4],"H":1.93,"bump":false},{"t":8,"true":[6,4],"bel":[5,5],"H":2.15,"bump":true},{"t":9,"true":[6,4],"bel":[5,6],"H":2.23,"bump":true},{"t":10,"true":[6,4],"bel":[5,7],"H":2.4,"bump":true},{"t":11,"true":[6,4],"bel":[5,8],"H":2.59,"bump":true},{"t":12,"true":[6,4],"bel":[5,9],"H":2.76,"bump":true},{"t":13,"true":[6,4],"bel":[4,9],"H":2.97,"bump":false},{"t":14,"true":[7,4],"bel":[4,9],"H":3.05,"bump":false},{"t":15,"true":[6,4],"bel":[1,4],"H":2.97,"bump":true},{"t":16,"true":[6,4],"bel":[1,4],"H":2.87,"bump":true},{"t":17,"true":[6,4],"bel":[1,3],"H":3.49,"bump":true},{"t":18,"true":[6,4],"bel":[1,3],"H":3.41,"bump":true},{"t":19,"true":[6,4],"bel":[1,8],"H":3.08,"bump":false},{"t":20,"true":[6,3],"bel":[1,7],"H":3.51,"bump":false},{"t":21,"true":[6,2],"bel":[1,6],"H":3.5,"bump":true},{"t":22,"true":[6,2],"bel":[2,6],"H":3.71,"bump":false},{"t":23,"true":[6,1],"bel":[2,1],"H":3.46,"bump":true},{"t":24,"true":[6,1],"bel":[2,1],"H":3.3,"bump":true},{"t":25,"true":[6,1],"bel":[2,1],"H":3.23,"bump":true},{"t":26,"true":[6,1],"bel":[2,1],"H":3.21,"bump":true},{"t":27,"true":[6,1],"bel":[2,1],"H":3.19,"bump":true},{"t":28,"true":[6,1],"bel":[2,1],"H":3.18,"bump":true},{"t":29,"true":[6,1],"bel":[2,1],"H":3.17,"bump":true},{"t":30,"true":[6,1],"bel":[2,1],"H":3.16,"bump":true},{"t":31,"true":[6,1],"bel":[2,1],"H":3.15,"bump":true},{"t":32,"true":[6,1],"bel":[3,1],"H":3.15,"bump":true},{"t":33,"true":[6,1],"bel":[3,1],"H":3.16,"bump":true},{"t":34,"true":[6,1],"bel":[5,1],"H":3.16,"bump":true},{"t":35,"true":[6,1],"bel":[5,1],"H":3.16,"bump":true},{"t":36,"true":[6,1],"bel":[5,1],"H":3.16,"bump":true},{"t":37,"true":[6,1],"bel":[5,1],"H":3.15,"bump":true},{"t":38,"true":[6,1],"bel":[5,1],"H":3.15,"bump":true},{"t":39,"true":[6,1],"bel":[5,1],"H":3.14,"bump":true},{"t":40,"true":[6,1],"bel":[5,1],"H":3.13,"bump":true},{"t":41,"true":[6,1],"bel":[5,1],"H":3.12,"bump":true},{"t":42,"true":[6,1],"bel":[5,1],"H":3.11,"bump":true},{"t":43,"true":[6,1],"bel":[5,1],"H":3.1,"bump":true},{"t":44,"true":[6,1],"bel":[5,1],"H":3.09,"bump":true},{"t":45,"true":[6,1],"bel":[5,1],"H":3.08,"bump":true},{"t":46,"true":[6,1],"bel":[5,1],"H":3.06,"bump":true},{"t":47,"true":[6,1],"bel":[5,1],"H":3.05,"bump":true},{"t":48,"true":[6,1],"bel":[5,1],"H":3.04,"bump":true},{"t":49,"true":[6,1],"bel":[5,1],"H":3.02,"bump":true},{"t":50,"true":[6,1],"bel":[5,1],"H":3.01,"bump":true},{"t":51,"true":[6,1],"bel":[5,1],"H":2.99,"bump":true},{"t":52,"true":[6,1],"bel":[5,1],"H":2.98,"bump":true},{"t":53,"true":[6,1],"bel":[5,1],"H":2.96,"bump":true},{"t":54,"true":[6,1],"bel":[5,1],"H":2.94,"bump":true},{"t":55,"true":[6,1],"bel":[5,1],"H":2.93,"bump":true},{"t":56,"true":[6,1],"bel":[5,1],"H":2.91,"bump":true},{"t":57,"true":[6,1],"bel":[5,1],"H":2.9,"bump":true},{"t":58,"true":[6,1],"bel":[5,1],"H":2.88,"bump":true},{"t":59,"true":[6,1],"bel":[5,1],"H":2.86,"bump":true}]},"blind-B-touch":{"success":true,"steps":29,"path":[{"t":0,"true":[1,1],"bel":[1,1],"H":0.0,"bump":false},{"t":1,"true":[1,2],"bel":[1,2],"H":0.65,"bump":false},{"t":2,"true":[2,2],"bel":[2,2],"H":1.22,"bump":true},{"t":3,"true":[2,2],"bel":[1,4],"H":2.36,"bump":false},{"t":4,"true":[3,2],"bel":[2,4],"H":2.56,"bump":false},{"t":5,"true":[4,2],"bel":[2,3],"H":2.6,"bump":true},{"t":6,"true":[4,2],"bel":[3,3],"H":1.71,"bump":false},{"t":7,"true":[4,3],"bel":[3,4],"H":1.56,"bump":false},{"t":8,"true":[4,4],"bel":[3,4],"H":1.4,"bump":true},{"t":9,"true":[4,4],"bel":[3,3],"H":1.75,"bump":false},{"t":10,"true":[4,5],"bel":[3,4],"H":1.64,"bump":true},{"t":11,"true":[4,5],"bel":[3,3],"H":2.44,"bump":false},{"t":12,"true":[4,6],"bel":[3,4],"H":2.49,"bump":false},{"t":13,"true":[4,7],"bel":[5,7],"H":2.78,"bump":true},{"t":14,"true":[4,7],"bel":[3,4],"H":2.34,"bump":false},{"t":15,"true":[4,8],"bel":[3,4],"H":3.01,"bump":false},{"t":16,"true":[3,8],"bel":[2,4],"H":2.68,"bump":true},{"t":17,"true":[3,8],"bel":[1,4],"H":2.51,"bump":true},{"t":18,"true":[3,8],"bel":[1,4],"H":1.87,"bump":false},{"t":19,"true":[4,8],"bel":[2,4],"H":1.26,"bump":true},{"t":20,"true":[4,8],"bel":[3,4],"H":2.65,"bump":false},{"t":21,"true":[4,9],"bel":[5,11],"H":3.06,"bump":false},{"t":22,"true":[3,9],"bel":[4,9],"H":3.07,"bump":false},{"t":23,"true":[2,9],"bel":[3,9],"H":2.73,"bump":false},{"t":24,"true":[2,10],"bel":[2,9],"H":2.66,"bump":false},{"t":25,"true":[2,9],"bel":[2,8],"H":2.8,"bump":false},{"t":26,"true":[1,9],"bel":[1,8],"H":2.45,"bump":false},{"t":27,"true":[1,8],"bel":[1,7],"H":2.53,"bump":false},{"t":28,"true":[1,7],"bel":[1,6],"H":2.35,"bump":false},{"t":29,"true":[2,7],"bel":[2,6],"H":2.22,"bump":null}]}},"tests":[{"name":"dyna_faster_than_q_t90","iqm_a":2000.0,"iqm_b":24937.5,"p_holm":0.0},{"name":"blindA_beats_blindB","iqm_a":0.20625,"iqm_b":0.104167,"p_holm":0.040425},{"name":"touch_beats_pure_deadreckoning","iqm_a":0.964583,"iqm_b":0.20625,"p_holm":0.0}],"conclusion":{"supported":true,"summary":"Blindfolded dead reckoning through the home-learned model keeps working in HOME_A (success IQM: sighted 0.99, blind 0.21, blind+touch 0.96) but collapses in the stranger's HOME_B (blind 0.10 vs random floor 0.00); DynaQ reached 90% eval success by step 2000 (censored 0%) vs 24938 (censored 0%) for Q-learning.","criteria":{"dyna_sample_efficiency":true,"blind_home_works":true,"blind_stranger_fails":true,"touch_helps":true}}},"exp2":{"pitch":{"W":11,"H":7,"goal_cells":[[2,10],[3,10],[4,10]],"goal_center":[3,10],"kickoff":{"agent":[3,0],"ball":[3,5]},"attacking_third_cols":[8,9,10],"left_half_cols":[0,1,2,3,4],"fixed_spawns":{"shoot":[3,9],"dribble":[3,2]},"shot_p":[[0.0,0.0,0.0,0.0,0.0,0.0,0.19999999999999996,0.4,0.4,0.4,0.4],[0.0,0.0,0.0,0.0,0.0,0.0,0.19999999999999996,0.4,0.6,0.6,0.6],[0.0,0.0,0.0,0.0,0.0,0.0,0.19999999999999996,0.4,0.6,0.8,0.8],[0.0,0.0,0.0,0.0,0.0,0.0,0.19999999999999996,0.4,0.6,0.8,1.0],[0.0,0.0,0.0,0.0,0.0,0.0,0.19999999999999996,0.4,0.6,0.8,0.8],[0.0,0.0,0.0,0.0,0.0,0.0,0.19999999999999996,0.4,0.6,0.6,0.6],[0.0,0.0,0.0,0.0,0.0,0.0,0.19999999999999996,0.4,0.4,0.4,0.4]]},"curves":{"checkpoints":[0,2000,4000,6000,8000,10000,12000,14000,16000,18000,20000,22000,24000,26000,28000,30000,32000,34000,36000,38000,40000,42000,44000,46000,48000,50000,52000,54000,56000,58000,60000],"threshold":0.9,"conditions":{"whole":{"iqm":[0.0,0.0,0.0,0.006,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.087,0.034,0.172,0.203,0.303,0.466,0.412,0.516,0.481,0.5,0.65,0.613,0.781,0.844,0.75,0.791,0.875,0.938,0.991,1.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.138,0.087,0.2,0.15,0.188,0.338,0.262,0.463,0.537,0.438,0.478,0.562,0.625,0.828,0.838],"ci_hi":[0.0,0.0,0.0,0.044,0.034,0.0,0.037,0.0,0.019,0.163,0.228,0.381,0.312,0.469,0.519,0.625,0.797,0.738,0.841,0.812,0.812,0.963,0.938,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"drills-varied":{"iqm":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.306,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.812,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"ci_hi":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.625,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"drills-fixed":{"iqm":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.438,0.625,0.875,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.125,0.312,0.562,0.688,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"ci_hi":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.188,0.75,0.938,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]}}},"trajs":{"whole":{"25":{"scored":false,"steps":[{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4},{"agent":[3,0],"ball":[3,5],"a":4}]},"50":{"scored":false,"steps":[{"agent":[3,0],"ball":[3,5],"a":1},{"agent":[3,1],"ball":[3,5],"a":1},{"agent":[3,2],"ball":[3,5],"a":1},{"agent":[3,3],"ball":[3,5],"a":1},{"agent":[3,4],"ball":[3,5],"a":1},{"agent":[3,5],"ball":"carried","a":1},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":3}]},"100":{"scored":true,"steps":[{"agent":[3,0],"ball":[3,5],"a":1},{"agent":[3,1],"ball":[3,5],"a":1},{"agent":[3,2],"ball":[3,5],"a":1},{"agent":[3,3],"ball":[3,5],"a":1},{"agent":[3,4],"ball":[3,5],"a":1},{"agent":[3,5],"ball":"carried","a":1},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":1},{"agent":[3,8],"ball":"carried","a":1},{"agent":[3,9],"ball":"carried","a":1},{"agent":[3,10],"ball":"carried","a":4}]}},"drills-varied":{"25":{"scored":true,"steps":[{"agent":[3,0],"ball":[3,5],"a":0},{"agent":[2,0],"ball":[3,5],"a":0},{"agent":[1,0],"ball":[3,5],"a":1},{"agent":[1,1],"ball":[3,5],"a":2},{"agent":[2,1],"ball":[3,5],"a":2},{"agent":[3,1],"ball":[3,5],"a":2},{"agent":[4,1],"ball":[3,5],"a":1},{"agent":[4,2],"ball":[3,5],"a":1},{"agent":[4,3],"ball":[3,5],"a":1},{"agent":[4,4],"ball":[3,5],"a":0},{"agent":[3,4],"ball":[3,5],"a":1},{"agent":[3,5],"ball":"carried","a":1},{"agent":[3,6],"ball":"carried","a":2},{"agent":[4,6],"ball":"carried","a":1},{"agent":[4,7],"ball":"carried","a":1},{"agent":[4,8],"ball":"carried","a":0},{"agent":[3,8],"ball":"carried","a":1},{"agent":[3,9],"ball":"carried","a":1},{"agent":[3,10],"ball":"carried","a":4}]},"50":{"scored":true,"steps":[{"agent":[3,0],"ball":[3,5],"a":1},{"agent":[3,1],"ball":[3,5],"a":2},{"agent":[4,1],"ball":[3,5],"a":1},{"agent":[4,2],"ball":[3,5],"a":1},{"agent":[4,3],"ball":[3,5],"a":1},{"agent":[4,4],"ball":[3,5],"a":0},{"agent":[3,4],"ball":[3,5],"a":1},{"agent":[3,5],"ball":"carried","a":1},{"agent":[3,6],"ball":"carried","a":2},{"agent":[4,6],"ball":"carried","a":1},{"agent":[4,7],"ball":"carried","a":1},{"agent":[4,8],"ball":"carried","a":0},{"agent":[3,8],"ball":"carried","a":1},{"agent":[3,9],"ball":"carried","a":1},{"agent":[3,10],"ball":"carried","a":4}]},"100":{"scored":true,"steps":[{"agent":[3,0],"ball":[3,5],"a":1},{"agent":[3,1],"ball":[3,5],"a":2},{"agent":[4,1],"ball":[3,5],"a":1},{"agent":[4,2],"ball":[3,5],"a":1},{"agent":[4,3],"ball":[3,5],"a":1},{"agent":[4,4],"ball":[3,5],"a":0},{"agent":[3,4],"ball":[3,5],"a":1},{"agent":[3,5],"ball":"carried","a":1},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":1},{"agent":[3,8],"ball":"carried","a":1},{"agent":[3,9],"ball":"carried","a":1},{"agent":[3,10],"ball":"carried","a":4}]}},"drills-fixed":{"25":{"scored":false,"steps":[{"agent":[3,0],"ball":[3,5],"a":0},{"agent":[2,0],"ball":[3,5],"a":0},{"agent":[1,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0},{"agent":[0,0],"ball":[3,5],"a":0}]},"50":{"scored":true,"steps":[{"agent":[3,0],"ball":[3,5],"a":1},{"agent":[3,1],"ball":[3,5],"a":1},{"agent":[3,2],"ball":[3,5],"a":1},{"agent":[3,3],"ball":[3,5],"a":1},{"agent":[3,4],"ball":[3,5],"a":1},{"agent":[3,5],"ball":"carried","a":1},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":1},{"agent":[3,8],"ball":"carried","a":1},{"agent":[3,9],"ball":"carried","a":1},{"agent":[3,10],"ball":"carried","a":4}]},"100":{"scored":true,"steps":[{"agent":[3,0],"ball":[3,5],"a":1},{"agent":[3,1],"ball":[3,5],"a":1},{"agent":[3,2],"ball":[3,5],"a":1},{"agent":[3,3],"ball":[3,5],"a":1},{"agent":[3,4],"ball":[3,5],"a":1},{"agent":[3,5],"ball":"carried","a":1},{"agent":[3,6],"ball":"carried","a":1},{"agent":[3,7],"ball":"carried","a":1},{"agent":[3,8],"ball":"carried","a":1},{"agent":[3,9],"ball":"carried","a":1},{"agent":[3,10],"ball":"carried","a":4}]}}},"tests":[{"comparison":"drills-varied vs whole","metric":"time_to_90 (steps; censored -> budget+1)","u":30.5,"p":0.0,"p_holm":0.0,"iqm":{"drills-varied":15375.0,"whole":38875.0},"faster":"drills-varied","significant":true},{"comparison":"drills-fixed vs whole","metric":"time_to_90 (steps; censored -> budget+1)","u":120.0,"p":1e-06,"p_holm":1e-06,"iqm":{"drills-fixed":20125.0,"whole":38875.0},"faster":"drills-fixed","significant":true},{"comparison":"drills-varied vs drills-fixed","metric":"time_to_90 (steps; censored -> budget+1)","u":119.5,"p":1e-06,"p_holm":1e-06,"iqm":{"drills-varied":15375.0,"drills-fixed":20125.0},"faster":"drills-varied","significant":true}],"conclusion":{"supported":true,"summary":"Time to 90% eval success (IQM steps): whole=38875, drills-varied=15375, drills-fixed=20125. drills-varied vs whole: Holm p=1.13e-09 \u2014 supports H2. Censored: whole 4/30, drills-varied 0/30, drills-fixed 0/30."}},"exp3":{"structure":{"motif_table":[[6,7,0],[2,6,5],[1,1,7],[3,5,5],[7,0,3],[6,3,2]],"passages":[[1,3,5,0],[2,3,4,5],[4,2,0,3],[1,2,0,4]],"exceptions":{"0":{"position":2,"key":1,"table_key":5},"1":{"position":5,"key":3,"table_key":5},"2":{"position":5,"key":1,"table_key":7}},"correct_keys":[[2,6,1,3,5,5,6,3,2,6,7,0],[1,1,7,3,5,3,7,0,3,6,3,2],[7,0,3,1,1,1,6,7,0,3,5,5],[2,6,5,1,1,7,6,7,0,7,0,3]]},"n_keys":8,"passage_names":["A","B","C","novel"],"phase_boundaries":[150,300],"practice":{"episodes":[15,30,45,60,75,90,105,120,135,150,165,180,195,210,225,240,255,270,285,300,315,330,345,360,375,390,405,420,435,450],"blocked":{"iqm":[0.278,0.433,0.537,0.599,0.634,0.675,0.715,0.738,0.765,0.784,0.439,0.565,0.651,0.702,0.739,0.765,0.779,0.798,0.832,0.842,0.511,0.623,0.692,0.737,0.768,0.791,0.815,0.843,0.849,0.859],"lo":[0.255,0.405,0.498,0.555,0.591,0.638,0.683,0.712,0.735,0.759,0.413,0.533,0.624,0.674,0.705,0.729,0.746,0.776,0.809,0.814,0.476,0.589,0.651,0.704,0.738,0.768,0.799,0.82,0.829,0.845],"hi":[0.302,0.468,0.571,0.643,0.673,0.713,0.746,0.764,0.796,0.814,0.474,0.602,0.676,0.723,0.772,0.797,0.809,0.819,0.849,0.865,0.54,0.658,0.729,0.765,0.795,0.813,0.831,0.858,0.868,0.873]},"interleaved":{"iqm":[0.281,0.391,0.465,0.489,0.534,0.562,0.593,0.619,0.638,0.655,0.673,0.688,0.694,0.718,0.72,0.743,0.741,0.763,0.775,0.773,0.781,0.787,0.805,0.787,0.814,0.798,0.79,0.805,0.802,0.805],"lo":[0.257,0.373,0.436,0.469,0.515,0.54,0.571,0.598,0.619,0.627,0.646,0.666,0.674,0.699,0.698,0.722,0.722,0.745,0.752,0.758,0.757,0.772,0.787,0.765,0.79,0.776,0.768,0.782,0.784,0.786],"hi":[0.304,0.406,0.493,0.51,0.557,0.585,0.614,0.64,0.656,0.684,0.7,0.714,0.715,0.736,0.745,0.761,0.761,0.778,0.794,0.788,0.804,0.801,0.819,0.807,0.831,0.819,0.811,0.821,0.821,0.827]}},"retention":{"passages":["A","B","C","mean"],"blocked":{"iqm":[0.733,0.792,0.988,0.825],"lo":[0.688,0.746,0.963,0.807],"hi":[0.775,0.838,1.0,0.846]},"interleaved":{"iqm":[0.921,0.904,0.896,0.896],"lo":[0.892,0.867,0.867,0.871],"hi":[0.95,0.946,0.938,0.921]}},"transfer":{"blocked":{"iqm":0.637,"lo":0.579,"hi":0.683},"interleaved":{"iqm":0.75,"lo":0.683,"hi":0.796}},"eval_curves":{"episodes":[0,15,30,45,60,75,90,105,120,135,150,165,180,195,210,225,240,255,270,285,300,315,330,345,360,375,390,405,420,435,450],"acquisition":{"blocked":{"iqm":[0.128,0.433,0.554,0.642,0.683,0.729,0.792,0.817,0.85,0.871,0.879,0.558,0.7,0.779,0.812,0.854,0.854,0.887,0.904,0.946,0.954,0.642,0.746,0.796,0.829,0.883,0.904,0.917,0.925,0.958,0.988]},"interleaved":{"iqm":[0.128,0.379,0.485,0.531,0.586,0.632,0.647,0.685,0.701,0.719,0.743,0.764,0.768,0.797,0.803,0.835,0.822,0.842,0.85,0.864,0.865,0.861,0.85,0.865,0.871,0.889,0.9,0.886,0.889,0.9,0.896]}}},"tests":{"acquisition_blocked_gt_interleaved":{"iqm":{"blocked":0.800556,"interleaved":0.769389},"p_holm":0.006363,"significant":true},"retention_interleaved_gt_blocked":{"iqm":{"interleaved":0.895833,"blocked":0.825},"p_holm":1.2e-05,"significant":true},"transfer_interleaved_gt_blocked":{"iqm":{"interleaved":0.75,"blocked":0.6375},"p_holm":0.006363,"significant":true},"retention_A_interleaved_gt_blocked":{"iqm":{"interleaved":0.920833,"blocked":0.733333}},"retention_B_interleaved_gt_blocked":{"iqm":{"interleaved":0.904167,"blocked":0.791667}},"retention_C_interleaved_gt_blocked":{"iqm":{"interleaved":0.895833,"blocked":0.9875}}},"conclusion":{"supported":true,"summary":"Acquisition: blocked 0.801 > interleaved 0.769 (Holm p=0.0064). Retention: interleaved 0.896 > blocked 0.825 (Holm p=1.2e-05). Transfer: interleaved 0.750 > blocked 0.637 (Holm p=0.0064). Full Shea-Morgan crossover: blocked practice was fool's progress \u2014 it looked better while practicing and lost at test."}},"exp4":{"grid":{"map":["###############","#.............#","#..C..........#","#.............#","#.............#","#S...C.......G#","#.............#","#.............#","#..C..........#","#.............#","###############"],"height":11,"width":15,"start":[5,1],"goal":[5,13],"candies":[[2,3],[5,5],[8,3]],"candy_reward":0.3,"goal_reward":10.0,"cap":120,"shortest_safe_path":14},"gens":[15000,30000,45000,60000,75000],"greedy":{"generational-distill":{"iqm":[0.3,1.25,4.375,7.5,8.75],"mean":[0.3,3.0,4.667,6.333,7.0],"ci_lo":[0.3,0.0,1.25,4.375,5.625],"ci_hi":[0.3,4.375,7.5,10.0,10.0]},"weight-copy":{"iqm":[0.3,0.3,0.3,0.3,0.3],"mean":[0.3,0.3,0.3,0.3,0.3],"ci_lo":[0.3,0.3,0.3,0.3,0.3],"ci_hi":[0.3,0.3,0.3,0.3,0.3]},"one-long-life":{"iqm":[0.3,0.3,0.3,0.3,0.3],"mean":[0.3,0.3,0.3,0.3,0.3],"ci_lo":[0.3,0.3,0.3,0.3,0.3],"ci_hi":[0.3,0.3,0.3,0.3,0.3]},"one-long-life-slow":{"iqm":[0.3,0.3,0.3,0.3,0.3],"mean":[0.3,0.3,0.3,0.3,0.3],"ci_lo":[0.3,0.3,0.3,0.3,0.3],"ci_hi":[0.3,0.3,0.3,0.3,0.3]},"no-inheritance":{"iqm":[0.3,0.3,0.3,0.3,0.3],"mean":[0.3,0.3,0.3,0.3,0.3],"ci_lo":[0.3,0.3,0.3,0.3,0.3],"ci_hi":[0.3,0.3,0.3,0.3,0.3]}},"big_goal":{"generational-distill":{"iqm":[0.0,0.125,0.438,0.75,0.875],"mean":[0.0,0.3,0.467,0.633,0.7],"ci_lo":[0.0,0.0,0.125,0.438,0.562],"ci_hi":[0.0,0.438,0.75,1.0,1.0]},"weight-copy":{"iqm":[0.0,0.0,0.0,0.0,0.0],"mean":[0.0,0.0,0.0,0.0,0.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[0.0,0.0,0.0,0.0,0.0]},"one-long-life":{"iqm":[0.0,0.0,0.0,0.0,0.0],"mean":[0.0,0.0,0.0,0.0,0.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[0.0,0.0,0.0,0.0,0.0]},"one-long-life-slow":{"iqm":[0.0,0.0,0.0,0.0,0.0],"mean":[0.0,0.0,0.0,0.0,0.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[0.0,0.0,0.0,0.0,0.0]},"no-inheritance":{"iqm":[0.0,0.0,0.0,0.0,0.0],"mean":[0.0,0.0,0.0,0.0,0.0],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[0.0,0.0,0.0,0.0,0.0]}},"gap":{"generational-distill":{"iqm":[1.212,0.262,0.169,0.075,0.037],"mean":[2.91,1.827,1.777,0.757,0.737],"ci_lo":[0.0,0.169,0.075,0.0,0.0],"ci_hi":[4.244,1.512,1.475,0.169,0.131]},"weight-copy":{"iqm":[1.819,0.0,0.0,0.0,0.0],"mean":[3.233,1.293,0.97,0.647,1.293],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[4.85,0.606,0.0,0.0,0.606]},"one-long-life":{"iqm":[1.212,1.212,1.212,1.212,1.212],"mean":[2.91,2.91,2.91,2.91,2.91],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[4.244,4.244,4.244,4.244,4.244]},"one-long-life-slow":{"iqm":[1.212,2.425,2.425,2.425,2.425],"mean":[2.91,3.557,3.557,3.557,3.557],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[4.244,5.456,5.456,5.456,5.456]},"no-inheritance":{"iqm":[0.0,0.0,1.212,0.606,0.606],"mean":[1.293,1.94,2.91,2.587,2.587],"ci_lo":[0.0,0.0,0.0,0.0,0.0],"ci_hi":[0.606,2.425,4.244,3.637,3.637]}},"advice":[{"generation":1,"n_pairs":53,"pairs":[{"rc":[5,1],"action":"down"},{"rc":[6,1],"action":"right"},{"rc":[6,2],"action":"up"},{"rc":[5,2],"action":"left"},{"rc":[5,1],"action":"left"},{"rc":[6,2],"action":"left"},{"rc":[6,1],"action":"down"},{"rc":[7,1],"action":"up"},{"rc":[6,1],"action":"up"},{"rc":[5,1],"action":"right"},{"rc":[5,2],"action":"right"},{"rc":[5,3],"action":"up"},{"rc":[4,3],"action":"down"},{"rc":[5,3],"action":"left"},{"rc":[5,3],"action":"right"},{"rc":[5,4],"action":"down"},{"rc":[6,4],"action":"down"},{"rc":[7,4],"action":"right"},{"rc":[7,5],"action":"left"},{"rc":[7,4],"action":"down"},{"rc":[8,4],"action":"down"},{"rc":[9,4],"action":"left"},{"rc":[9,3],"action":"down"},{"rc":[9,3],"action":"right"},{"rc":[9,4],"action":"right"},{"rc":[9,5],"action":"up"},{"rc":[8,5],"action":"right"},{"rc":[8,6],"action":"left"},{"rc":[8,5],"action":"left"},{"rc":[8,4],"action":"left"},{"rc":[5,1],"action":"up"},{"rc":[4,1],"action":"left"},{"rc":[4,1],"action":"right"},{"rc":[4,2],"action":"left"},{"rc":[4,1],"action":"down"},{"rc":[6,1],"action":"left"},{"rc":[6,2],"action":"right"},{"rc":[6,3],"action":"down"},{"rc":[7,3],"action":"right"},{"rc":[4,2],"action":"up"},{"rc":[3,2],"action":"left"},{"rc":[3,1],"action":"right"},{"rc":[3,2],"action":"up"},{"rc":[2,2],"action":"left"},{"rc":[2,1],"action":"up"},{"rc":[1,1],"action":"down"},{"rc":[2,1],"action":"right"},{"rc":[2,2],"action":"up"},{"rc":[1,2],"action":"left"},{"rc":[1,1],"action":"left"},{"rc":[1,1],"action":"right"},{"rc":[1,2],"action":"up"},{"rc":[2,2],"action":"right"}]},{"generation":2,"n_pairs":59,"pairs":[{"rc":[5,1],"action":"right"},{"rc":[5,2],"action":"left"},{"rc":[5,1],"action":"down"},{"rc":[6,1],"action":"right"},{"rc":[6,2],"action":"down"},{"rc":[7,2],"action":"up"},{"rc":[6,2],"action":"left"},{"rc":[6,1],"action":"up"},{"rc":[5,2],"action":"right"},{"rc":[5,3],"action":"up"},{"rc":[4,3],"action":"down"},{"rc":[5,3],"action":"left"},{"rc":[5,3],"action":"down"},{"rc":[6,3],"action":"down"},{"rc":[7,3],"action":"right"},{"rc":[7,4],"action":"right"},{"rc":[7,5],"action":"left"},{"rc":[7,4],"action":"down"},{"rc":[8,4],"action":"right"},{"rc":[8,5],"action":"down"},{"rc":[9,5],"action":"right"},{"rc":[9,6],"action":"left"},{"rc":[9,6],"action":"up"},{"rc":[8,6],"action":"left"},{"rc":[9,6],"action":"right"},{"rc":[9,7],"action":"right"},{"rc":[9,8],"action":"right"},{"rc":[9,9],"action":"left"},{"rc":[9,9],"action":"right"},{"rc":[9,10],"action":"down"},{"rc":[9,10],"action":"right"},{"rc":[9,11],"action":"down"},{"rc":[9,11],"action":"up"},{"rc":[8,11],"action":"right"},{"rc":[8,12],"action":"right"},{"rc":[8,13],"action":"up"},{"rc":[7,13],"action":"left"},{"rc":[7,12],"action":"left"},{"rc":[7,11],"action":"up"},{"rc":[6,11],"action":"right"},{"rc":[6,12],"action":"right"},{"rc":[6,13],"action":"down"},{"rc":[7,13],"action":"right"},{"rc":[7,13],"action":"up"},{"rc":[6,13],"action":"up"},{"rc":[5,1],"action":"up"},{"rc":[4,1],"action":"up"},{"rc":[3,1],"action":"right"},{"rc":[3,2],"action":"left"},{"rc":[3,2],"action":"down"},{"rc":[4,2],"action":"left"},{"rc":[4,1],"action":"right"},{"rc":[4,2],"action":"up"},{"rc":[4,1],"action":"left"},{"rc":[3,2],"action":"right"},{"rc":[3,3],"action":"left"},{"rc":[3,2],"action":"up"},{"rc":[2,2],"action":"right"},{"rc":[8,4],"action":"left"}]},{"generation":3,"n_pairs":72,"pairs":[{"rc":[5,1],"action":"down"},{"rc":[6,1],"action":"up"},{"rc":[5,1],"action":"up"},{"rc":[4,1],"action":"right"},{"rc":[4,2],"action":"down"},{"rc":[5,2],"action":"left"},{"rc":[5,1],"action":"left"},{"rc":[5,1],"action":"right"},{"rc":[5,2],"action":"right"},{"rc":[5,3],"action":"right"},{"rc":[5,4],"action":"left"},{"rc":[5,3],"action":"left"},{"rc":[5,3],"action":"down"},{"rc":[6,3],"action":"down"},{"rc":[7,3],"action":"right"},{"rc":[7,4],"action":"right"},{"rc":[7,5],"action":"left"},{"rc":[7,4],"action":"down"},{"rc":[8,4],"action":"right"},{"rc":[8,5],"action":"up"},{"rc":[8,5],"action":"down"},{"rc":[9,5],"action":"right"},{"rc":[9,6],"action":"up"},{"rc":[8,6],"action":"left"},{"rc":[9,6],"action":"left"},{"rc":[9,6],"action":"right"},{"rc":[9,7],"action":"right"},{"rc":[9,8],"action":"right"},{"rc":[9,9],"action":"right"},{"rc":[9,10],"action":"right"},{"rc":[9,11],"action":"up"},{"rc":[8,11],"action":"right"},{"rc":[8,12],"action":"right"},{"rc":[8,13],"action":"up"},{"rc":[7,13],"action":"left"},{"rc":[7,12],"action":"left"},{"rc":[7,11],"action":"up"},{"rc":[6,11],"action":"right"},{"rc":[6,12],"action":"up"},{"rc":[5,12],"action":"down"},{"rc":[6,12],"action":"down"},{"rc":[5,12],"action":"left"},{"rc":[5,11],"action":"right"},{"rc":[5,12],"action":"up"},{"rc":[4,12],"action":"down"},{"rc":[6,12],"action":"left"},{"rc":[6,12],"action":"right"},{"rc":[6,13],"action":"up"},{"rc":[9,5],"action":"up"},{"rc":[9,5],"action":"down"},{"rc":[9,6],"action":"down"},{"rc":[9,8],"action":"up"},{"rc":[8,8],"action":"right"},{"rc":[8,9],"action":"left"},{"rc":[8,8],"action":"down"},{"rc":[9,8],"action":"down"},{"rc":[9,9],"action":"left"},{"rc":[9,10],"action":"down"},{"rc":[9,11],"action":"down"},{"rc":[8,11],"action":"down"},{"rc":[7,13],"action":"up"},{"rc":[6,13],"action":"right"},{"rc":[6,1],"action":"right"},{"rc":[6,2],"action":"left"},{"rc":[4,1],"action":"down"},{"rc":[8,6],"action":"down"},{"rc":[9,9],"action":"down"},{"rc":[8,13],"action":"right"},{"rc":[6,13],"action":"down"},{"rc":[7,11],"action":"down"},{"rc":[7,13],"action":"down"},{"rc":[8,13],"action":"left"}]},{"generation":4,"n_pairs":96,"pairs":[{"rc":[5,1],"action":"right"},{"rc":[5,2],"action":"right"},{"rc":[5,3],"action":"right"},{"rc":[5,4],"action":"left"},{"rc":[5,3],"action":"left"},{"rc":[5,3],"action":"down"},{"rc":[6,3],"action":"down"},{"rc":[7,3],"action":"up"},{"rc":[7,3],"action":"right"},{"rc":[7,4],"action":"down"},{"rc":[8,4],"action":"down"},{"rc":[9,4],"action":"right"},{"rc":[9,5],"action":"up"},{"rc":[8,5],"action":"down"},{"rc":[9,5],"action":"right"},{"rc":[9,6],"action":"right"},{"rc":[9,7],"action":"up"},{"rc":[8,7],"action":"right"},{"rc":[8,8],"action":"down"},{"rc":[9,8],"action":"right"},{"rc":[9,9],"action":"down"},{"rc":[9,9],"action":"right"},{"rc":[9,10],"action":"up"},{"rc":[8,10],"action":"right"},{"rc":[8,11],"action":"up"},{"rc":[7,11],"action":"down"},{"rc":[8,11],"action":"down"},{"rc":[9,11],"action":"up"},{"rc":[8,11],"action":"right"},{"rc":[8,12],"action":"right"},{"rc":[8,13],"action":"left"},{"rc":[8,12],"action":"down"},{"rc":[9,12],"action":"up"},{"rc":[8,13],"action":"right"},{"rc":[8,13],"action":"up"},{"rc":[7,13],"action":"right"},{"rc":[7,13],"action":"up"},{"rc":[6,13],"action":"up"},{"rc":[5,1],"action":"down"},{"rc":[6,1],"action":"right"},{"rc":[6,2],"action":"right"},{"rc":[6,3],"action":"up"},{"rc":[7,4],"action":"right"},{"rc":[7,5],"action":"left"},{"rc":[8,4],"action":"right"},{"rc":[9,6],"action":"left"},{"rc":[9,5],"action":"down"},{"rc":[8,5],"action":"right"},{"rc":[8,6],"action":"left"},{"rc":[8,6],"action":"down"},{"rc":[9,6],"action":"down"},{"rc":[9,6],"action":"up"},{"rc":[9,7],"action":"right"},{"rc":[9,8],"action":"left"},{"rc":[9,8],"action":"down"},{"rc":[9,10],"action":"right"},{"rc":[9,11],"action":"down"},{"rc":[9,11],"action":"right"},{"rc":[9,12],"action":"down"},{"rc":[9,12],"action":"left"},{"rc":[7,13],"action":"left"},{"rc":[7,12],"action":"left"},{"rc":[7,11],"action":"up"},{"rc":[6,11],"action":"right"},{"rc":[6,12],"action":"down"},{"rc":[6,12],"action":"up"},{"rc":[5,12],"action":"right"},{"rc":[5,1],"action":"up"},{"rc":[4,1],"action":"right"},{"rc":[4,2],"action":"down"},{"rc":[5,2],"action":"left"},{"rc":[6,1],"action":"up"},{"rc":[4,1],"action":"down"},{"rc":[4,2],"action":"left"},{"rc":[5,1],"action":"left"},{"rc":[6,2],"action":"left"},{"rc":[6,1],"action":"left"},{"rc":[6,1],"action":"down"},{"rc":[7,1],"action":"right"},{"rc":[7,2],"action":"up"},{"rc":[6,2],"action":"down"},{"rc":[7,2],"action":"right"},{"rc":[8,5],"action":"up"},{"rc":[8,5],"action":"left"},{"rc":[9,7],"action":"down"},{"rc":[8,8],"action":"right"},{"rc":[8,9],"action":"right"},{"rc":[8,12],"action":"up"},{"rc":[8,13],"action":"down"},{"rc":[9,13],"action":"up"},{"rc":[7,13],"action":"down"},{"rc":[7,12],"action":"down"},{"rc":[8,12],"action":"left"},{"rc":[8,11],"action":"left"},{"rc":[9,13],"action":"right"},{"rc":[6,13],"action":"right"}]},{"generation":5,"n_pairs":100,"pairs":[{"rc":[5,1],"action":"right"},{"rc":[5,2],"action":"right"},{"rc":[5,3],"action":"up"},{"rc":[4,3],"action":"up"},{"rc":[3,3],"action":"left"},{"rc":[3,2],"action":"right"},{"rc":[3,3],"action":"down"},{"rc":[4,3],"action":"left"},{"rc":[4,2],"action":"left"},{"rc":[4,1],"action":"right"},{"rc":[4,2],"action":"down"},{"rc":[5,3],"action":"right"},{"rc":[5,4],"action":"down"},{"rc":[6,4],"action":"down"},{"rc":[7,4],"action":"down"},{"rc":[8,4],"action":"down"},{"rc":[9,4],"action":"right"},{"rc":[9,5],"action":"right"},{"rc":[9,6],"action":"right"},{"rc":[9,7],"action":"up"},{"rc":[8,7],"action":"right"},{"rc":[8,8],"action":"left"},{"rc":[8,8],"action":"down"},{"rc":[9,8],"action":"up"},{"rc":[8,8],"action":"right"},{"rc":[8,9],"action":"right"},{"rc":[8,10],"action":"up"},{"rc":[7,10],"action":"left"},{"rc":[7,9],"action":"down"},{"rc":[8,10],"action":"down"},{"rc":[9,10],"action":"up"},{"rc":[8,10],"action":"left"},{"rc":[7,10],"action":"up"},{"rc":[6,10],"action":"down"},{"rc":[6,10],"action":"right"},{"rc":[6,11],"action":"right"},{"rc":[6,12],"action":"up"},{"rc":[5,12],"action":"left"},{"rc":[5,11],"action":"right"},{"rc":[5,12],"action":"right"},{"rc":[5,1],"action":"down"},{"rc":[6,1],"action":"down"},{"rc":[7,1],"action":"right"},{"rc":[7,2],"action":"up"},{"rc":[6,2],"action":"down"},{"rc":[7,2],"action":"down"},{"rc":[8,2],"action":"down"},{"rc":[9,2],"action":"down"},{"rc":[9,2],"action":"up"},{"rc":[8,2],"action":"up"},{"rc":[7,2],"action":"right"},{"rc":[7,3],"action":"up"},{"rc":[6,3],"action":"up"},{"rc":[5,3],"action":"down"},{"rc":[6,3],"action":"down"},{"rc":[7,3],"action":"right"},{"rc":[7,4],"action":"right"},{"rc":[7,5],"action":"left"},{"rc":[8,4],"action":"right"},{"rc":[8,5],"action":"down"},{"rc":[9,5],"action":"down"},{"rc":[9,5],"action":"up"},{"rc":[8,5],"action":"up"},{"rc":[7,5],"action":"down"},{"rc":[8,5],"action":"right"},{"rc":[8,6],"action":"down"},{"rc":[9,6],"action":"left"},{"rc":[8,5],"action":"left"},{"rc":[8,6],"action":"left"},{"rc":[8,6],"action":"right"},{"rc":[8,10],"action":"right"},{"rc":[8,11],"action":"right"},{"rc":[8,12],"action":"down"},{"rc":[9,12],"action":"right"},{"rc":[9,13],"action":"right"},{"rc":[9,13],"action":"up"},{"rc":[8,13],"action":"left"},{"rc":[8,12],"action":"up"},{"rc":[7,12],"action":"left"},{"rc":[7,11],"action":"down"},{"rc":[8,11],"action":"up"},{"rc":[7,11],"action":"up"},{"rc":[6,11],"action":"left"},{"rc":[6,12],"action":"down"},{"rc":[8,11],"action":"down"},{"rc":[9,11],"action":"down"},{"rc":[9,11],"action":"right"},{"rc":[9,12],"action":"up"},{"rc":[8,12],"action":"right"},{"rc":[8,13],"action":"down"},{"rc":[8,13],"action":"up"},{"rc":[7,13],"action":"left"},{"rc":[7,12],"action":"down"},{"rc":[8,13],"action":"right"},{"rc":[7,13],"action":"right"},{"rc":[8,12],"action":"left"},{"rc":[8,11],"action":"left"},{"rc":[7,10],"action":"down"},{"rc":[9,11],"action":"up"},{"rc":[6,11],"action":"up"}]}],"final_paths":{"generational-distill":[[5,1],[6,1],[6,2],[7,2],[7,3],[7,4],[8,4],[8,5],[9,5],[9,6],[9,7],[9,8],[9,9],[9,10],[8,10],[8,11],[7,11],[6,11],[6,12],[5,12],[5,13]],"weight-copy":[[5,1],[4,1],[3,1],[3,2],[2,2],[2,3]],"one-long-life":[[5,1],[4,1],[4,2],[3,2],[3,3],[2,3]],"one-long-life-slow":[[5,1],[5,2],[5,3],[5,4],[5,5]],"no-inheritance":[[5,1],[5,2],[5,3],[5,4],[5,5]]},"tests":{"metric":"final greedy return (generation 5)","correction":"holm-bonferroni","alpha":0.05,"comparisons":[{"a":"generational-distill","b":"weight-copy","iqm_a":8.75,"iqm_b":0.3,"u":630.0,"p":0.00356,"p_holm":0.01424,"significant":true},{"a":"generational-distill","b":"one-long-life","iqm_a":8.75,"iqm_b":0.3,"u":630.0,"p":0.00356,"p_holm":0.01424,"significant":true},{"a":"generational-distill","b":"one-long-life-slow","iqm_a":8.75,"iqm_b":0.3,"u":630.0,"p":0.00356,"p_holm":0.01424,"significant":true},{"a":"generational-distill","b":"no-inheritance","iqm_a":8.75,"iqm_b":0.3,"u":630.0,"p":0.00356,"p_holm":0.01424,"significant":true}]},"conclusion":{"supported":true,"summary":"Final greedy-return IQMs: generational-distill=8.75, weight-copy=0.30, one-long-life=0.30, one-long-life-slow=0.30, no-inheritance=0.30. Distill gen-1 IQM 0.30 -> gen-5 8.75 (ratchets upward). Holm-adjusted p vs distill: weight-copy=0.0142, one-long-life=0.0142, one-long-life-slow=0.0142, no-inheritance=0.0142."}},"exp5":{"conds":{"adult-walk":"s=1.0 throughout, walking task from the start","adult-balance-first":"s=1.0; target fixed at 0 for first 30%, then walking","grow-linear":"s 0.5->1.0 over first 60% of budget; balance-first","grow-adaptive":"grow s by 0.05 when rolling no-fall rate > 70%; balance-first","grow-jump":"s=0.5 for 60% of budget then s=1.0; balance-first","grow-linear-walk":"grow-linear schedule but walking task from the start"},"meta":{"threshold":500.0,"fall_angle":0.6283185307179586,"targets":[-0.15,0.0,0.15],"cap":400,"max_return_per_step":3.0,"conditions":{"adult-walk":"s=1.0 throughout, walking task from the start","adult-balance-first":"s=1.0; target fixed at 0 for first 30%, then walking","grow-linear":"s 0.5->1.0 over first 60% of budget; balance-first","grow-adaptive":"grow s by 0.05 when rolling no-fall rate > 70%; balance-first","grow-jump":"s=0.5 for 60% of budget then s=1.0; balance-first","grow-linear-walk":"grow-linear schedule but walking task from the start"},"damage_law":"(s / 1.0)^4 per fall","eval":"adult body s=1.0, greedy, walking targets"},"sizes":{"adult-walk":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"example":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"adult-balance-first":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"example":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"grow-linear":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[0.528,0.556,0.583,0.611,0.639,0.667,0.694,0.722,0.75,0.778,0.806,0.833,0.861,0.889,0.917,0.944,0.972,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"example":[0.503,0.506,0.508,0.511,0.514,0.517,0.519,0.522,0.525,0.528,0.531,0.533,0.536,0.539,0.542,0.544,0.547,0.55,0.553,0.556,0.558,0.561,0.564,0.567,0.569,0.572,0.575,0.578,0.581,0.583,0.586,0.589,0.592,0.594,0.597,0.6,0.603,0.606,0.608,0.611,0.614,0.617,0.619,0.622,0.625,0.628,0.631,0.633,0.636,0.639,0.642,0.644,0.647,0.65,0.653,0.656,0.658,0.661,0.664,0.667,0.669,0.672,0.675,0.678,0.681,0.683,0.686,0.689,0.692,0.694,0.697,0.7,0.703,0.706,0.708,0.711,0.714,0.717,0.719,0.722,0.725,0.728,0.731,0.733,0.736,0.739,0.742,0.744,0.747,0.75,0.753,0.756,0.758,0.761,0.764,0.767,0.769,0.772,0.775,0.778,0.781,0.783,0.786,0.789,0.792,0.794,0.797,0.8,0.803,0.806,0.808,0.811,0.814,0.817,0.819,0.822,0.825,0.828,0.831,0.833,0.836,0.839,0.842,0.844,0.847,0.85,0.853,0.856,0.858,0.861,0.864,0.867,0.869,0.872,0.875,0.878,0.881,0.883,0.886,0.889,0.892,0.894,0.897,0.9,0.903,0.906,0.908,0.911,0.914,0.917,0.919,0.922,0.925,0.928,0.931,0.933,0.936,0.939,0.942,0.944,0.947,0.95,0.953,0.956,0.958,0.961,0.964,0.967,0.969,0.972,0.975,0.978,0.981,0.983,0.986,0.989,0.992,0.994,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"grow-adaptive":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[0.5,0.5,0.5,0.5,0.525,0.525,0.56,0.57,0.61,0.615,0.615,0.615,0.615,0.615,0.615,0.615,0.615,0.615,0.615,0.62,0.63,0.635,0.635,0.635,0.645,0.66,0.665,0.675,0.68,0.685],"example":[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7,0.7]},"grow-jump":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"example":[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"grow-linear-walk":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[0.528,0.556,0.583,0.611,0.639,0.667,0.694,0.722,0.75,0.778,0.806,0.833,0.861,0.889,0.917,0.944,0.972,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"example":[0.503,0.506,0.508,0.511,0.514,0.517,0.519,0.522,0.525,0.528,0.531,0.533,0.536,0.539,0.542,0.544,0.547,0.55,0.553,0.556,0.558,0.561,0.564,0.567,0.569,0.572,0.575,0.578,0.581,0.583,0.586,0.589,0.592,0.594,0.597,0.6,0.603,0.606,0.608,0.611,0.614,0.617,0.619,0.622,0.625,0.628,0.631,0.633,0.636,0.639,0.642,0.644,0.647,0.65,0.653,0.656,0.658,0.661,0.664,0.667,0.669,0.672,0.675,0.678,0.681,0.683,0.686,0.689,0.692,0.694,0.697,0.7,0.703,0.706,0.708,0.711,0.714,0.717,0.719,0.722,0.725,0.728,0.731,0.733,0.736,0.739,0.742,0.744,0.747,0.75,0.753,0.756,0.758,0.761,0.764,0.767,0.769,0.772,0.775,0.778,0.781,0.783,0.786,0.789,0.792,0.794,0.797,0.8,0.803,0.806,0.808,0.811,0.814,0.817,0.819,0.822,0.825,0.828,0.831,0.833,0.836,0.839,0.842,0.844,0.847,0.85,0.853,0.856,0.858,0.861,0.864,0.867,0.869,0.872,0.875,0.878,0.881,0.883,0.886,0.889,0.892,0.894,0.897,0.9,0.903,0.906,0.908,0.911,0.914,0.917,0.919,0.922,0.925,0.928,0.931,0.933,0.936,0.939,0.942,0.944,0.947,0.95,0.953,0.956,0.958,0.961,0.964,0.967,0.969,0.972,0.975,0.978,0.981,0.983,0.986,0.989,0.992,0.994,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]}},"damage":{"adult-walk":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[56.3,111.1,166.0,220.8,275.6,329.1,380.9,432.8,484.0,533.8,581.6,628.6,673.3,717.4,760.0,796.9,831.8,862.7,885.7,905.7,924.2,939.6,956.7,972.9,989.9,1004.0,1019.0,1036.3,1052.1,1071.7],"lo":[54.5,108.8,162.6,215.2,269.0,322.3,373.2,423.7,473.0,520.9,566.7,613.1,655.8,693.7,733.4,767.3,799.1,826.4,847.5,864.5,881.1,893.5,908.5,926.3,939.3,952.0,966.2,980.6,995.6,1012.1],"hi":[58.7,114.7,170.0,226.8,281.8,335.7,388.2,441.5,494.1,545.4,593.5,642.0,688.1,732.5,775.7,814.9,849.0,880.5,905.1,926.8,947.4,970.6,990.7,1009.6,1024.5,1039.0,1056.3,1074.5,1092.0,1109.1]},"adult-balance-first":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[51.1,97.9,142.0,180.6,216.1,250.2,273.5,295.7,317.4,372.2,425.8,477.9,529.1,578.0,621.2,663.3,704.5,741.9,780.2,818.1,854.2,890.2,921.6,948.2,973.3,995.8,1018.2,1037.9,1056.3,1073.7],"lo":[46.8,93.6,135.2,169.6,206.6,237.0,261.0,283.7,307.3,360.9,413.2,464.4,515.0,562.2,606.1,647.4,688.4,724.3,763.3,796.2,827.2,856.7,882.0,905.2,924.0,943.7,961.4,978.5,995.7,1013.7],"hi":[54.9,102.2,148.0,190.6,223.9,258.0,280.4,304.9,325.8,380.8,436.4,487.8,539.7,588.1,632.8,679.3,722.7,763.2,802.1,840.8,880.6,915.0,949.0,979.9,1011.7,1037.9,1064.5,1090.2,1112.0,1132.8]},"grow-linear":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[2.65,3.44,3.89,4.45,5.78,6.68,7.45,9.1,10.79,29.01,48.87,73.32,99.25,127.16,158.65,189.69,221.84,253.9,287.5,309.41,330.24,350.69,367.47,384.42,394.72,414.42,433.67,454.03,469.53,483.53],"lo":[2.2,2.83,3.31,3.86,4.91,5.93,6.71,7.93,9.14,26.3,45.35,68.53,91.18,116.43,142.9,169.99,199.16,224.76,252.07,271.66,286.65,299.91,312.67,326.77,335.46,351.12,365.61,381.09,398.28,412.21],"hi":[3.04,4.02,4.59,5.25,6.49,7.45,8.95,10.76,13.25,31.98,52.87,78.94,106.48,137.09,171.4,205.64,241.21,279.32,320.9,350.63,382.32,411.97,436.31,462.57,480.24,509.22,529.26,553.09,568.83,586.58]},"grow-adaptive":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[2.52,3.4,3.93,4.23,4.53,4.75,5.03,5.14,5.24,12.78,19.52,25.89,32.01,38.17,43.06,47.36,50.68,53.45,55.75,58.16,60.2,61.9,64.0,65.71,67.62,69.22,70.58,72.6,74.24,75.51],"lo":[2.04,2.73,3.11,3.4,3.49,3.73,4.11,4.27,4.33,12.22,18.38,23.72,28.7,33.34,36.64,40.14,42.06,44.02,45.61,47.32,49.02,50.34,52.1,53.2,54.74,56.2,57.86,59.83,60.89,61.98],"hi":[2.97,4.04,4.7,5.1,5.49,5.7,5.87,5.98,6.29,13.41,21.86,29.53,36.94,43.78,50.16,55.6,59.55,62.97,66.24,69.47,71.74,73.95,76.6,78.61,80.64,82.2,83.85,86.19,87.67,88.94]},"grow-jump":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[2.98,3.9,4.47,4.86,5.06,5.21,5.29,5.43,5.59,8.44,11.15,13.83,16.45,18.76,20.62,22.04,23.38,24.43,69.22,110.97,145.13,171.73,194.58,219.47,243.04,266.34,286.81,304.68,318.37,339.34],"lo":[2.44,3.23,3.7,4.13,4.41,4.56,4.62,4.69,4.8,7.74,10.44,12.76,14.97,17.08,18.69,19.76,20.74,21.27,61.19,98.31,125.89,150.46,169.65,191.27,211.81,234.86,252.87,271.62,289.74,311.43],"hi":[3.48,4.56,5.19,5.55,5.76,5.98,6.14,6.3,6.42,9.42,12.29,15.21,17.84,20.22,22.34,24.23,25.88,27.2,78.11,125.47,167.41,202.08,233.38,265.03,296.06,323.13,347.23,371.22,388.63,407.67]},"grow-linear-walk":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[4.42,8.95,14.19,20.35,26.95,34.71,42.32,49.31,57.26,65.16,73.58,80.58,90.3,101.03,114.13,128.48,142.9,161.78,177.18,192.37,210.55,227.65,243.45,261.77,276.65,291.47,308.37,325.07,339.57,354.05],"lo":[4.22,8.47,13.48,19.26,24.93,31.04,37.37,43.43,49.37,55.16,62.56,67.7,75.53,85.36,95.88,110.82,124.56,141.78,160.23,176.01,190.28,203.18,218.36,237.85,249.55,263.26,277.43,292.95,308.29,322.04],"hi":[4.54,9.21,14.59,20.82,27.95,36.27,44.93,54.04,64.66,75.58,88.69,100.69,113.93,130.89,146.78,162.28,185.42,204.87,220.76,239.0,262.3,280.65,293.77,309.53,324.36,340.52,359.74,379.99,391.55,406.53]}},"theta":{"adult-walk":[0.036,0.037,0.037,0.039,0.042,0.046,0.05,0.055,0.059,0.062,0.066,0.07,0.075,0.079,0.083,0.088,0.092,0.095,0.1,0.104,0.107,0.112,0.117,0.12,0.124,0.128,0.132,0.136,0.14,0.144,0.148,0.152,0.156,0.16,0.164,0.168,0.173,0.177,0.181,0.186,0.192,0.2,0.21,0.222,0.236,0.251,0.267,0.283,0.299,0.316,0.332,0.348,0.367,0.387,0.408,0.431,0.455,0.48,0.507,0.536,0.567,0.6,0.637],"adult-balance-first":[0.031,0.031,0.031,0.03,0.03,0.029,0.028,0.027,0.025,0.023,0.021,0.019,0.016,0.013,0.01,0.006,0.002,-0.001,-0.005,-0.009,-0.013,-0.016,-0.02,-0.024,-0.028,-0.032,-0.036,-0.039,-0.042,-0.043,-0.044,-0.044,-0.043,-0.041,-0.038,-0.034,-0.031,-0.028,-0.026,-0.024,-0.021,-0.017,-0.012,-0.007,-0.002,0.004,0.01,0.017,0.024,0.031,0.039,0.046,0.052,0.057,0.061,0.064,0.068,0.071,0.074,0.078,0.081,0.084,0.087,0.09,0.093,0.096,0.099,0.102,0.105,0.109,0.112,0.115,0.117,0.118,0.119,0.119,0.118,0.117,0.115,0.113,0.112,0.112,0.114,0.118,0.123,0.128,0.133,0.138,0.144,0.149,0.155,0.162,0.168,0.175,0.182,0.19,0.197,0.204,0.211,0.218,0.224,0.23,0.236,0.242,0.248,0.253,0.259,0.264,0.271,0.279,0.289,0.3,0.313,0.327,0.343,0.361,0.382,0.403,0.424,0.446,0.469,0.494,0.52,0.547,0.576,0.607,0.641],"grow-linear":[-0.012,-0.012,-0.012,-0.012,-0.013,-0.014,-0.015,-0.017,-0.02,-0.023,-0.026,-0.03,-0.034,-0.038,-0.04,-0.042,-0.043,-0.042,-0.041,-0.039,-0.036,-0.034,-0.032,-0.03,-0.029,-0.029,-0.029,-0.029,-0.03,-0.032,-0.033,-0.035,-0.038,-0.04,-0.04,-0.04,-0.039,-0.037,-0.034,-0.032,-0.029,-0.026,-0.023,-0.02,-0.016,-0.012,-0.008,-0.004,-0.0,0.004,0.007,0.012,0.016,0.019,0.024,0.028,0.031,0.036,0.04,0.043,0.046,0.05,0.054,0.058,0.062,0.065,0.068,0.072,0.076,0.08,0.083,0.087,0.091,0.094,0.098,0.102,0.105,0.109,0.114,0.117,0.12,0.122,0.124,0.125,0.126,0.126,0.125,0.124,0.122,0.12,0.117,0.113,0.109,0.104,0.099,0.093,0.086,0.078,0.07,0.061,0.05,0.04,0.028,0.017,0.008,-0.001,-0.008,-0.014,-0.02,-0.024,-0.027,-0.031,-0.035,-0.038,-0.04,-0.041,-0.041,-0.041,-0.039,-0.036,-0.034,-0.033,-0.032,-0.032,-0.032,-0.032,-0.033,-0.034,-0.036,-0.039,-0.041,-0.042,-0.041,-0.04,-0.038,-0.035,-0.033,-0.031,-0.03,-0.029,-0.029,-0.029,-0.03,-0.031,-0.032,-0.035,-0.037,-0.039,-0.039,-0.039,-0.038,-0.036,-0.035,-0.034,-0.033,-0.034,-0.034,-0.035,-0.037,-0.038,-0.037,-0.036,-0.035,-0.035,-0.035,-0.036,-0.037,-0.038,-0.039,-0.039,-0.038,-0.036,-0.035,-0.034,-0.033,-0.033,-0.034,-0.035,-0.037,-0.039,-0.04,-0.04,-0.04,-0.038,-0.036,-0.034,-0.033,-0.032,-0.032,-0.032,-0.032,-0.033,-0.035,-0.037,-0.038,-0.038,-0.038,-0.036,-0.035,-0.034],"grow-adaptive":[0.004,0.004,0.002,0.001,-0.001,-0.003,-0.005,-0.008,-0.011,-0.015,-0.019,-0.023,-0.026,-0.03,-0.034,-0.037,-0.041,-0.043,-0.046,-0.048,-0.05,-0.053,-0.054,-0.056,-0.058,-0.059,-0.06,-0.061,-0.062,-0.063,-0.064,-0.064,-0.065,-0.065,-0.065,-0.065,-0.065,-0.065,-0.065,-0.065,-0.063,-0.061,-0.059,-0.055,-0.051,-0.047,-0.043,-0.04,-0.037,-0.033,-0.029,-0.026,-0.022,-0.019,-0.015,-0.011,-0.008,-0.005,-0.001,0.003,0.006,0.009,0.013,0.017,0.021,0.024,0.028,0.032,0.035,0.039,0.043,0.046,0.048,0.051,0.053,0.056,0.058,0.06,0.062,0.063,0.064,0.065,0.064,0.062,0.06,0.056,0.052,0.049,0.045,0.041,0.036,0.033,0.029,0.025,0.022,0.018,0.015,0.011,0.007,0.003,0.0,-0.003,-0.007,-0.011,-0.015,-0.018,-0.022,-0.025,-0.029,-0.033,-0.037,-0.04,-0.044,-0.047,-0.05,-0.053,-0.055,-0.058,-0.06,-0.062,-0.064,-0.065,-0.064,-0.064,-0.062,-0.059,-0.056,-0.052,-0.049,-0.045,-0.041,-0.037,-0.033,-0.03,-0.027,-0.023,-0.019,-0.015,-0.012,-0.009,-0.006,-0.002,0.002,0.005,0.008,0.012,0.016,0.019,0.023,0.027,0.031,0.035,0.039,0.042,0.045,0.047,0.05,0.052,0.054,0.057,0.058,0.06,0.062,0.063,0.065,0.066,0.067,0.068,0.069,0.07,0.071,0.071,0.072,0.072,0.073,0.073,0.073,0.074,0.074,0.074,0.074,0.073,0.073,0.073,0.073,0.072,0.072,0.071,0.071,0.07,0.07,0.069,0.068,0.068,0.067,0.066,0.065,0.064,0.062,0.06],"grow-jump":[-0.012,-0.014,-0.015,-0.015,-0.016,-0.016,-0.015,-0.015,-0.014,-0.013,-0.011,-0.01,-0.008,-0.006,-0.003,-0.0,0.003,0.006,0.01,0.015,0.018,0.021,0.025,0.03,0.033,0.037,0.04,0.043,0.044,0.044,0.044,0.042,0.04,0.037,0.033,0.03,0.027,0.024,0.022,0.02,0.019,0.018,0.016,0.015,0.014,0.013,0.012,0.011,0.01,0.01,0.009,0.008,0.007,0.007,0.006,0.005,0.005,0.004,0.004,0.003,0.003,0.003,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.002,0.001,-0.0,-0.002,-0.004,-0.006,-0.009,-0.012,-0.016,-0.019,-0.024,-0.028,-0.033,-0.037,-0.041,-0.045,-0.049,-0.053,-0.057,-0.061,-0.065,-0.068,-0.072,-0.077,-0.081,-0.085,-0.089,-0.093,-0.097,-0.101,-0.104,-0.109,-0.112,-0.117,-0.123,-0.129,-0.135,-0.143,-0.15,-0.159,-0.169,-0.179,-0.191,-0.203,-0.217,-0.232,-0.248,-0.265,-0.282,-0.299,-0.316,-0.333,-0.351,-0.369,-0.387,-0.405,-0.424,-0.444,-0.465,-0.487,-0.511,-0.539,-0.569,-0.602,-0.637],"grow-linear-walk":[0.016,0.014,0.011,0.008,0.003,-0.003,-0.008,-0.015,-0.021,-0.028,-0.035,-0.043,-0.05,-0.056,-0.061,-0.065,-0.069,-0.071,-0.073,-0.074,-0.075,-0.074,-0.073,-0.072,-0.069,-0.066,-0.062,-0.057,-0.051,-0.045,-0.038,-0.029,-0.022,-0.016,-0.012,-0.008,-0.006,-0.004,-0.004,-0.005,-0.007,-0.01,-0.014,-0.017,-0.022,-0.025,-0.029,-0.033,-0.038,-0.042,-0.044,-0.046,-0.048,-0.048,-0.047,-0.045,-0.043,-0.039,-0.035,-0.032,-0.03,-0.029,-0.03,-0.032,-0.034,-0.038,-0.041,-0.043,-0.045,-0.045,-0.044,-0.043,-0.04,-0.037,-0.033,-0.03,-0.028,-0.027,-0.028,-0.029,-0.032,-0.037,-0.041,-0.045,-0.048,-0.05,-0.051,-0.051,-0.051,-0.049,-0.047,-0.043,-0.039,-0.034,-0.03,-0.027,-0.026,-0.026,-0.027,-0.029,-0.032,-0.037,-0.042,-0.046,-0.049,-0.051,-0.053,-0.054,-0.053,-0.052,-0.05,-0.048,-0.044,-0.039,-0.034,-0.03,-0.026,-0.025,-0.024,-0.024,-0.024,-0.024,-0.024,-0.023,-0.022,-0.021,-0.019,-0.018,-0.016,-0.013,-0.01,-0.007,-0.004,-0.0,0.004,0.008,0.013,0.017,0.022,0.027,0.032,0.037,0.041,0.045,0.047,0.049,0.05,0.05,0.049,0.047,0.044,0.041,0.036,0.032,0.028,0.026,0.023,0.021,0.019,0.018,0.016,0.013,0.009,0.005,0.001,-0.002,-0.006,-0.009,-0.013,-0.016,-0.021,-0.024,-0.028,-0.032,-0.036,-0.04,-0.043,-0.045,-0.046,-0.046,-0.045,-0.044,-0.042,-0.038,-0.034,-0.031,-0.03,-0.029,-0.03,-0.032,-0.035,-0.04,-0.043,-0.046,-0.048,-0.049,-0.049,-0.048,-0.046,-0.044]},"falls":{"adult-walk":[{"step":43,"size":1.0,"dmg":1.0},{"step":428,"size":1.0,"dmg":1.0},{"step":845,"size":1.0,"dmg":1.0},{"step":1280,"size":1.0,"dmg":1.0},{"step":1734,"size":1.0,"dmg":1.0},{"step":2180,"size":1.0,"dmg":1.0},{"step":2639,"size":1.0,"dmg":1.0},{"step":3108,"size":1.0,"dmg":1.0},{"step":3557,"size":1.0,"dmg":1.0},{"step":4003,"size":1.0,"dmg":1.0},{"step":4467,"size":1.0,"dmg":1.0},{"step":4913,"size":1.0,"dmg":1.0},{"step":5396,"size":1.0,"dmg":1.0},{"step":5883,"size":1.0,"dmg":1.0},{"step":6355,"size":1.0,"dmg":1.0},{"step":6822,"size":1.0,"dmg":1.0},{"step":7263,"size":1.0,"dmg":1.0},{"step":7704,"size":1.0,"dmg":1.0},{"step":8169,"size":1.0,"dmg":1.0},{"step":8610,"size":1.0,"dmg":1.0},{"step":9077,"size":1.0,"dmg":1.0},{"step":9522,"size":1.0,"dmg":1.0},{"step":10000,"size":1.0,"dmg":1.0},{"step":10470,"size":1.0,"dmg":1.0},{"step":10946,"size":1.0,"dmg":1.0},{"step":11391,"size":1.0,"dmg":1.0},{"step":11869,"size":1.0,"dmg":1.0},{"step":12341,"size":1.0,"dmg":1.0},{"step":12815,"size":1.0,"dmg":1.0},{"step":13265,"size":1.0,"dmg":1.0},{"step":13734,"size":1.0,"dmg":1.0},{"step":14192,"size":1.0,"dmg":1.0},{"step":14658,"size":1.0,"dmg":1.0},{"step":15128,"size":1.0,"dmg":1.0},{"step":15610,"size":1.0,"dmg":1.0},{"step":16069,"size":1.0,"dmg":1.0},{"step":16542,"size":1.0,"dmg":1.0},{"step":17001,"size":1.0,"dmg":1.0},{"step":17454,"size":1.0,"dmg":1.0},{"step":17920,"size":1.0,"dmg":1.0},{"step":18378,"size":1.0,"dmg":1.0},{"step":18863,"size":1.0,"dmg":1.0},{"step":19339,"size":1.0,"dmg":1.0},{"step":19826,"size":1.0,"dmg":1.0},{"step":20279,"size":1.0,"dmg":1.0},{"step":20773,"size":1.0,"dmg":1.0},{"step":21219,"size":1.0,"dmg":1.0},{"step":21681,"size":1.0,"dmg":1.0},{"step":22166,"size":1.0,"dmg":1.0},{"step":22663,"size":1.0,"dmg":1.0},{"step":23140,"size":1.0,"dmg":1.0},{"step":23609,"size":1.0,"dmg":1.0},{"step":24083,"size":1.0,"dmg":1.0},{"step":24553,"size":1.0,"dmg":1.0},{"step":25046,"size":1.0,"dmg":1.0},{"step":25521,"size":1.0,"dmg":1.0},{"step":26003,"size":1.0,"dmg":1.0},{"step":26494,"size":1.0,"dmg":1.0},{"step":26991,"size":1.0,"dmg":1.0},{"step":27512,"size":1.0,"dmg":1.0},{"step":27969,"size":1.0,"dmg":1.0},{"step":28448,"size":1.0,"dmg":1.0},{"step":28957,"size":1.0,"dmg":1.0},{"step":29476,"size":1.0,"dmg":1.0},{"step":30012,"size":1.0,"dmg":1.0},{"step":30509,"size":1.0,"dmg":1.0},{"step":31006,"size":1.0,"dmg":1.0},{"step":31519,"size":1.0,"dmg":1.0},{"step":31975,"size":1.0,"dmg":1.0},{"step":32444,"size":1.0,"dmg":1.0},{"step":32953,"size":1.0,"dmg":1.0},{"step":33449,"size":1.0,"dmg":1.0},{"step":33948,"size":1.0,"dmg":1.0},{"step":34455,"size":1.0,"dmg":1.0},{"step":34951,"size":1.0,"dmg":1.0},{"step":35441,"size":1.0,"dmg":1.0},{"step":35960,"size":1.0,"dmg":1.0},{"step":36504,"size":1.0,"dmg":1.0},{"step":37019,"size":1.0,"dmg":1.0},{"step":37549,"size":1.0,"dmg":1.0},{"step":38043,"size":1.0,"dmg":1.0},{"step":38533,"size":1.0,"dmg":1.0},{"step":39039,"size":1.0,"dmg":1.0},{"step":39572,"size":1.0,"dmg":1.0},{"step":40080,"size":1.0,"dmg":1.0},{"step":40624,"size":1.0,"dmg":1.0},{"step":41165,"size":1.0,"dmg":1.0},{"step":41727,"size":1.0,"dmg":1.0},{"step":42261,"size":1.0,"dmg":1.0},{"step":42817,"size":1.0,"dmg":1.0},{"step":43356,"size":1.0,"dmg":1.0},{"step":43917,"size":1.0,"dmg":1.0},{"step":44472,"size":1.0,"dmg":1.0},{"step":44984,"size":1.0,"dmg":1.0},{"step":45519,"size":1.0,"dmg":1.0},{"step":46084,"size":1.0,"dmg":1.0},{"step":46630,"size":1.0,"dmg":1.0},{"step":47171,"size":1.0,"dmg":1.0},{"step":47732,"size":1.0,"dmg":1.0},{"step":48299,"size":1.0,"dmg":1.0},{"step":48865,"size":1.0,"dmg":1.0},{"step":49468,"size":1.0,"dmg":1.0},{"step":50039,"size":1.0,"dmg":1.0},{"step":50639,"size":1.0,"dmg":1.0},{"step":51220,"size":1.0,"dmg":1.0},{"step":51781,"size":1.0,"dmg":1.0},{"step":52346,"size":1.0,"dmg":1.0},{"step":52947,"size":1.0,"dmg":1.0},{"step":53533,"size":1.0,"dmg":1.0},{"step":54160,"size":1.0,"dmg":1.0},{"step":54789,"size":1.0,"dmg":1.0},{"step":55446,"size":1.0,"dmg":1.0},{"step":56073,"size":1.0,"dmg":1.0},{"step":56688,"size":1.0,"dmg":1.0},{"step":57303,"size":1.0,"dmg":1.0},{"step":57926,"size":1.0,"dmg":1.0},{"step":58571,"size":1.0,"dmg":1.0},{"step":59192,"size":1.0,"dmg":1.0},{"step":59857,"size":1.0,"dmg":1.0},{"step":60485,"size":1.0,"dmg":1.0},{"step":61171,"size":1.0,"dmg":1.0},{"step":61864,"size":1.0,"dmg":1.0},{"step":62603,"size":1.0,"dmg":1.0},{"step":63310,"size":1.0,"dmg":1.0},{"step":64061,"size":1.0,"dmg":1.0},{"step":64819,"size":1.0,"dmg":1.0},{"step":65551,"size":1.0,"dmg":1.0},{"step":66279,"size":1.0,"dmg":1.0},{"step":67177,"size":1.0,"dmg":1.0},{"step":68075,"size":1.0,"dmg":1.0},{"step":68962,"size":1.0,"dmg":1.0},{"step":69756,"size":1.0,"dmg":1.0},{"step":70636,"size":1.0,"dmg":1.0},{"step":71497,"size":1.0,"dmg":1.0},{"step":72503,"size":1.0,"dmg":1.0},{"step":73570,"size":1.0,"dmg":1.0},{"step":74650,"size":1.0,"dmg":1.0},{"step":75769,"size":1.0,"dmg":1.0},{"step":76893,"size":1.0,"dmg":1.0},{"step":78142,"size":1.0,"dmg":1.0},{"step":79377,"size":1.0,"dmg":1.0},{"step":80557,"size":1.0,"dmg":1.0},{"step":81926,"size":1.0,"dmg":1.0},{"step":83061,"size":1.0,"dmg":1.0},{"step":84367,"size":1.0,"dmg":1.0},{"step":85739,"size":1.0,"dmg":1.0},{"step":87159,"size":1.0,"dmg":1.0},{"step":88728,"size":1.0,"dmg":1.0},{"step":90062,"size":1.0,"dmg":1.0},{"step":91314,"size":1.0,"dmg":1.0}],"adult-balance-first":[{"step":40,"size":1.0,"dmg":1.0},{"step":501,"size":1.0,"dmg":1.0},{"step":969,"size":1.0,"dmg":1.0},{"step":1427,"size":1.0,"dmg":1.0},{"step":1931,"size":1.0,"dmg":1.0},{"step":2444,"size":1.0,"dmg":1.0},{"step":2962,"size":1.0,"dmg":1.0},{"step":3538,"size":1.0,"dmg":1.0},{"step":4068,"size":1.0,"dmg":1.0},{"step":4602,"size":1.0,"dmg":1.0},{"step":5173,"size":1.0,"dmg":1.0},{"step":5705,"size":1.0,"dmg":1.0},{"step":6274,"size":1.0,"dmg":1.0},{"step":6786,"size":1.0,"dmg":1.0},{"step":7332,"size":1.0,"dmg":1.0},{"step":7863,"size":1.0,"dmg":1.0},{"step":8420,"size":1.0,"dmg":1.0},{"step":9004,"size":1.0,"dmg":1.0},{"step":9585,"size":1.0,"dmg":1.0},{"step":10148,"size":1.0,"dmg":1.0},{"step":10725,"size":1.0,"dmg":1.0},{"step":11364,"size":1.0,"dmg":1.0},{"step":12008,"size":1.0,"dmg":1.0},{"step":12618,"size":1.0,"dmg":1.0},{"step":13268,"size":1.0,"dmg":1.0},{"step":13883,"size":1.0,"dmg":1.0},{"step":14670,"size":1.0,"dmg":1.0},{"step":15348,"size":1.0,"dmg":1.0},{"step":16028,"size":1.0,"dmg":1.0},{"step":16743,"size":1.0,"dmg":1.0},{"step":17413,"size":1.0,"dmg":1.0},{"step":18135,"size":1.0,"dmg":1.0},{"step":18872,"size":1.0,"dmg":1.0},{"step":19653,"size":1.0,"dmg":1.0},{"step":20440,"size":1.0,"dmg":1.0},{"step":21200,"size":1.0,"dmg":1.0},{"step":22174,"size":1.0,"dmg":1.0},{"step":22944,"size":1.0,"dmg":1.0},{"step":23605,"size":1.0,"dmg":1.0},{"step":24567,"size":1.0,"dmg":1.0},{"step":25625,"size":1.0,"dmg":1.0},{"step":26931,"size":1.0,"dmg":1.0},{"step":27935,"size":1.0,"dmg":1.0},{"step":28894,"size":1.0,"dmg":1.0},{"step":29818,"size":1.0,"dmg":1.0},{"step":31016,"size":1.0,"dmg":1.0},{"step":32451,"size":1.0,"dmg":1.0},{"step":33647,"size":1.0,"dmg":1.0},{"step":34826,"size":1.0,"dmg":1.0},{"step":35884,"size":1.0,"dmg":1.0},{"step":36491,"size":1.0,"dmg":1.0},{"step":36957,"size":1.0,"dmg":1.0},{"step":37408,"size":1.0,"dmg":1.0},{"step":37888,"size":1.0,"dmg":1.0},{"step":38381,"size":1.0,"dmg":1.0},{"step":38829,"size":1.0,"dmg":1.0},{"step":39295,"size":1.0,"dmg":1.0},{"step":39740,"size":1.0,"dmg":1.0},{"step":40204,"size":1.0,"dmg":1.0},{"step":40654,"size":1.0,"dmg":1.0},{"step":41167,"size":1.0,"dmg":1.0},{"step":41651,"size":1.0,"dmg":1.0},{"step":42114,"size":1.0,"dmg":1.0},{"step":42608,"size":1.0,"dmg":1.0},{"step":43056,"size":1.0,"dmg":1.0},{"step":43536,"size":1.0,"dmg":1.0},{"step":44004,"size":1.0,"dmg":1.0},{"step":44470,"size":1.0,"dmg":1.0},{"step":44984,"size":1.0,"dmg":1.0},{"step":45474,"size":1.0,"dmg":1.0},{"step":45936,"size":1.0,"dmg":1.0},{"step":46427,"size":1.0,"dmg":1.0},{"step":46934,"size":1.0,"dmg":1.0},{"step":47423,"size":1.0,"dmg":1.0},{"step":47953,"size":1.0,"dmg":1.0},{"step":48453,"size":1.0,"dmg":1.0},{"step":48947,"size":1.0,"dmg":1.0},{"step":49452,"size":1.0,"dmg":1.0},{"step":49980,"size":1.0,"dmg":1.0},{"step":50500,"size":1.0,"dmg":1.0},{"step":50966,"size":1.0,"dmg":1.0},{"step":51466,"size":1.0,"dmg":1.0},{"step":51973,"size":1.0,"dmg":1.0},{"step":52498,"size":1.0,"dmg":1.0},{"step":53035,"size":1.0,"dmg":1.0},{"step":53575,"size":1.0,"dmg":1.0},{"step":54097,"size":1.0,"dmg":1.0},{"step":54593,"size":1.0,"dmg":1.0},{"step":55150,"size":1.0,"dmg":1.0},{"step":55666,"size":1.0,"dmg":1.0},{"step":56198,"size":1.0,"dmg":1.0},{"step":56761,"size":1.0,"dmg":1.0},{"step":57313,"size":1.0,"dmg":1.0},{"step":57892,"size":1.0,"dmg":1.0},{"step":58473,"size":1.0,"dmg":1.0},{"step":59057,"size":1.0,"dmg":1.0},{"step":59642,"size":1.0,"dmg":1.0},{"step":60201,"size":1.0,"dmg":1.0},{"step":60761,"size":1.0,"dmg":1.0},{"step":61355,"size":1.0,"dmg":1.0},{"step":61926,"size":1.0,"dmg":1.0},{"step":62481,"size":1.0,"dmg":1.0},{"step":63063,"size":1.0,"dmg":1.0},{"step":63620,"size":1.0,"dmg":1.0},{"step":64212,"size":1.0,"dmg":1.0},{"step":64760,"size":1.0,"dmg":1.0},{"step":65365,"size":1.0,"dmg":1.0},{"step":65955,"size":1.0,"dmg":1.0},{"step":66557,"size":1.0,"dmg":1.0},{"step":67159,"size":1.0,"dmg":1.0},{"step":67777,"size":1.0,"dmg":1.0},{"step":68398,"size":1.0,"dmg":1.0},{"step":69116,"size":1.0,"dmg":1.0},{"step":69728,"size":1.0,"dmg":1.0},{"step":70390,"size":1.0,"dmg":1.0},{"step":71041,"size":1.0,"dmg":1.0},{"step":71731,"size":1.0,"dmg":1.0},{"step":72415,"size":1.0,"dmg":1.0},{"step":73127,"size":1.0,"dmg":1.0},{"step":73832,"size":1.0,"dmg":1.0},{"step":74489,"size":1.0,"dmg":1.0},{"step":75175,"size":1.0,"dmg":1.0},{"step":75892,"size":1.0,"dmg":1.0},{"step":76625,"size":1.0,"dmg":1.0},{"step":77387,"size":1.0,"dmg":1.0},{"step":78112,"size":1.0,"dmg":1.0},{"step":78839,"size":1.0,"dmg":1.0},{"step":79522,"size":1.0,"dmg":1.0},{"step":80215,"size":1.0,"dmg":1.0},{"step":80947,"size":1.0,"dmg":1.0},{"step":81793,"size":1.0,"dmg":1.0},{"step":82576,"size":1.0,"dmg":1.0},{"step":83311,"size":1.0,"dmg":1.0},{"step":84059,"size":1.0,"dmg":1.0},{"step":84864,"size":1.0,"dmg":1.0},{"step":85698,"size":1.0,"dmg":1.0},{"step":86496,"size":1.0,"dmg":1.0},{"step":87348,"size":1.0,"dmg":1.0},{"step":88187,"size":1.0,"dmg":1.0},{"step":89004,"size":1.0,"dmg":1.0},{"step":89838,"size":1.0,"dmg":1.0},{"step":90757,"size":1.0,"dmg":1.0},{"step":91692,"size":1.0,"dmg":1.0},{"step":92621,"size":1.0,"dmg":1.0},{"step":93595,"size":1.0,"dmg":1.0},{"step":94530,"size":1.0,"dmg":1.0},{"step":95686,"size":1.0,"dmg":1.0},{"step":96737,"size":1.0,"dmg":1.0},{"step":97809,"size":1.0,"dmg":1.0},{"step":98831,"size":1.0,"dmg":1.0}],"grow-linear":[{"step":20,"size":0.5,"dmg":0.063},{"step":212,"size":0.5,"dmg":0.063},{"step":454,"size":0.5,"dmg":0.064},{"step":722,"size":0.51,"dmg":0.065},{"step":1028,"size":0.51,"dmg":0.066},{"step":1397,"size":0.51,"dmg":0.067},{"step":1800,"size":0.51,"dmg":0.069},{"step":2396,"size":0.52,"dmg":0.071},{"step":3259,"size":0.52,"dmg":0.075},{"step":4232,"size":0.53,"dmg":0.079},{"step":5515,"size":0.54,"dmg":0.084},{"step":7025,"size":0.55,"dmg":0.091},{"step":9479,"size":0.57,"dmg":0.102},{"step":12879,"size":0.59,"dmg":0.121},{"step":17103,"size":0.62,"dmg":0.147},{"step":19643,"size":0.64,"dmg":0.164},{"step":22601,"size":0.66,"dmg":0.186},{"step":26683,"size":0.69,"dmg":0.221},{"step":29516,"size":0.7,"dmg":0.247},{"step":32631,"size":0.73,"dmg":0.279},{"step":35865,"size":0.75,"dmg":0.315},{"step":36439,"size":0.75,"dmg":0.322},{"step":36792,"size":0.76,"dmg":0.326},{"step":37143,"size":0.76,"dmg":0.33},{"step":37480,"size":0.76,"dmg":0.334},{"step":37828,"size":0.76,"dmg":0.338},{"step":38154,"size":0.76,"dmg":0.342},{"step":38506,"size":0.77,"dmg":0.347},{"step":38864,"size":0.77,"dmg":0.351},{"step":39167,"size":0.77,"dmg":0.355},{"step":39493,"size":0.77,"dmg":0.359},{"step":39836,"size":0.78,"dmg":0.364},{"step":40181,"size":0.78,"dmg":0.368},{"step":40538,"size":0.78,"dmg":0.373},{"step":40872,"size":0.78,"dmg":0.377},{"step":41210,"size":0.79,"dmg":0.382},{"step":41546,"size":0.79,"dmg":0.387},{"step":41927,"size":0.79,"dmg":0.392},{"step":42287,"size":0.79,"dmg":0.397},{"step":42645,"size":0.8,"dmg":0.402},{"step":43026,"size":0.8,"dmg":0.407},{"step":43375,"size":0.8,"dmg":0.412},{"step":43706,"size":0.8,"dmg":0.417},{"step":44044,"size":0.81,"dmg":0.422},{"step":44361,"size":0.81,"dmg":0.426},{"step":44686,"size":0.81,"dmg":0.431},{"step":45009,"size":0.81,"dmg":0.436},{"step":45350,"size":0.81,"dmg":0.441},{"step":45671,"size":0.82,"dmg":0.446},{"step":46005,"size":0.82,"dmg":0.451},{"step":46350,"size":0.82,"dmg":0.456},{"step":46670,"size":0.82,"dmg":0.461},{"step":47033,"size":0.83,"dmg":0.467},{"step":47408,"size":0.83,"dmg":0.473},{"step":47764,"size":0.83,"dmg":0.478},{"step":48124,"size":0.83,"dmg":0.484},{"step":48523,"size":0.84,"dmg":0.491},{"step":48904,"size":0.84,"dmg":0.497},{"step":49273,"size":0.84,"dmg":0.503},{"step":49736,"size":0.85,"dmg":0.511},{"step":50101,"size":0.85,"dmg":0.517},{"step":50478,"size":0.85,"dmg":0.523},{"step":50811,"size":0.85,"dmg":0.529},{"step":51176,"size":0.86,"dmg":0.535},{"step":51574,"size":0.86,"dmg":0.542},{"step":51973,"size":0.86,"dmg":0.549},{"step":52396,"size":0.86,"dmg":0.557},{"step":52748,"size":0.87,"dmg":0.563},{"step":53133,"size":0.87,"dmg":0.57},{"step":53523,"size":0.87,"dmg":0.577},{"step":53930,"size":0.87,"dmg":0.585},{"step":54295,"size":0.88,"dmg":0.592},{"step":54665,"size":0.88,"dmg":0.599},{"step":55040,"size":0.88,"dmg":0.606},{"step":55447,"size":0.89,"dmg":0.614},{"step":55847,"size":0.89,"dmg":0.621},{"step":56292,"size":0.89,"dmg":0.63},{"step":56670,"size":0.89,"dmg":0.637},{"step":57040,"size":0.9,"dmg":0.645},{"step":57426,"size":0.9,"dmg":0.653},{"step":57806,"size":0.9,"dmg":0.66},{"step":58189,"size":0.9,"dmg":0.668},{"step":58565,"size":0.91,"dmg":0.676},{"step":59065,"size":0.91,"dmg":0.686},{"step":59506,"size":0.91,"dmg":0.696},{"step":59969,"size":0.92,"dmg":0.705},{"step":60384,"size":0.92,"dmg":0.714},{"step":60822,"size":0.92,"dmg":0.724},{"step":61254,"size":0.93,"dmg":0.733},{"step":61691,"size":0.93,"dmg":0.743},{"step":62086,"size":0.93,"dmg":0.752},{"step":62513,"size":0.93,"dmg":0.761},{"step":62962,"size":0.94,"dmg":0.772},{"step":63382,"size":0.94,"dmg":0.781},{"step":63915,"size":0.94,"dmg":0.794},{"step":64433,"size":0.95,"dmg":0.806},{"step":64901,"size":0.95,"dmg":0.817},{"step":65378,"size":0.95,"dmg":0.828},{"step":65906,"size":0.96,"dmg":0.841},{"step":66328,"size":0.96,"dmg":0.851},{"step":66781,"size":0.96,"dmg":0.863},{"step":67317,"size":0.97,"dmg":0.876},{"step":67859,"size":0.97,"dmg":0.89},{"step":68404,"size":0.98,"dmg":0.904},{"step":68940,"size":0.98,"dmg":0.918},{"step":69474,"size":0.98,"dmg":0.932},{"step":70034,"size":0.99,"dmg":0.946},{"step":70575,"size":0.99,"dmg":0.961},{"step":71065,"size":0.99,"dmg":0.974},{"step":71642,"size":1.0,"dmg":0.99},{"step":72152,"size":1.0,"dmg":1.0},{"step":72625,"size":1.0,"dmg":1.0},{"step":73170,"size":1.0,"dmg":1.0},{"step":73684,"size":1.0,"dmg":1.0},{"step":74205,"size":1.0,"dmg":1.0},{"step":74828,"size":1.0,"dmg":1.0},{"step":75346,"size":1.0,"dmg":1.0},{"step":75869,"size":1.0,"dmg":1.0},{"step":76483,"size":1.0,"dmg":1.0},{"step":77063,"size":1.0,"dmg":1.0},{"step":77729,"size":1.0,"dmg":1.0},{"step":78463,"size":1.0,"dmg":1.0},{"step":79266,"size":1.0,"dmg":1.0},{"step":80078,"size":1.0,"dmg":1.0},{"step":80898,"size":1.0,"dmg":1.0},{"step":81584,"size":1.0,"dmg":1.0},{"step":82349,"size":1.0,"dmg":1.0},{"step":83072,"size":1.0,"dmg":1.0},{"step":83868,"size":1.0,"dmg":1.0},{"step":84670,"size":1.0,"dmg":1.0},{"step":85497,"size":1.0,"dmg":1.0},{"step":86325,"size":1.0,"dmg":1.0},{"step":87121,"size":1.0,"dmg":1.0},{"step":87874,"size":1.0,"dmg":1.0},{"step":88649,"size":1.0,"dmg":1.0},{"step":89641,"size":1.0,"dmg":1.0},{"step":90625,"size":1.0,"dmg":1.0},{"step":91597,"size":1.0,"dmg":1.0},{"step":92460,"size":1.0,"dmg":1.0},{"step":93289,"size":1.0,"dmg":1.0},{"step":94222,"size":1.0,"dmg":1.0},{"step":95071,"size":1.0,"dmg":1.0},{"step":96035,"size":1.0,"dmg":1.0},{"step":97138,"size":1.0,"dmg":1.0},{"step":98241,"size":1.0,"dmg":1.0},{"step":99313,"size":1.0,"dmg":1.0},{"step":100441,"size":1.0,"dmg":1.0},{"step":101233,"size":1.0,"dmg":1.0},{"step":102019,"size":1.0,"dmg":1.0},{"step":102862,"size":1.0,"dmg":1.0}],"grow-adaptive":[{"step":19,"size":0.5,"dmg":0.062},{"step":197,"size":0.5,"dmg":0.062},{"step":370,"size":0.5,"dmg":0.062},{"step":549,"size":0.5,"dmg":0.062},{"step":765,"size":0.5,"dmg":0.062},{"step":1019,"size":0.5,"dmg":0.062},{"step":1293,"size":0.5,"dmg":0.062},{"step":1572,"size":0.5,"dmg":0.062},{"step":1902,"size":0.5,"dmg":0.062},{"step":2266,"size":0.5,"dmg":0.062},{"step":2760,"size":0.5,"dmg":0.062},{"step":3307,"size":0.5,"dmg":0.062},{"step":3917,"size":0.5,"dmg":0.062},{"step":4621,"size":0.5,"dmg":0.062},{"step":5408,"size":0.5,"dmg":0.062},{"step":6244,"size":0.5,"dmg":0.062},{"step":7220,"size":0.5,"dmg":0.062},{"step":8285,"size":0.5,"dmg":0.062},{"step":9595,"size":0.5,"dmg":0.062},{"step":11140,"size":0.5,"dmg":0.062},{"step":13364,"size":0.5,"dmg":0.062},{"step":15417,"size":0.5,"dmg":0.062},{"step":18180,"size":0.5,"dmg":0.062},{"step":20528,"size":0.5,"dmg":0.062},{"step":25646,"size":0.55,"dmg":0.092},{"step":31711,"size":0.6,"dmg":0.13},{"step":36159,"size":0.6,"dmg":0.13},{"step":36490,"size":0.6,"dmg":0.13},{"step":36813,"size":0.7,"dmg":0.24},{"step":37077,"size":0.6,"dmg":0.13},{"step":37323,"size":0.7,"dmg":0.24},{"step":37596,"size":0.65,"dmg":0.179},{"step":37866,"size":0.5,"dmg":0.062},{"step":38095,"size":0.7,"dmg":0.24},{"step":38350,"size":0.6,"dmg":0.13},{"step":38619,"size":0.6,"dmg":0.13},{"step":38883,"size":0.6,"dmg":0.13},{"step":39163,"size":0.6,"dmg":0.13},{"step":39421,"size":0.65,"dmg":0.179},{"step":39661,"size":0.6,"dmg":0.13},{"step":39927,"size":0.65,"dmg":0.179},{"step":40217,"size":0.65,"dmg":0.179},{"step":40479,"size":0.65,"dmg":0.179},{"step":40735,"size":0.65,"dmg":0.179},{"step":41004,"size":0.65,"dmg":0.179},{"step":41254,"size":0.7,"dmg":0.24},{"step":41519,"size":0.7,"dmg":0.24},{"step":41780,"size":0.7,"dmg":0.24},{"step":42020,"size":0.5,"dmg":0.062},{"step":42292,"size":0.7,"dmg":0.24},{"step":42575,"size":0.5,"dmg":0.062},{"step":42837,"size":0.6,"dmg":0.13},{"step":43094,"size":0.7,"dmg":0.24},{"step":43334,"size":0.65,"dmg":0.179},{"step":43604,"size":0.65,"dmg":0.179},{"step":43891,"size":0.5,"dmg":0.062},{"step":44163,"size":0.7,"dmg":0.24},{"step":44436,"size":0.65,"dmg":0.179},{"step":44708,"size":0.6,"dmg":0.13},{"step":44971,"size":0.6,"dmg":0.13},{"step":45274,"size":0.6,"dmg":0.13},{"step":45561,"size":0.6,"dmg":0.13},{"step":45854,"size":0.6,"dmg":0.13},{"step":46171,"size":0.6,"dmg":0.13},{"step":46435,"size":0.5,"dmg":0.062},{"step":46732,"size":0.55,"dmg":0.092},{"step":47018,"size":0.6,"dmg":0.13},{"step":47297,"size":0.7,"dmg":0.24},{"step":47598,"size":0.6,"dmg":0.13},{"step":47911,"size":0.6,"dmg":0.13},{"step":48184,"size":0.6,"dmg":0.13},{"step":48450,"size":0.7,"dmg":0.24},{"step":48777,"size":0.6,"dmg":0.13},{"step":49082,"size":0.5,"dmg":0.062},{"step":49367,"size":0.6,"dmg":0.13},{"step":49686,"size":0.7,"dmg":0.24},{"step":50033,"size":0.6,"dmg":0.13},{"step":50369,"size":0.7,"dmg":0.24},{"step":50676,"size":0.7,"dmg":0.24},{"step":50948,"size":0.7,"dmg":0.24},{"step":51267,"size":0.65,"dmg":0.179},{"step":51583,"size":0.6,"dmg":0.13},{"step":51866,"size":0.65,"dmg":0.179},{"step":52176,"size":0.6,"dmg":0.13},{"step":52477,"size":0.5,"dmg":0.062},{"step":52861,"size":0.55,"dmg":0.092},{"step":53163,"size":0.6,"dmg":0.13},{"step":53468,"size":0.6,"dmg":0.13},{"step":53764,"size":0.55,"dmg":0.092},{"step":54101,"size":0.6,"dmg":0.13},{"step":54425,"size":0.65,"dmg":0.179},{"step":54759,"size":0.6,"dmg":0.13},{"step":55105,"size":0.5,"dmg":0.062},{"step":55474,"size":0.5,"dmg":0.062},{"step":55821,"size":0.6,"dmg":0.13},{"step":56173,"size":0.6,"dmg":0.13},{"step":56516,"size":0.5,"dmg":0.062},{"step":56912,"size":0.6,"dmg":0.13},{"step":57318,"size":0.7,"dmg":0.24},{"step":57775,"size":0.65,"dmg":0.179},{"step":58114,"size":0.6,"dmg":0.13},{"step":58527,"size":0.5,"dmg":0.062},{"step":58973,"size":0.6,"dmg":0.13},{"step":59380,"size":0.6,"dmg":0.13},{"step":59767,"size":0.6,"dmg":0.13},{"step":60200,"size":0.6,"dmg":0.13},{"step":60654,"size":0.6,"dmg":0.13},{"step":61113,"size":0.6,"dmg":0.13},{"step":61547,"size":0.55,"dmg":0.092},{"step":62001,"size":0.6,"dmg":0.13},{"step":62487,"size":0.7,"dmg":0.24},{"step":62991,"size":0.5,"dmg":0.062},{"step":63583,"size":0.6,"dmg":0.13},{"step":64078,"size":0.5,"dmg":0.062},{"step":64654,"size":0.65,"dmg":0.179},{"step":65172,"size":0.7,"dmg":0.24},{"step":65693,"size":0.65,"dmg":0.179},{"step":66364,"size":0.5,"dmg":0.062},{"step":66971,"size":0.6,"dmg":0.13},{"step":67645,"size":0.6,"dmg":0.13},{"step":68171,"size":0.6,"dmg":0.13},{"step":68760,"size":0.6,"dmg":0.13},{"step":69292,"size":0.5,"dmg":0.062},{"step":69904,"size":0.65,"dmg":0.179},{"step":70696,"size":0.6,"dmg":0.13},{"step":71428,"size":0.6,"dmg":0.13},{"step":72182,"size":0.5,"dmg":0.062},{"step":72919,"size":0.6,"dmg":0.13},{"step":73658,"size":0.65,"dmg":0.179},{"step":74418,"size":0.6,"dmg":0.13},{"step":75168,"size":0.55,"dmg":0.092},{"step":75968,"size":0.6,"dmg":0.13},{"step":76726,"size":0.5,"dmg":0.062},{"step":77587,"size":0.7,"dmg":0.24},{"step":78379,"size":0.6,"dmg":0.13},{"step":79284,"size":0.6,"dmg":0.13},{"step":80245,"size":0.6,"dmg":0.13},{"step":81437,"size":0.6,"dmg":0.13},{"step":82251,"size":0.6,"dmg":0.13},{"step":83206,"size":0.6,"dmg":0.13},{"step":84118,"size":0.65,"dmg":0.179},{"step":85186,"size":0.6,"dmg":0.13},{"step":86277,"size":0.6,"dmg":0.13},{"step":87330,"size":0.7,"dmg":0.24},{"step":88133,"size":0.5,"dmg":0.062},{"step":89002,"size":0.6,"dmg":0.13},{"step":89909,"size":0.55,"dmg":0.092},{"step":90869,"size":0.6,"dmg":0.13},{"step":91938,"size":0.55,"dmg":0.092},{"step":93265,"size":0.65,"dmg":0.179}],"grow-jump":[{"step":24,"size":0.5,"dmg":0.062},{"step":224,"size":0.5,"dmg":0.062},{"step":444,"size":0.5,"dmg":0.062},{"step":717,"size":0.5,"dmg":0.062},{"step":974,"size":0.5,"dmg":0.062},{"step":1259,"size":0.5,"dmg":0.062},{"step":1590,"size":0.5,"dmg":0.062},{"step":1969,"size":0.5,"dmg":0.062},{"step":2428,"size":0.5,"dmg":0.062},{"step":2934,"size":0.5,"dmg":0.062},{"step":3570,"size":0.5,"dmg":0.062},{"step":4327,"size":0.5,"dmg":0.062},{"step":5283,"size":0.5,"dmg":0.062},{"step":6417,"size":0.5,"dmg":0.062},{"step":7898,"size":0.5,"dmg":0.062},{"step":9750,"size":0.5,"dmg":0.062},{"step":12459,"size":0.5,"dmg":0.062},{"step":15278,"size":0.5,"dmg":0.062},{"step":18867,"size":0.5,"dmg":0.062},{"step":23848,"size":0.5,"dmg":0.062},{"step":32405,"size":0.5,"dmg":0.062},{"step":36294,"size":0.5,"dmg":0.062},{"step":36699,"size":0.5,"dmg":0.062},{"step":37081,"size":0.5,"dmg":0.062},{"step":37450,"size":0.5,"dmg":0.062},{"step":37804,"size":0.5,"dmg":0.062},{"step":38202,"size":0.5,"dmg":0.062},{"step":38569,"size":0.5,"dmg":0.062},{"step":38942,"size":0.5,"dmg":0.062},{"step":39290,"size":0.5,"dmg":0.062},{"step":39641,"size":0.5,"dmg":0.062},{"step":40007,"size":0.5,"dmg":0.062},{"step":40356,"size":0.5,"dmg":0.062},{"step":40694,"size":0.5,"dmg":0.062},{"step":41112,"size":0.5,"dmg":0.062},{"step":41513,"size":0.5,"dmg":0.062},{"step":41892,"size":0.5,"dmg":0.062},{"step":42326,"size":0.5,"dmg":0.062},{"step":42704,"size":0.5,"dmg":0.062},{"step":43139,"size":0.5,"dmg":0.062},{"step":43517,"size":0.5,"dmg":0.062},{"step":43939,"size":0.5,"dmg":0.062},{"step":44348,"size":0.5,"dmg":0.062},{"step":44736,"size":0.5,"dmg":0.062},{"step":45172,"size":0.5,"dmg":0.062},{"step":45599,"size":0.5,"dmg":0.062},{"step":46018,"size":0.5,"dmg":0.062},{"step":46420,"size":0.5,"dmg":0.062},{"step":46861,"size":0.5,"dmg":0.062},{"step":47320,"size":0.5,"dmg":0.062},{"step":47735,"size":0.5,"dmg":0.062},{"step":48202,"size":0.5,"dmg":0.062},{"step":48708,"size":0.5,"dmg":0.062},{"step":49163,"size":0.5,"dmg":0.062},{"step":49595,"size":0.5,"dmg":0.062},{"step":50073,"size":0.5,"dmg":0.062},{"step":50590,"size":0.5,"dmg":0.062},{"step":51069,"size":0.5,"dmg":0.062},{"step":51547,"size":0.5,"dmg":0.062},{"step":52038,"size":0.5,"dmg":0.062},{"step":52541,"size":0.5,"dmg":0.062},{"step":53098,"size":0.5,"dmg":0.062},{"step":53611,"size":0.5,"dmg":0.062},{"step":54163,"size":0.5,"dmg":0.062},{"step":54679,"size":0.5,"dmg":0.062},{"step":55158,"size":0.5,"dmg":0.062},{"step":55637,"size":0.5,"dmg":0.062},{"step":56140,"size":0.5,"dmg":0.062},{"step":56656,"size":0.5,"dmg":0.062},{"step":57219,"size":0.5,"dmg":0.062},{"step":57789,"size":0.5,"dmg":0.062},{"step":58419,"size":0.5,"dmg":0.062},{"step":58972,"size":0.5,"dmg":0.062},{"step":59602,"size":0.5,"dmg":0.062},{"step":60226,"size":0.5,"dmg":0.062},{"step":60945,"size":0.5,"dmg":0.062},{"step":61683,"size":0.5,"dmg":0.062},{"step":62423,"size":0.5,"dmg":0.062},{"step":63109,"size":0.5,"dmg":0.062},{"step":63831,"size":0.5,"dmg":0.062},{"step":64675,"size":0.5,"dmg":0.062},{"step":65533,"size":0.5,"dmg":0.062},{"step":66301,"size":0.5,"dmg":0.062},{"step":67109,"size":0.5,"dmg":0.062},{"step":68037,"size":0.5,"dmg":0.062},{"step":68852,"size":0.5,"dmg":0.062},{"step":69694,"size":0.5,"dmg":0.062},{"step":70624,"size":0.5,"dmg":0.062},{"step":71849,"size":0.5,"dmg":0.062},{"step":72399,"size":1.0,"dmg":1.0},{"step":72811,"size":1.0,"dmg":1.0},{"step":73140,"size":1.0,"dmg":1.0},{"step":73495,"size":1.0,"dmg":1.0},{"step":73862,"size":1.0,"dmg":1.0},{"step":74251,"size":1.0,"dmg":1.0},{"step":74635,"size":1.0,"dmg":1.0},{"step":75060,"size":1.0,"dmg":1.0},{"step":75453,"size":1.0,"dmg":1.0},{"step":75858,"size":1.0,"dmg":1.0},{"step":76288,"size":1.0,"dmg":1.0},{"step":76702,"size":1.0,"dmg":1.0},{"step":77130,"size":1.0,"dmg":1.0},{"step":77577,"size":1.0,"dmg":1.0},{"step":78000,"size":1.0,"dmg":1.0},{"step":78378,"size":1.0,"dmg":1.0},{"step":78822,"size":1.0,"dmg":1.0},{"step":79267,"size":1.0,"dmg":1.0},{"step":79691,"size":1.0,"dmg":1.0},{"step":80092,"size":1.0,"dmg":1.0},{"step":80577,"size":1.0,"dmg":1.0},{"step":81029,"size":1.0,"dmg":1.0},{"step":81523,"size":1.0,"dmg":1.0},{"step":82013,"size":1.0,"dmg":1.0},{"step":82519,"size":1.0,"dmg":1.0},{"step":83050,"size":1.0,"dmg":1.0},{"step":83543,"size":1.0,"dmg":1.0},{"step":84125,"size":1.0,"dmg":1.0},{"step":84634,"size":1.0,"dmg":1.0},{"step":85138,"size":1.0,"dmg":1.0},{"step":85754,"size":1.0,"dmg":1.0},{"step":86363,"size":1.0,"dmg":1.0},{"step":86944,"size":1.0,"dmg":1.0},{"step":87551,"size":1.0,"dmg":1.0},{"step":88113,"size":1.0,"dmg":1.0},{"step":88764,"size":1.0,"dmg":1.0},{"step":89419,"size":1.0,"dmg":1.0},{"step":90146,"size":1.0,"dmg":1.0},{"step":90867,"size":1.0,"dmg":1.0},{"step":91512,"size":1.0,"dmg":1.0},{"step":92169,"size":1.0,"dmg":1.0},{"step":92804,"size":1.0,"dmg":1.0},{"step":93454,"size":1.0,"dmg":1.0},{"step":93999,"size":1.0,"dmg":1.0},{"step":94605,"size":1.0,"dmg":1.0},{"step":95270,"size":1.0,"dmg":1.0},{"step":95891,"size":1.0,"dmg":1.0},{"step":96570,"size":1.0,"dmg":1.0},{"step":97182,"size":1.0,"dmg":1.0},{"step":97805,"size":1.0,"dmg":1.0},{"step":98460,"size":1.0,"dmg":1.0},{"step":99162,"size":1.0,"dmg":1.0},{"step":99810,"size":1.0,"dmg":1.0},{"step":100448,"size":1.0,"dmg":1.0},{"step":101175,"size":1.0,"dmg":1.0},{"step":101870,"size":1.0,"dmg":1.0},{"step":102656,"size":1.0,"dmg":1.0},{"step":103378,"size":1.0,"dmg":1.0},{"step":104065,"size":1.0,"dmg":1.0},{"step":104797,"size":1.0,"dmg":1.0},{"step":105477,"size":1.0,"dmg":1.0}],"grow-linear-walk":[{"step":18,"size":0.5,"dmg":0.063},{"step":228,"size":0.5,"dmg":0.063},{"step":471,"size":0.5,"dmg":0.064},{"step":699,"size":0.5,"dmg":0.065},{"step":951,"size":0.51,"dmg":0.066},{"step":1231,"size":0.51,"dmg":0.067},{"step":1513,"size":0.51,"dmg":0.068},{"step":1829,"size":0.51,"dmg":0.069},{"step":2173,"size":0.52,"dmg":0.07},{"step":2504,"size":0.52,"dmg":0.072},{"step":2833,"size":0.52,"dmg":0.073},{"step":3187,"size":0.52,"dmg":0.074},{"step":3529,"size":0.52,"dmg":0.076},{"step":3885,"size":0.53,"dmg":0.077},{"step":4249,"size":0.53,"dmg":0.079},{"step":4603,"size":0.53,"dmg":0.08},{"step":4982,"size":0.53,"dmg":0.082},{"step":5374,"size":0.54,"dmg":0.083},{"step":5727,"size":0.54,"dmg":0.085},{"step":6128,"size":0.54,"dmg":0.087},{"step":6487,"size":0.55,"dmg":0.088},{"step":6853,"size":0.55,"dmg":0.09},{"step":7229,"size":0.55,"dmg":0.092},{"step":7609,"size":0.55,"dmg":0.093},{"step":7998,"size":0.56,"dmg":0.095},{"step":8366,"size":0.56,"dmg":0.097},{"step":8737,"size":0.56,"dmg":0.099},{"step":9125,"size":0.56,"dmg":0.101},{"step":9513,"size":0.57,"dmg":0.103},{"step":9903,"size":0.57,"dmg":0.105},{"step":10292,"size":0.57,"dmg":0.107},{"step":10636,"size":0.57,"dmg":0.108},{"step":11029,"size":0.58,"dmg":0.111},{"step":11433,"size":0.58,"dmg":0.113},{"step":11863,"size":0.58,"dmg":0.115},{"step":12298,"size":0.59,"dmg":0.117},{"step":12714,"size":0.59,"dmg":0.12},{"step":13115,"size":0.59,"dmg":0.122},{"step":13498,"size":0.59,"dmg":0.124},{"step":13884,"size":0.6,"dmg":0.127},{"step":14308,"size":0.6,"dmg":0.129},{"step":14709,"size":0.6,"dmg":0.131},{"step":15139,"size":0.61,"dmg":0.134},{"step":15569,"size":0.61,"dmg":0.137},{"step":15955,"size":0.61,"dmg":0.139},{"step":16402,"size":0.61,"dmg":0.142},{"step":16871,"size":0.62,"dmg":0.145},{"step":17297,"size":0.62,"dmg":0.148},{"step":17750,"size":0.62,"dmg":0.151},{"step":18182,"size":0.63,"dmg":0.154},{"step":18666,"size":0.63,"dmg":0.157},{"step":19167,"size":0.63,"dmg":0.161},{"step":19625,"size":0.64,"dmg":0.164},{"step":20091,"size":0.64,"dmg":0.167},{"step":20546,"size":0.64,"dmg":0.171},{"step":20922,"size":0.65,"dmg":0.173},{"step":21434,"size":0.65,"dmg":0.177},{"step":21889,"size":0.65,"dmg":0.181},{"step":22428,"size":0.66,"dmg":0.185},{"step":22967,"size":0.66,"dmg":0.189},{"step":23440,"size":0.66,"dmg":0.193},{"step":23982,"size":0.67,"dmg":0.197},{"step":24523,"size":0.67,"dmg":0.202},{"step":25041,"size":0.67,"dmg":0.206},{"step":25573,"size":0.68,"dmg":0.211},{"step":26133,"size":0.68,"dmg":0.216},{"step":26729,"size":0.69,"dmg":0.221},{"step":27288,"size":0.69,"dmg":0.226},{"step":27836,"size":0.69,"dmg":0.231},{"step":28333,"size":0.7,"dmg":0.236},{"step":28924,"size":0.7,"dmg":0.241},{"step":29551,"size":0.71,"dmg":0.247},{"step":30134,"size":0.71,"dmg":0.253},{"step":30733,"size":0.71,"dmg":0.259},{"step":31405,"size":0.72,"dmg":0.266},{"step":32141,"size":0.72,"dmg":0.274},{"step":32788,"size":0.73,"dmg":0.28},{"step":33416,"size":0.73,"dmg":0.287},{"step":34039,"size":0.74,"dmg":0.294},{"step":34613,"size":0.74,"dmg":0.3},{"step":35185,"size":0.74,"dmg":0.307},{"step":35842,"size":0.75,"dmg":0.315},{"step":36471,"size":0.75,"dmg":0.322},{"step":37119,"size":0.76,"dmg":0.33},{"step":37846,"size":0.76,"dmg":0.339},{"step":38637,"size":0.77,"dmg":0.348},{"step":39360,"size":0.77,"dmg":0.358},{"step":40137,"size":0.78,"dmg":0.368},{"step":40837,"size":0.78,"dmg":0.377},{"step":41501,"size":0.79,"dmg":0.386},{"step":42245,"size":0.79,"dmg":0.396},{"step":43013,"size":0.8,"dmg":0.407},{"step":43693,"size":0.8,"dmg":0.417},{"step":44481,"size":0.81,"dmg":0.428},{"step":45456,"size":0.82,"dmg":0.443},{"step":46341,"size":0.82,"dmg":0.456},{"step":47231,"size":0.83,"dmg":0.47},{"step":48129,"size":0.83,"dmg":0.484},{"step":48975,"size":0.84,"dmg":0.498},{"step":49873,"size":0.85,"dmg":0.513},{"step":50745,"size":0.85,"dmg":0.528},{"step":51557,"size":0.86,"dmg":0.542},{"step":52249,"size":0.86,"dmg":0.554},{"step":52997,"size":0.87,"dmg":0.568},{"step":53662,"size":0.87,"dmg":0.58},{"step":54419,"size":0.88,"dmg":0.594},{"step":55142,"size":0.88,"dmg":0.608},{"step":56041,"size":0.89,"dmg":0.625},{"step":56811,"size":0.89,"dmg":0.64},{"step":57604,"size":0.9,"dmg":0.656},{"step":58428,"size":0.91,"dmg":0.673},{"step":59338,"size":0.91,"dmg":0.692},{"step":60358,"size":0.92,"dmg":0.714},{"step":61103,"size":0.92,"dmg":0.73},{"step":62084,"size":0.93,"dmg":0.752},{"step":62998,"size":0.94,"dmg":0.772},{"step":63769,"size":0.94,"dmg":0.79},{"step":64537,"size":0.95,"dmg":0.808},{"step":65311,"size":0.95,"dmg":0.827},{"step":66102,"size":0.96,"dmg":0.846},{"step":66890,"size":0.96,"dmg":0.865},{"step":67914,"size":0.97,"dmg":0.891},{"step":68919,"size":0.98,"dmg":0.917},{"step":69735,"size":0.98,"dmg":0.939},{"step":70619,"size":0.99,"dmg":0.962},{"step":71511,"size":1.0,"dmg":0.986},{"step":72499,"size":1.0,"dmg":1.0},{"step":73508,"size":1.0,"dmg":1.0},{"step":74362,"size":1.0,"dmg":1.0},{"step":75279,"size":1.0,"dmg":1.0},{"step":76199,"size":1.0,"dmg":1.0},{"step":77215,"size":1.0,"dmg":1.0},{"step":78311,"size":1.0,"dmg":1.0},{"step":79309,"size":1.0,"dmg":1.0},{"step":80458,"size":1.0,"dmg":1.0},{"step":81676,"size":1.0,"dmg":1.0},{"step":82530,"size":1.0,"dmg":1.0},{"step":83358,"size":1.0,"dmg":1.0},{"step":84288,"size":1.0,"dmg":1.0},{"step":85465,"size":1.0,"dmg":1.0},{"step":86763,"size":1.0,"dmg":1.0},{"step":88094,"size":1.0,"dmg":1.0},{"step":89208,"size":1.0,"dmg":1.0},{"step":90579,"size":1.0,"dmg":1.0},{"step":91859,"size":1.0,"dmg":1.0},{"step":92957,"size":1.0,"dmg":1.0},{"step":94191,"size":1.0,"dmg":1.0},{"step":95361,"size":1.0,"dmg":1.0},{"step":96716,"size":1.0,"dmg":1.0},{"step":98005,"size":1.0,"dmg":1.0}]},"eval":{"adult-walk":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[128.8,149.3,123.2,137.5,135.8,122.5,121.7,131.5,114.1,159.7,170.9,147.8,125.2,175.2,170.8,212.5,266.4,272.6,366.6,371.2,264.7,366.3,287.0,561.8,514.2,327.2,525.0,416.1,440.9,383.7],"lo":[109.9,118.6,105.5,109.2,112.2,96.5,106.2,107.8,103.0,120.8,125.3,119.3,100.9,135.4,127.5,181.1,202.7,189.7,231.6,264.8,181.8,249.0,234.2,409.7,375.5,233.0,322.5,284.8,285.4,254.3],"hi":[151.1,175.2,140.5,161.4,166.1,151.8,145.5,166.1,139.2,202.1,212.1,220.9,175.4,225.4,203.2,259.7,360.8,417.2,543.5,492.8,417.2,528.0,371.7,664.1,617.3,488.5,672.6,564.3,588.0,515.8]},"adult-balance-first":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[118.6,114.8,129.5,137.8,138.1,145.9,142.6,146.6,146.2,93.9,100.2,125.6,141.7,139.5,155.7,160.6,149.0,215.9,207.9,170.4,174.7,251.3,233.8,260.5,262.6,228.8,331.6,365.7,259.8,353.4],"lo":[105.3,95.9,116.2,122.4,125.0,137.1,130.8,137.3,137.2,80.5,90.5,113.6,115.3,109.9,119.5,126.2,113.3,184.7,167.5,138.0,128.5,178.8,201.5,185.7,214.8,161.4,244.5,250.9,211.3,252.3],"hi":[132.2,133.8,140.7,146.5,145.2,148.7,147.9,148.7,149.3,113.8,128.4,141.9,164.8,164.0,189.9,194.0,197.7,246.5,261.5,227.7,220.1,376.8,331.5,406.8,366.6,328.7,420.3,525.9,326.2,513.7]},"grow-linear":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[146.6,149.0,147.8,148.6,146.0,148.3,145.9,146.1,147.9,142.8,117.8,158.9,159.0,142.3,156.4,226.0,194.5,163.8,185.1,267.3,355.8,397.7,340.6,428.5,423.9,357.2,394.3,326.2,348.9,439.9],"lo":[142.4,147.4,146.6,146.6,140.5,141.3,131.7,141.4,142.7,111.7,94.8,122.3,136.0,101.7,122.5,186.2,153.2,115.0,126.1,180.8,221.1,234.5,237.7,298.7,307.8,241.3,285.0,261.9,242.8,271.1],"hi":[148.6,150.3,149.0,150.2,148.4,151.2,149.4,148.3,150.4,169.6,163.4,188.8,203.2,184.0,207.6,326.6,239.2,219.3,301.3,401.2,525.2,580.3,501.6,570.3,558.5,512.4,524.1,435.9,516.0,610.4]},"grow-adaptive":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[147.6,147.8,146.1,145.1,147.5,148.9,148.9,147.3,148.8,145.1,134.2,160.4,164.5,152.2,179.6,183.2,174.3,211.3,241.5,246.2,261.9,322.4,321.1,309.3,328.4,332.2,287.1,245.3,321.0,291.2],"lo":[132.1,144.3,144.4,132.5,143.3,147.3,145.7,142.3,144.1,126.2,109.9,122.6,126.5,123.7,145.9,139.3,143.9,154.8,189.5,207.1,188.5,200.4,248.3,209.7,238.1,266.6,187.1,183.8,193.7,223.5],"hi":[149.0,150.1,147.9,149.0,149.6,150.6,150.7,148.7,150.3,162.6,161.2,194.7,194.4,178.0,258.7,250.2,256.0,309.1,382.4,295.3,367.6,464.0,402.5,485.5,435.0,416.9,441.7,366.7,486.3,413.4]},"grow-jump":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[142.8,148.3,149.0,149.3,148.8,148.3,146.5,146.9,147.6,117.6,156.7,145.2,135.0,162.5,181.5,178.9,140.0,177.4,130.7,162.5,248.1,265.4,225.6,251.9,271.7,287.4,415.6,336.6,457.4,378.9],"lo":[130.5,146.3,146.7,147.4,146.8,144.3,142.3,143.2,143.4,96.3,125.6,113.2,106.9,124.6,121.6,148.1,97.0,136.1,95.8,119.1,195.7,184.2,194.3,197.7,163.8,191.1,284.2,217.1,300.7,282.0],"hi":[147.4,150.1,150.3,151.0,150.4,150.7,149.6,149.4,148.8,143.2,188.6,179.3,162.9,190.4,256.7,211.0,193.4,229.8,197.9,243.3,323.4,399.3,304.2,355.4,406.7,413.6,545.3,506.4,596.2,488.7]},"grow-linear-walk":{"steps":[4000,8000,12000,16000,20000,24000,28000,32000,36000,40000,44000,48000,52000,56000,60000,64000,68000,72000,76000,80000,84000,88000,92000,96000,100000,104000,108000,112000,116000,120000],"iqm":[177.7,160.8,166.2,170.3,168.9,210.0,157.9,244.0,230.1,229.6,340.9,247.6,261.5,320.0,290.4,243.3,333.1,289.9,379.0,469.7,360.2,467.2,458.8,472.8,492.0,424.3,350.4,504.9,349.4,481.3],"lo":[148.7,138.4,151.2,136.6,128.6,147.3,126.0,144.7,153.9,175.1,230.7,168.6,175.0,223.6,236.4,186.3,243.5,239.3,260.5,302.2,274.9,320.3,274.2,318.6,365.6,293.4,243.5,322.8,253.5,317.1],"hi":[209.0,192.4,184.4,199.3,227.8,340.4,216.5,380.2,359.6,347.3,469.2,388.5,411.1,425.7,394.5,322.2,465.3,382.7,537.0,622.1,478.5,604.3,622.6,606.9,612.5,564.9,500.1,658.1,450.8,609.9]}},"tests":[{"name":"damage: grow-linear < adult-walk","metric":"damage_at_competence","a":"grow-linear","b":"adult-walk","iqm_a":357.259823,"iqm_b":880.1,"u":11.0,"p":0.0,"direction_ok":true,"p_holm":2e-06,"significant":true},{"name":"damage: grow-adaptive < adult-walk","metric":"damage_at_competence","a":"grow-adaptive","b":"adult-walk","iqm_a":62.254608,"iqm_b":880.1,"u":0.0,"p":0.0,"direction_ok":true,"p_holm":1e-06,"significant":true},{"name":"damage: grow-linear < adult-balance-first","metric":"damage_at_competence","a":"grow-linear","b":"adult-balance-first","iqm_a":357.259823,"iqm_b":1018.8,"u":0.0,"p":0.0,"direction_ok":true,"p_holm":1e-06,"significant":true},{"name":"damage: grow-linear < grow-jump (gradualism)","metric":"damage_at_competence","a":"grow-linear","b":"grow-jump","iqm_a":357.259823,"iqm_b":207.49375,"u":278.0,"p":0.036048,"direction_ok":false,"p_holm":0.108145,"significant":false},{"name":"steps: grow-linear <= adult-walk","metric":"steps_to_competence","a":"grow-linear","b":"adult-walk","iqm_a":86400.0,"iqm_b":74800.0,"u":249.5,"p":0.183823,"direction_ok":false,"p_holm":0.298992,"significant":false},{"name":"steps: grow-adaptive <= adult-walk","metric":"steps_to_competence","a":"grow-adaptive","b":"adult-walk","iqm_a":85200.0,"iqm_b":74800.0,"u":253.5,"p":0.149496,"direction_ok":false,"p_holm":0.298992,"significant":false},{"name":"steps: adult-balance-first < adult-walk (balance-first)","metric":"steps_to_competence","a":"adult-balance-first","b":"adult-walk","iqm_a":108000.0,"iqm_b":74800.0,"u":348.5,"p":5.9e-05,"direction_ok":false,"p_holm":0.000293,"significant":true},{"name":"steps: grow-linear < grow-linear-walk (balance-first)","metric":"steps_to_competence","a":"grow-linear","b":"grow-linear-walk","iqm_a":86400.0,"iqm_b":46000.0,"u":343.5,"p":0.000108,"direction_ok":false,"p_holm":0.000431,"significant":true}],"conclusion":{"supported":true,"summary":"Morphological curriculum: SUPPORTED. Damage at adult competence (IQM): grow-linear 357 vs adult-walk 880 (Holm p=2e-06); grow-adaptive 62 (Holm p=5.4e-07). Steps to competence (IQM, censored=budget+1): grow-linear 86400 vs adult-walk 74800 (Holm p=0.3). Gradualism (grow-linear < grow-jump damage): not significant. Balance-first sub-claim: REFUTED (walking-from-the-start was faster) on both matched-morphology comparisons. Censored fractions: adult-walk 0.00, adult-balance-first 0.25, grow-linear 0.05, grow-adaptive 0.20, grow-jump 0.20, grow-linear-walk 0.00."}}};
+
+</script>
+<script>
+/* Growing Up to Learn — scene + chart engine.
+   One fixed canvas, per-stage scissor rendering, on-demand frames only.
+   three r147 UMD + fat lines; GSAP 3.15 ScrollTrigger. Data: window.DATA. */
+(function () {
+  'use strict';
+  gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+  const D = window.DATA;
+  const PAL = { blue: 0x4c86d8, orange: 0xc77b2f, green: 0x4f9e6e, violet: 0xaa64c8, gold: 0xad8f2e, red: 0xc75f6b, accent: 0xe8c468, ink: 0xf2ede4 };
+  const CSS = { blue: '#4C86D8', orange: '#C77B2F', green: '#4F9E6E', violet: '#AA64C8', gold: '#AD8F2E', red: '#C75F6B', accent: '#E8C468', muted: '#9FA8B8', hair: '#263049', ink: '#F2EDE4' };
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- renderer core ---------------- */
+  const canvas = document.getElementById('gl');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const lineMats = [];   // LineMaterial registry (resolution updates)
+  const stages = [];     // {el, scene, camera, update(t), extraRender?}
+  let renderQueued = false;
+  function requestRender() {
+    if (renderQueued) return; renderQueued = true;
+    requestAnimationFrame(() => { renderQueued = false; drawFrame(); });
+  }
+  function drawFrame() {
+    const W = window.innerWidth, H = window.innerHeight;
+    renderer.setScissorTest(false); renderer.setClearColor(0x000000, 0); renderer.clear();
+    renderer.setScissorTest(true);
+    for (const st of stages) {
+      const r = st.el.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > H || r.width === 0) continue;
+      const y = H - r.bottom;
+      if (st.extraRender) { st.extraRender(r, y); continue; }
+      renderer.setViewport(r.left, y, r.width, r.height);
+      renderer.setScissor(r.left, y, r.width, r.height);
+      st.camera.aspect = r.width / r.height;
+      if (st.camera.isOrthographicCamera) fitOrtho(st.camera, r.width / r.height);
+      st.camera.updateProjectionMatrix();
+      renderer.render(st.scene, st.camera);
+    }
+  }
+  function fitOrtho(cam, aspect) {
+    let h = cam.userData.viewH || 12;
+    const w = cam.userData.viewW || 0;
+    if (w && w / aspect > h) h = w / aspect;
+    cam.top = h / 2; cam.bottom = -h / 2; cam.left = -h * aspect / 2; cam.right = h * aspect / 2;
+  }
+  function onResize() {
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    for (const m of lineMats) m.resolution.set(window.innerWidth, window.innerHeight);
+    requestRender();
+  }
+  window.addEventListener('resize', onResize);
+
+  /* ---------------- three helpers ---------------- */
+  function dimetricCam(viewH) {
+    const c = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 200);
+    c.userData.viewH = viewH;
+    c.position.set(14, 14 * Math.tan(35.264 * Math.PI / 180) * 1.41, 14);
+    c.lookAt(0, 0, 0); return c;
+  }
+  function lights(scene, amb = 0.55, key = 0.75) {
+    scene.add(new THREE.AmbientLight(0xbfd0ff, amb));
+    const d = new THREE.DirectionalLight(0xfff2dc, key); d.position.set(6, 10, 4); scene.add(d);
+    return d;
+  }
+  function mat(color, opt = {}) { return new THREE.MeshLambertMaterial(Object.assign({ color }, opt)); }
+  function fatLine(pts, color, width, dashed = false) {
+    const g = new THREE.LineGeometry();
+    g.setPositions(pts.flat());
+    const m = new THREE.LineMaterial({ color, linewidth: width, transparent: true, dashed });
+    m.resolution.set(window.innerWidth, window.innerHeight);
+    if (dashed) { m.defines.USE_DASH = ''; }
+    lineMats.push(m);
+    const line = new THREE.Line2(g, m); line.computeLineDistances();
+    return line;
+  }
+  function gridToWorld(r, c, H, W, y = 0) { return [c - (W - 1) / 2, y, r - (H - 1) / 2]; }
+
+  /* ---------------- SVG chart engine (dataviz spec) ---------------- */
+  const NS = 'http://www.w3.org/2000/svg';
+  const tooltip = document.getElementById('tooltip');
+  function el(n, attrs, parent) {
+    const e = document.createElementNS(NS, n);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e); return e;
+  }
+  function niceTicks(min, max, n = 4) {
+    const span = max - min || 1, step0 = Math.pow(10, Math.floor(Math.log10(span / n)));
+    const err = span / n / step0; const step = step0 * (err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1);
+    const t = []; for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) t.push(v);
+    return t;
+  }
+  function fmt(v) { return Math.abs(v) >= 1000 ? (v / 1000) + 'k' : String(Math.round(v * 100) / 100); }
+  function lineChart(svgId, cfg) {
+    const svg = document.getElementById(svgId); if (!svg) return;
+    const W = 800, Hh = cfg.height || 320, m = { l: 52, r: 110, t: 14, b: 34 };
+    svg.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
+    const iw = W - m.l - m.r, ih = Hh - m.t - m.b;
+    const xs = cfg.series[0].x;
+    const xmin = Math.min(...cfg.series.map(s => s.x[0])), xmax = Math.max(...cfg.series.map(s => s.x[s.x.length - 1]));
+    let ymin = cfg.ymin != null ? cfg.ymin : Infinity, ymax = cfg.ymax != null ? cfg.ymax : -Infinity;
+    if (cfg.ymin == null || cfg.ymax == null) for (const s of cfg.series) {
+      for (const v of (s.lo || s.y)) ymin = Math.min(ymin, v);
+      for (const v of (s.hi || s.y)) ymax = Math.max(ymax, v);
+    }
+    if (cfg.ymin == null) ymin = Math.min(ymin, 0);
+    const X = v => m.l + (v - xmin) / (xmax - xmin) * iw;
+    const Y = v => m.t + ih - (v - ymin) / (ymax - ymin) * ih;
+    // grid + axes
+    for (const t of niceTicks(ymin, ymax)) {
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: CSS.hair, 'stroke-width': 1 }, svg);
+      el('text', { x: m.l - 8, y: Y(t) + 4, 'text-anchor': 'end' }, svg).textContent = fmt(t);
+    }
+    for (const t of niceTicks(xmin, xmax, 5)) {
+      el('text', { x: X(t), y: Hh - 10, 'text-anchor': 'middle' }, svg).textContent = fmt(t);
+    }
+    el('text', { x: m.l + iw / 2, y: Hh - (cfg.xlabelPad || -4) + 4, 'text-anchor': 'middle', fill: CSS.muted }, svg);
+    if (cfg.threshold != null) {
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(cfg.threshold), y2: Y(cfg.threshold), stroke: CSS.accent, 'stroke-width': 1, 'stroke-dasharray': '5 5', opacity: .65 }, svg);
+      el('text', { x: m.l + 8, y: Y(cfg.threshold) - 6, fill: CSS.accent }, svg).textContent = cfg.thresholdLabel || '';
+    }
+    if (cfg.bands) for (const b of cfg.bands) {
+      el('rect', { x: X(b.x0), y: m.t, width: X(b.x1) - X(b.x0), height: ih, fill: b.color || '#4C86D8', opacity: .07 }, svg);
+      el('text', { x: X(b.x0) + 5, y: m.t + 13, fill: CSS.muted, 'font-size': 10 }, svg).textContent = b.label || '';
+    }
+    const drawFns = [];
+    const usedLabelY = [];
+    cfg.series.forEach(s => {
+      if (s.lo) {
+        let dPath = '';
+        s.x.forEach((x, i) => dPath += (i ? 'L' : 'M') + X(x) + ' ' + Y(s.lo[i]));
+        for (let i = s.x.length - 1; i >= 0; i--) dPath += 'L' + X(s.x[i]) + ' ' + Y(s.hi[i]);
+        el('path', { d: dPath + 'Z', fill: s.color, opacity: .13 }, svg);
+      }
+      let d = '';
+      s.x.forEach((x, i) => d += (i ? 'L' : 'M') + X(x) + ' ' + Y(s.y[i]));
+      const p = el('path', { d, fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg);
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = len; p.style.strokeDashoffset = reduceMotion ? 0 : len;
+      drawFns.push(t => { p.style.strokeDashoffset = len * (1 - t); });
+      // direct label at line end, collision-nudged
+      let ly = Y(s.y[s.y.length - 1]);
+      while (usedLabelY.some(u => Math.abs(u - ly) < 14)) ly += 14;
+      usedLabelY.push(ly);
+      el('text', { x: W - m.r + 8, y: ly + 4, fill: s.color, class: 'dl' }, svg).textContent = s.name;
+    });
+    // hover crosshair + tooltip
+    const hitRect = el('rect', { x: m.l, y: m.t, width: iw, height: ih, fill: 'transparent', 'pointer-events': 'all' }, svg);
+    const cross = el('line', { y1: m.t, y2: m.t + ih, stroke: CSS.muted, 'stroke-width': 1, opacity: 0 }, svg);
+    hitRect.addEventListener('mousemove', ev => {
+      const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+      const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const xv = xmin + (loc.x - m.l) / iw * (xmax - xmin);
+      let idx = 0, best = Infinity;
+      xs.forEach((x, i) => { const dd = Math.abs(x - xv); if (dd < best) { best = dd; idx = i; } });
+      cross.setAttribute('x1', X(xs[idx])); cross.setAttribute('x2', X(xs[idx])); cross.setAttribute('opacity', .5);
+      tooltip.innerHTML = `<div class="trow"><span>${cfg.xname || 'x'}</span><b>${fmt(xs[idx])}</b></div>` +
+        cfg.series.map(s => `<div class="trow"><span style="color:${s.color}">${s.name}</span><b>${s.y[idx] != null ? (+s.y[idx]).toFixed(cfg.dp != null ? cfg.dp : 2) : '—'}</b></div>`).join('');
+      tooltip.style.opacity = 1;
+      tooltip.style.left = Math.min(window.innerWidth - 190, ev.clientX + 14) + 'px';
+      tooltip.style.top = (ev.clientY + 14) + 'px';
+    });
+    hitRect.addEventListener('mouseleave', () => { tooltip.style.opacity = 0; cross.setAttribute('opacity', 0); });
+    // legend
+    if (cfg.legend) {
+      const lg = document.getElementById(cfg.legend);
+      if (lg) lg.innerHTML = cfg.series.map(s => `<span><span class="sw" style="background:${s.color}"></span>${s.name}</span>`).join('');
+    }
+    return { draw: t => drawFns.forEach(f => f(t)) };
+  }
+  function groupedBars(svg, cfg, x0, width) {
+    // draws grouped bars into an existing svg at x offset; returns nothing fancy
+    const Hh = cfg.height, m = cfg.m, ih = Hh - m.t - m.b;
+    const groups = cfg.groups, series = cfg.series;
+    const gw = width / groups.length;
+    const bw = Math.min(26, (gw - 18) / series.length);
+    const Y = v => m.t + ih - v / (cfg.ymax || 1) * ih;
+    for (const t of [0, .25, .5, .75, 1]) {
+      el('line', { x1: x0, x2: x0 + width, y1: Y(t), y2: Y(t), stroke: CSS.hair }, cfg.svg);
+      el('text', { x: x0 - 7, y: Y(t) + 4, 'text-anchor': 'end' }, cfg.svg).textContent = t;
+    }
+    groups.forEach((g, gi) => {
+      series.forEach((s, si) => {
+        const v = s.values[gi];
+        const x = x0 + gi * gw + gw / 2 + (si - series.length / 2) * (bw + 2) + 1;
+        el('rect', { x, y: Y(v), width: bw, height: m.t + ih - Y(v), fill: s.color, rx: 3 }, cfg.svg);
+        el('text', { x: x + bw / 2, y: Y(v) - 5, 'text-anchor': 'middle', fill: s.color, 'font-size': 10.5 }, cfg.svg).textContent = v.toFixed(2).replace('0.', '.');
+      });
+      el('text', { x: x0 + gi * gw + gw / 2, y: Hh - 10, 'text-anchor': 'middle' }, cfg.svg).textContent = g;
+    });
+  }
+
+  /* ---------------- charts from DATA ---------------- */
+  const chartDraws = {};
+  chartDraws.exp1 = lineChart('chart-exp1', {
+    xname: 'steps', legend: 'lg-exp1', threshold: 0.9, thresholdLabel: '90%', ymin: 0, ymax: 1, dp: 2,
+    series: [
+      { name: 'Dyna-Q (model)', color: CSS.blue, x: D.exp1.curves.checkpoints, y: D.exp1.curves.dyna.iqm, lo: D.exp1.curves.dyna.ci_lo, hi: D.exp1.curves.dyna.ci_hi },
+      { name: 'Q-learning', color: CSS.orange, x: D.exp1.curves.checkpoints, y: D.exp1.curves.q.iqm, lo: D.exp1.curves.q.ci_lo, hi: D.exp1.curves.q.ci_hi },
+    ],
+  });
+  chartDraws.exp2 = lineChart('chart-exp2', {
+    xname: 'steps', legend: 'lg-exp2', threshold: D.exp2.curves.threshold, thresholdLabel: '90%', ymin: 0, ymax: 1, dp: 2,
+    bands: [{ x0: 0, x1: 12000, label: 'shoot drill' }, { x0: 12000, x1: 24000, label: 'dribble drill' }],
+    series: [
+      { name: 'drills, varied', color: CSS.blue, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions['drills-varied'].iqm, lo: D.exp2.curves.conditions['drills-varied'].ci_lo, hi: D.exp2.curves.conditions['drills-varied'].ci_hi },
+      { name: 'drills, fixed', color: CSS.violet, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions['drills-fixed'].iqm, lo: D.exp2.curves.conditions['drills-fixed'].ci_lo, hi: D.exp2.curves.conditions['drills-fixed'].ci_hi },
+      { name: 'whole games', color: CSS.orange, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions.whole.iqm, lo: D.exp2.curves.conditions.whole.ci_lo, hi: D.exp2.curves.conditions.whole.ci_hi },
+    ],
+  });
+  // exp3: acquisition lines (left) + retention/transfer bars (right) in one svg
+  (function exp3chart() {
+    const svg = document.getElementById('chart-exp3'); if (!svg) return;
+    const W = 800, Hh = 320; svg.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
+    const m = { t: 16, b: 34 };
+    // left: acquisition
+    const ac = D.exp3.eval_curves && D.exp3.eval_curves.acquisition;
+    const ep = D.exp3.eval_curves ? D.exp3.eval_curves.episodes : D.exp3.practice.episodes;
+    const lw = 400, lx = 50, ih = Hh - m.t - m.b;
+    const bl = ac ? ac.blocked.iqm : D.exp3.practice.blocked, il = ac ? ac.interleaved.iqm : D.exp3.practice.interleaved;
+    const X = i => lx + (ep[i] - ep[0]) / (ep[ep.length - 1] - ep[0]) * lw;
+    const Y = v => m.t + ih - v * ih;
+    [0, .25, .5, .75, 1].forEach(t => {
+      el('line', { x1: lx, x2: lx + lw, y1: Y(t), y2: Y(t), stroke: CSS.hair }, svg);
+      el('text', { x: lx - 8, y: Y(t) + 4, 'text-anchor': 'end' }, svg).textContent = t;
+    });
+    (D.exp3.phase_boundaries || []).forEach(b => {
+      const i = ep.findIndex(e => e >= b); if (i > 0) el('line', { x1: X(i), x2: X(i), y1: m.t, y2: m.t + ih, stroke: CSS.hair, 'stroke-dasharray': '3 4' }, svg);
+    });
+    [['blocked', bl, CSS.orange], ['interleaved', il, CSS.blue]].forEach(([nm, ys, col]) => {
+      let d = ''; ys.forEach((v, i) => d += (i ? 'L' : 'M') + X(i) + ' ' + Y(v));
+      el('path', { d, fill: 'none', stroke: col, 'stroke-width': 2 }, svg);
+      el('text', { x: X(ys.length - 1) - 4, y: Y(ys[ys.length - 1]) - 8, fill: col, 'text-anchor': 'end', class: 'dl' }, svg).textContent = nm;
+    });
+    el('text', { x: lx + lw / 2, y: Hh - 8, 'text-anchor': 'middle' }, svg).textContent = 'practice episodes (score on currently-practiced passage)';
+    // right: bars — retention mean + transfer
+    const gx = 520, gwid = 240;
+    groupedBars(null, {
+      svg, height: Hh, m: { t: m.t, b: m.b }, ymax: 1,
+      groups: ['retention', 'transfer'],
+      series: [
+        { name: 'blocked', color: CSS.orange, values: [D.exp3.retention.blocked.iqm[3], D.exp3.transfer.blocked.iqm != null ? D.exp3.transfer.blocked.iqm : D.exp3.transfer.blocked] },
+        { name: 'interleaved', color: CSS.blue, values: [D.exp3.retention.interleaved.iqm[3], D.exp3.transfer.interleaved.iqm != null ? D.exp3.transfer.interleaved.iqm : D.exp3.transfer.interleaved] },
+      ],
+    }, gx, gwid);
+    el('text', { x: gx + gwid / 2, y: Hh - 8, 'text-anchor': 'middle' }, svg).textContent = 'test, learning off';
+    const lg = document.getElementById('lg-exp3');
+    if (lg) lg.innerHTML = `<span><span class="sw" style="background:${CSS.orange}"></span>blocked</span><span><span class="sw" style="background:${CSS.blue}"></span>interleaved</span>`;
+  })();
+  chartDraws.exp4 = lineChart('chart-exp4', {
+    xname: 'gen', legend: 'lg-exp4', ymin: 0, ymax: 10, dp: 2, xlabelPad: 0,
+    series: [
+      { name: 'distill', color: CSS.blue, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['generational-distill'].iqm, lo: D.exp4.greedy['generational-distill'].ci_lo, hi: D.exp4.greedy['generational-distill'].ci_hi },
+      { name: 'weight-copy', color: CSS.orange, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['weight-copy'].iqm },
+      { name: 'one long life', color: CSS.green, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['one-long-life'].iqm },
+      { name: 'slow decay', color: CSS.violet, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['one-long-life-slow'].iqm },
+      { name: 'no inherit', color: CSS.gold, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['no-inheritance'].iqm },
+    ],
+  });
+  chartDraws.exp5 = lineChart('chart-exp5', {
+    xname: 'steps', legend: 'lg-exp5', ymin: 0, dp: 0,
+    series: [
+      { name: 'adult, walk', color: CSS.red, x: D.exp5.damage['adult-walk'].steps, y: D.exp5.damage['adult-walk'].iqm, lo: D.exp5.damage['adult-walk'].lo, hi: D.exp5.damage['adult-walk'].hi },
+      { name: 'adult, balance-first', color: CSS.orange, x: D.exp5.damage['adult-balance-first'].steps, y: D.exp5.damage['adult-balance-first'].iqm },
+      { name: 'grow linear', color: CSS.violet, x: D.exp5.damage['grow-linear'].steps, y: D.exp5.damage['grow-linear'].iqm, lo: D.exp5.damage['grow-linear'].lo, hi: D.exp5.damage['grow-linear'].hi },
+      { name: 'grow jump', color: CSS.green, x: D.exp5.damage['grow-jump'].steps, y: D.exp5.damage['grow-jump'].iqm },
+      { name: 'grow adaptive', color: CSS.blue, x: D.exp5.damage['grow-adaptive'].steps, y: D.exp5.damage['grow-adaptive'].iqm, lo: D.exp5.damage['grow-adaptive'].lo, hi: D.exp5.damage['grow-adaptive'].hi },
+    ],
+  });
+  // scorecard
+  (function scorecard() {
+    const sc = document.getElementById('scorecard'); if (!sc) return;
+    const rows = [
+      ['H1', 'world models', true, '12× fewer steps with a model; blind-at-home 96% vs stranger 10%'],
+      ['H2', 'microtasks', true, 'drills reach mastery in 15.4k steps vs 38.9k (p=1.1e-9)'],
+      ['H3', 'variation', true, 'train worse, test better — retention p=1.2e-5, transfer p=.006'],
+      ['H4', 'teachers', true, 'lineage ratchets to 8.75; every control flat at 0.3 (p=.014)'],
+      ['H5', 'growing bodies', true, '14× less damage to adult competence (p≤2.1e-6); 2 sub-claims failed'],
+    ];
+    sc.innerHTML = rows.map(([h, nm, ok, txt]) =>
+      `<div class="tile ${ok ? 'win' : ''}"><div class="v">${h} <span class="chip ${ok ? 'ok' : 'no'}">${ok ? 'supported' : 'refuted'}</span></div><div class="l"><b>${nm}</b> — ${txt}</div></div>`).join('');
+  })();
+
+  /* ---------------- scenes ---------------- */
+  function addStage(name, build) {
+    const elx = document.querySelector(`[data-stage="${name}"]`) || document.querySelector(`[data-scene="${name}"]`);
+    if (!elx) return null;
+    const scene = new THREE.Scene();
+    const st = build(scene, elx);
+    st.el = elx; st.scene = scene; stages.push(st); return st;
+  }
+
+  // ---- hero: five floating islands ----
+  const hero = addStage('hero', (scene, elx) => {
+    const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+    lights(scene, .5, .8);
+    const islands = new THREE.Group(); scene.add(islands);
+    const defs = [
+      { c: PAL.blue, build: g => { // home: walls
+          for (let i = 0; i < 4; i++) { const w = new THREE.Mesh(new THREE.BoxGeometry(.28, .5, 1.6), mat(0x3a4c6e)); w.position.set(i < 2 ? (i ? .8 : -.8) : 0, .35, i >= 2 ? (i === 2 ? .8 : -.8) : 0); if (i >= 2) w.rotation.y = Math.PI / 2; g.add(w); }
+          const fr = new THREE.Mesh(new THREE.BoxGeometry(.3, .42, .3), mat(PAL.accent, { emissive: 0x6b5620 })); fr.position.set(.45, .3, -.4); g.add(fr); } },
+      { c: PAL.green, build: g => { const p = new THREE.Mesh(new THREE.BoxGeometry(1.9, .1, 1.2), mat(0x2c5c40)); p.position.y = .12; g.add(p);
+          const goal = new THREE.Mesh(new THREE.BoxGeometry(.08, .3, .7), mat(0xf2ede4)); goal.position.set(.92, .28, 0); g.add(goal); } },
+      { c: PAL.violet, build: g => { for (let k = 0; k < 7; k++) { const key = new THREE.Mesh(new THREE.BoxGeometry(.22, .1, .9), mat(k % 2 ? 0x222b40 : 0xd8d3c6)); key.position.set(-.7 + k * .24, .18, 0); g.add(key); } } },
+      { c: PAL.gold, build: g => { for (let k = 0; k < 3; k++) { const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.22), mat(PAL.accent, { emissive: 0x4a3c14 })); gem.position.set(0, .3 + k * .5, 0); gem.scale.setScalar(1 - k * .22); g.add(gem); } } },
+      { c: PAL.red, build: g => { const pole = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 1), mat(0xd8d3c6)); pole.position.y = .62; pole.rotation.z = .3; g.add(pole);
+          const bob = new THREE.Mesh(new THREE.SphereGeometry(.2), mat(PAL.red)); bob.position.set(-.3, 1.1, 0); g.add(bob); } },
+    ];
+    defs.forEach((d, i) => {
+      const g = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.35, .35, 6), mat(0x1a2336));
+      base.position.y = -.05; g.add(base);
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(1.16, 1.16, .06, 6), mat(d.c));
+      rim.position.y = .14; g.add(rim);
+      d.build(g);
+      const ang = (i / 5) * Math.PI * 2 + .5;
+      g.position.set(Math.cos(ang) * 6.6, Math.sin(i * 2.1) * 1.1 - .4, Math.sin(ang) * 5.2 - i * 2.6);
+      g.rotation.y = -ang + .6;
+      islands.add(g);
+    });
+    cam.position.set(0, 2.6, 15);
+    const st = { camera: cam, update(t) {
+      cam.position.z = 13 - t * 10; cam.position.y = 2.4 - t * 1.2;
+      islands.rotation.y = t * .55;
+      cam.lookAt(0, .4, -t * 6);
+    } };
+    st.update(0); return st;
+  });
+
+  // ---- primer: 3x3 grid with growing Q arrows ----
+  addStage('primer', scene => {
+    const cam = dimetricCam(7.2); cam.userData.viewW = 9; lights(scene);
+    const g = new THREE.Group(); scene.add(g);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+      const tile = new THREE.Mesh(new THREE.BoxGeometry(.94, .18, .94), mat(r === 0 && c === 2 ? 0x4a3c14 : 0x1d2740));
+      tile.position.set(c - 1, 0, r - 1); g.add(tile);
+    }
+    const goal = new THREE.Mesh(new THREE.BoxGeometry(.5, .3, .5), mat(PAL.accent, { emissive: 0x6b5620 }));
+    goal.position.set(1, .28, -1); g.add(goal);
+    const agent = new THREE.Mesh(new THREE.SphereGeometry(.26, 24, 18), mat(PAL.blue, { emissive: 0x14273f }));
+    agent.position.set(-1, .35, 1); g.add(agent);
+    // arrows: cone per (cell, dir) pointing toward better value
+    const coneGeo = new THREE.ConeGeometry(.09, .3, 10);
+    const arrows = new THREE.InstancedMesh(coneGeo, mat(0x7fa8dd), 36);
+    arrows.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    scene.add(arrows);
+    const dum = new THREE.Object3D();
+    const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // toward -z(up-grid), +x, +z, -x
+    function setArrows(t) {
+      let i = 0;
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+        const dGoal = Math.abs(r - 0) + Math.abs(c - 2);
+        for (let d = 0; d < 4; d++) {
+          const nr = r + dirs[d][1], nc = c + dirs[d][0];
+          let v = 0;
+          if (nr >= 0 && nr < 3 && nc >= 0 && nc < 3) {
+            const nd = Math.abs(nr - 0) + Math.abs(nc - 2);
+            v = Math.pow(.75, nd) * (nd < dGoal ? 1 : .25);
+          }
+          const reveal = Math.max(0, Math.min(1, (t * 6 - dGoal)));
+          const s = v * reveal;
+          dum.position.set(c - 1 + dirs[d][0] * .28, .35, r - 1 + dirs[d][1] * .28);
+          dum.rotation.set(0, 0, 0);
+          if (d === 0) dum.rotation.x = -Math.PI / 2 * 0, dum.rotation.x = 0;
+          // orient cone along dir
+          dum.rotation.y = Math.atan2(dirs[d][0], dirs[d][1]);
+          dum.rotation.x = Math.PI / 2;
+          dum.scale.setScalar(Math.max(.001, s));
+          dum.updateMatrix(); arrows.setMatrixAt(i++, dum.matrix);
+        }
+      }
+      arrows.instanceMatrix.needsUpdate = true;
+      // agent strolls a canned loop late in the scrub
+      const path = [[1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1]];
+      const wt = Math.max(0, t - .55) / .45;
+      const fi = wt * (path.length - 1);
+      const i0 = Math.floor(fi), i1 = Math.min(path.length - 1, i0 + 1), fr = fi - i0;
+      agent.position.x = path[i0][1] * (1 - fr) + path[i1][1] * fr;
+      agent.position.z = path[i0][0] * (1 - fr) + path[i1][0] * fr;
+    }
+    const st = { camera: cam, update: setArrows };
+    st.update(reduceMotion ? 1 : 0); return st;
+  });
+
+  // ---- H1: blindfold home ----
+  const H1 = addStage('h1', scene => {
+    const cam = dimetricCam(13); cam.userData.viewW = 19.5; lights(scene, .32, .5);
+    function home(hdef, tint) {
+      const rows = hdef.ascii || hdef;
+      const Hn = rows.length, Wn = rows[0].length;
+      const grp = new THREE.Group();
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(Wn, .3, Hn), mat(0x151d2f));
+      floor.position.y = -.16; grp.add(floor);
+      let n = 0; rows.forEach(row => { for (const ch of row) if (ch === '#') n++; });
+      const walls = new THREE.InstancedMesh(new THREE.BoxGeometry(.96, .8, .96), mat(tint), n);
+      const dum = new THREE.Object3D(); let i = 0;
+      let S = hdef.start || [1, 1], G = hdef.goal || [2, 7];
+      rows.forEach((row, r) => { [...row].forEach((ch, c) => {
+        if (ch === '#') { const [x, , z] = gridToWorld(r, c, Hn, Wn); dum.position.set(x, .4, z); dum.updateMatrix(); walls.setMatrixAt(i++, dum.matrix); }
+        if (ch === 'S') S = [r, c]; if (ch === 'G') G = [r, c];
+      }); });
+      grp.add(walls);
+      const fridge = new THREE.Mesh(new THREE.BoxGeometry(.7, .9, .7), mat(PAL.accent, { emissive: 0x5c4a1c }));
+      const [gx, , gz] = gridToWorld(G[0], G[1], Hn, Wn); fridge.position.set(gx, .45, gz);
+      grp.add(fridge);
+      return { grp, Hn, Wn, S, G };
+    }
+    const A = home(D.exp1.homes.A, 0x2d3c5c), B = home(D.exp1.homes.B, 0x51344a);
+    scene.add(A.grp); scene.add(B.grp); B.grp.visible = false;
+    const agent = new THREE.Mesh(new THREE.SphereGeometry(.34, 24, 18), mat(0xe8d9b8, { emissive: 0x33291a }));
+    agent.position.y = .45; scene.add(agent);
+    const ghost = new THREE.Mesh(new THREE.SphereGeometry(.34, 24, 18),
+      new THREE.MeshLambertMaterial({ color: PAL.blue, transparent: true, opacity: .55, emissive: 0x1c3050 }));
+    ghost.position.y = .45; scene.add(ghost); ghost.visible = false;
+    const spot = new THREE.SpotLight(0xfff0c8, 2.2, 9, .55, .5); spot.position.set(0, 4, 0);
+    spot.target = agent; scene.add(spot);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3.6, 24, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, opacity: .10, depthWrite: false }));
+    cone.position.y = 2.2; scene.add(cone);
+    const tether = fatLine([[0, .45, 0], [0, .45, .001]], PAL.red, 2.2); tether.visible = false; scene.add(tether);
+    // BFS sighted path in A (illustrating the greedy policy's walk)
+    function bfsPath(hm) {
+      const raw = hm === A ? D.exp1.homes.A : D.exp1.homes.B;
+      const rows = raw.ascii || raw;
+      const key = (r, c) => r * 100 + c; const prev = new Map(); const q = [hm.S]; const seen = new Set([key(...hm.S)]);
+      while (q.length) { const [r, c] = q.shift();
+        if (r === hm.G[0] && c === hm.G[1]) break;
+        for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { const nr = r + dr, nc = c + dc;
+          if (rows[nr][nc] !== '#' && !seen.has(key(nr, nc))) { seen.add(key(nr, nc)); prev.set(key(nr, nc), [r, c]); q.push([nr, nc]); } } }
+      const path = [[...hm.G]]; let cur = hm.G;
+      while (key(...cur) !== key(...hm.S)) { cur = prev.get(key(...cur)); path.unshift(cur); }
+      return path;
+    }
+    const sightedPath = bfsPath(A);
+    function place(mesh, hm, rc, frac, rc2) {
+      const [x0, , z0] = gridToWorld(rc[0], rc[1], hm.Hn, hm.Wn);
+      let x = x0, z = z0;
+      if (rc2) { const [x1, , z1] = gridToWorld(rc2[0], rc2[1], hm.Hn, hm.Wn); x = x0 + (x1 - x0) * frac; z = z0 + (z1 - z0) * frac; }
+      mesh.position.x = x; mesh.position.z = z;
+    }
+    function playTraj(hm, traj, t, withGhost) {
+      const path = traj.path; const fi = t * (path.length - 1);
+      const i0 = Math.floor(fi), i1 = Math.min(path.length - 1, i0 + 1), fr = fi - i0;
+      place(agent, hm, path[i0].true, fr, path[i1].true);
+      if (withGhost) { ghost.visible = true; place(ghost, hm, path[i0].bel, fr, path[i1].bel);
+        const H = path[i0].H || 0; const s = 1 + Math.min(1.6, H * .45); ghost.scale.setScalar(s);
+        ghost.material.opacity = Math.max(.2, .6 - H * .1);
+        // divergence tether
+        const p1 = agent.position, p2 = ghost.position;
+        const d = p1.distanceTo(p2);
+        tether.visible = d > .8;
+        if (tether.visible) { tether.geometry.dispose(); const g2 = new THREE.LineGeometry(); g2.setPositions([p1.x, .45, p1.z, p2.x, .45, p2.z]); tether.geometry = g2; tether.computeLineDistances(); }
+      } else { ghost.visible = false; tether.visible = false; }
+      spot.position.set(agent.position.x, 4, agent.position.z);
+      cone.position.set(agent.position.x, 2.2, agent.position.z);
+    }
+    const st = { camera: cam, update(t) {
+      // beats: 0-.25 sighted A · .25-.5 blind-A-touch · .5-.62 swap to B · .62-.92 blind-B-touch · .92-1 hold
+      if (t < .25) { A.grp.visible = true; B.grp.visible = false; spot.intensity = 2.2; cone.visible = true;
+        const u = t / .25; const fi = u * (sightedPath.length - 1); const i0 = Math.floor(fi), i1 = Math.min(sightedPath.length - 1, i0 + 1);
+        place(agent, A, sightedPath[i0], fi - i0, sightedPath[i1]); ghost.visible = false; tether.visible = false;
+      } else if (t < .5) { A.grp.visible = true; B.grp.visible = false; spot.intensity = .25; cone.visible = false;
+        playTraj(A, D.exp1.trajs['blind-A-touch'], (t - .25) / .25, true);
+      } else if (t < .62) { const u = (t - .5) / .12; A.grp.visible = u < .5; B.grp.visible = u >= .5; spot.intensity = .25; cone.visible = false; ghost.visible = false; tether.visible = false;
+        agent.position.set(-6 + u * 12 * 0, .45, 0);
+      } else { A.grp.visible = false; B.grp.visible = true; spot.intensity = .25; cone.visible = false;
+        playTraj(B, D.exp1.trajs['blind-B-touch'], Math.min(1, (t - .62) / .3), true);
+      }
+    } };
+    st.update(reduceMotion ? .4 : 0); return st;
+  });
+
+  // ---- H2: pitch with ghost trails ----
+  addStage('h2', scene => {
+    const cam = dimetricCam(10); cam.userData.viewW = 15.5; lights(scene, .5, .75);
+    const P = D.exp2.pitch, Wn = P.W, Hn = P.H;
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(Wn + .6, .3, Hn + .6), mat(0x17332a));
+    slab.position.y = -.16; scene.add(slab);
+    // pitch lines
+    const lineM = new THREE.MeshBasicMaterial({ color: 0xd8d3c6, transparent: true, opacity: .22 });
+    const mid = new THREE.Mesh(new THREE.PlaneGeometry(.08, Hn), lineM);
+    mid.rotation.x = -Math.PI / 2; mid.position.y = .02; scene.add(mid);
+    (P.goal_cells || [[2, 10], [3, 10], [4, 10]]).forEach(rc => {
+      const fr = new THREE.Mesh(new THREE.BoxGeometry(.9, .34, .9), new THREE.MeshLambertMaterial({ color: PAL.accent, transparent: true, opacity: .5, emissive: 0x51431a }));
+      const [x, , z] = gridToWorld(rc[0], rc[1], Hn, Wn); fr.position.set(x, .17, z); scene.add(fr);
+    });
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(.2, 18, 14), mat(0xf2ede4));
+    ball.position.y = .25; scene.add(ball);
+    const agent = new THREE.Mesh(new THREE.SphereGeometry(.3, 24, 18), mat(PAL.blue, { emissive: 0x12233c })); agent.position.y = .4; scene.add(agent);
+    const conds = [['whole', PAL.orange], ['drills-fixed', PAL.violet], ['drills-varied', PAL.blue]];
+    const trails = new THREE.Group(); scene.add(trails);
+    const trailObjs = [];
+    conds.forEach(([cond, col]) => {
+      ['25', '50', '100'].forEach((stg, si) => {
+        const t = D.exp2.trajs[cond] && D.exp2.trajs[cond][stg]; if (!t || !t.steps.length) return;
+        const pts = t.steps.map(s => { const [x, , z] = gridToWorld(s.agent[0], s.agent[1], Hn, Wn); return [x, .12 + si * .04, z]; });
+        if (pts.length < 2) return;
+        const ln = fatLine(pts, col, 2.4); ln.material.transparent = true; ln.material.opacity = 0;
+        trails.add(ln);
+        trailObjs.push({ cond, stg: si, line: ln, scored: t.scored, steps: t.steps });
+      });
+    });
+    const st = { camera: cam, update(t) {
+      // three beats, one per condition; within each, stages 25→50→100 reveal
+      const ci = Math.min(2, Math.floor(t * 3)); const u = (t * 3) - ci;
+      trailObjs.forEach(o => {
+        const active = conds[ci][0] === o.cond;
+        const sReveal = Math.max(0, Math.min(1, u * 3 - o.stg));
+        o.line.material.opacity = active ? .75 * sReveal : .10;
+      });
+      const [cond] = conds[ci];
+      const stg = u < .34 ? '25' : u < .67 ? '50' : '100';
+      const tr = D.exp2.trajs[cond] && D.exp2.trajs[cond][stg];
+      if (tr && tr.steps.length) {
+        const wt = (u % .34) / .34; const fi = wt * (tr.steps.length - 1);
+        const i0 = Math.floor(fi), i1 = Math.min(tr.steps.length - 1, i0 + 1), fr = fi - i0;
+        const s0 = tr.steps[i0], s1 = tr.steps[i1];
+        const [ax0, , az0] = gridToWorld(s0.agent[0], s0.agent[1], Hn, Wn);
+        const [ax1, , az1] = gridToWorld(s1.agent[0], s1.agent[1], Hn, Wn);
+        agent.position.x = ax0 + (ax1 - ax0) * fr; agent.position.z = az0 + (az1 - az0) * fr;
+        const b0 = s0.ball, b1 = s1.ball;
+        if (b0 && b1) { const [bx0, , bz0] = gridToWorld(b0[0], b0[1], Hn, Wn); const [bx1, , bz1] = gridToWorld(b1[0], b1[1], Hn, Wn);
+          ball.visible = true; ball.position.x = bx0 + (bx1 - bx0) * fr; ball.position.z = bz0 + (bz1 - bz0) * fr;
+        } else { ball.visible = false; }
+      }
+    } };
+    st.update(reduceMotion ? .95 : 0); return st;
+  });
+
+  // ---- H3: piano roll wall ----
+  addStage('h3', scene => {
+    const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, -50, 100);
+    cam.userData.viewH = 13; cam.userData.viewW = 15; cam.position.set(0, 0, 20); cam.lookAt(0, 0, 0);
+    lights(scene, .8, .35);
+    const S = D.exp3.structure; const nK = D.exp3.n_keys || 8, len = 12;
+    function lane(xoff, label) {
+      const grp = new THREE.Group(); grp.position.x = xoff; scene.add(grp);
+      const cells = new THREE.InstancedMesh(new THREE.BoxGeometry(.42, .42, .18), new THREE.MeshLambertMaterial(), len * nK);
+      const dum = new THREE.Object3D(); const colors = [];
+      let i = 0;
+      for (let p = 0; p < len; p++) for (let k = 0; k < nK; k++) {
+        dum.position.set((p - len / 2 + .5) * .5, (k - nK / 2 + .5) * .5, 0);
+        dum.updateMatrix(); cells.setMatrixAt(i, dum.matrix);
+        cells.setColorAt(i, new THREE.Color(0x1c2438)); i++;
+      }
+      cells.instanceColor.needsUpdate = true;
+      grp.add(cells);
+      return { grp, cells };
+    }
+    const L1 = lane(-3.6), L2 = lane(3.6);
+    const blackRow = new Set([1, 3, 6]);
+    function paintLane(L, passageIdx, playT, col, errAt) {
+      const keys = S.correct_keys[passageIdx];
+      let i = 0; const c = new THREE.Color(); const laneCol = new THREE.Color(col);
+      const played = playT * len;
+      for (let p = 0; p < len; p++) for (let k = 0; k < nK; k++) {
+        const correct = keys && keys[p] === k;
+        c.set(blackRow.has(k) ? 0x141b2c : 0x1c2438);           // key-bed rows
+        if (correct) c.set(0x3a4a6c);                            // the fingering, faintly visible
+        if (Math.abs(played - p) < .5) c.lerp(new THREE.Color(0x8892a8), .35); // playhead column
+        if (correct && p < played) {
+          const glow = Math.max(0, 1 - (played - p) * .28);
+          c.copy(laneCol).lerp(new THREE.Color(0xffffff), .25 * glow);
+          if (glow < .3) c.lerp(new THREE.Color(0x1c2438), .55 - glow); // trail fades
+        }
+        if (errAt != null && p === errAt && Math.abs(played - p) < 1 && k === ((keys[p] + 3) % nK)) c.set(PAL.red);
+        L.cells.setColorAt(i++, c);
+      }
+      L.cells.instanceColor.needsUpdate = true;
+    }
+    const st = { camera: cam, update(t) {
+      // beats: 0-.5 practice (blocked plays A repeatedly; interleaved cycles A/B/C) · .5-1 test on novel-ish (passage index 3 if present else 0)
+      if (t < .5) {
+        const u = (t / .5) * 3; const rep = Math.floor(u), pt = u - rep;
+        paintLane(L1, 0, pt, PAL.orange, null);                    // blocked: drill A
+        paintLane(L2, rep % 3, pt, PAL.blue, null);                // interleaved: rotate
+      } else {
+        const u = (t - .5) / .5;
+        const novel = S.passages.length > 3 ? 3 : 0;
+        const exc = (S.exceptions && S.exceptions[0] != null) ? (Array.isArray(S.exceptions[0]) ? S.exceptions[0][0] : S.exceptions[0]) : 6;
+        paintLane(L1, novel, u, PAL.orange, typeof exc === 'number' ? exc : 6); // blocked stumbles
+        paintLane(L2, novel, u, PAL.blue, null);                                // interleaved flows
+      }
+    } };
+    st.update(reduceMotion ? .8 : 0); return st;
+  });
+
+  // ---- H4: trapgrid generations ----
+  addStage('h4', scene => {
+    const cam = dimetricCam(13.5); cam.userData.viewW = 21.5; lights(scene, .4, .6);
+    const Gd = D.exp4.grid; const rows = (Gd.map.trim ? Gd.map.trim().split('\n') : Gd.map);
+    const Hn = Gd.height || rows.length, Wn = Gd.width || rows[0].length;
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(Wn, .3, Hn), mat(0x141c2e)); floor.position.y = -.16; scene.add(floor);
+    let nW = 0; rows.forEach(r => { for (const ch of r) if (ch === '#') nW++; });
+    if (nW) {
+      const walls = new THREE.InstancedMesh(new THREE.BoxGeometry(.96, .7, .96), mat(0x27324e), nW);
+      const dum = new THREE.Object3D(); let i = 0;
+      rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') { const [x, , z] = gridToWorld(r, c, Hn, Wn); dum.position.set(x, .35, z); dum.updateMatrix(); walls.setMatrixAt(i++, dum.matrix); } }));
+      scene.add(walls);
+    }
+    (Gd.candies || []).forEach(rc => {
+      const cd = new THREE.Mesh(new THREE.SphereGeometry(.26, 16, 12), mat(0xd678a8, { emissive: 0x54263e }));
+      const [x, , z] = gridToWorld(rc[0], rc[1], Hn, Wn); cd.position.set(x, .3, z); scene.add(cd);
+    });
+    const goalRC = Gd.goal || [5, 13];
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.7), mat(PAL.accent, { emissive: 0x6b5620 }));
+    { const [x, , z] = gridToWorld(goalRC[0], goalRC[1], Hn, Wn); gem.position.set(x, .6, z); }
+    scene.add(gem);
+    // advice skeleton per generation
+    const genLines = [];
+    (D.exp4.advice || []).forEach((adv, gi) => {
+      const pts = adv.pairs.map(p => { const [x, , z] = gridToWorld(p.rc[0], p.rc[1], Hn, Wn); return [x, .16 + gi * .05, z]; });
+      if (pts.length < 2) return;
+      const col = new THREE.Color(PAL.blue).lerp(new THREE.Color(PAL.accent), gi / 4);
+      const ln = fatLine(pts, col.getHex(), 1.6 + gi * .9);
+      ln.material.transparent = true; ln.material.opacity = 0; scene.add(ln);
+      genLines.push(ln);
+    });
+    const finalPts = (D.exp4.final_paths['generational-distill'] || []).map(rc => { const [x, , z] = gridToWorld(rc[0], rc[1], Hn, Wn); return [x, .5, z]; });
+    const golden = finalPts.length > 1 ? fatLine(finalPts.map(pt => [pt[0], .55, pt[2]]), PAL.accent, 6) : null;
+    if (golden) { golden.material.transparent = true; golden.material.opacity = 0; scene.add(golden); }
+    const st = { camera: cam, update(t) {
+      const g = t * 6; // 5 gens + golden finale
+      genLines.forEach((ln, i) => {
+        const u = Math.max(0, Math.min(1, g - i));
+        ln.material.opacity = u * (.10 + .22 * (i + 1) / 5);
+      });
+      if (golden) golden.material.opacity = Math.max(0, Math.min(1, g - 5));
+      gem.rotation.y = t * 3;
+      gem.scale.setScalar(1 + Math.max(0, Math.min(1, g - 5)) * .25);
+    } };
+    st.update(reduceMotion ? 1 : 0); return st;
+  });
+
+  // ---- H5: scissor-split growing pendulums ----
+  addStage('h5', (scene, elx) => {
+    // two scenes rendered side by side inside one stage
+    function pendulumScene(cond, col) {
+      const sc = new THREE.Scene(); lights(sc, .5, .8);
+      const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, -50, 100);
+      cam.userData.viewH = 4.6; cam.position.set(0, .95, 10); cam.lookAt(0, .85, 0);
+      const ground = new THREE.Mesh(new THREE.BoxGeometry(6, .16, 2), mat(0x1a2336)); sc.add(ground);
+      const cart = new THREE.Mesh(new THREE.BoxGeometry(.7, .3, .5), mat(0x33415f)); cart.position.y = .25; sc.add(cart);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, 1), mat(0xd8d3c6));
+      const bob = new THREE.Mesh(new THREE.SphereGeometry(.22, 20, 16), mat(col));
+      const pivot = new THREE.Group(); pivot.position.y = .4;
+      pole.position.y = .5; pivot.add(pole); bob.position.y = 1; pivot.add(bob);
+      sc.add(pivot);
+      const flash = new THREE.Mesh(new THREE.PlaneGeometry(6, 3), new THREE.MeshBasicMaterial({ color: PAL.red, transparent: true, opacity: 0, depthWrite: false }));
+      flash.position.set(0, 1.4, -1); sc.add(flash);
+      return { sc, cam, pivot, pole, bob, flash, cond,
+        theta: D.exp5.theta[cond] || [], sizes: D.exp5.sizes[cond], falls: D.exp5.falls[cond] || [] };
+    }
+    const left = pendulumScene('adult-walk', PAL.red);
+    const right = pendulumScene('grow-adaptive', PAL.blue);
+    // HTML damage counters
+    const hud = document.createElement('div');
+    hud.className = 'hud';
+    hud.innerHTML = `
+      <div style="position:absolute;top:64px;left:0;right:50%;text-align:center;font-family:var(--mono);font-size:12px;color:${CSS.muted}">born adult<br><span id="dmgL" style="font-size:26px;color:${CSS.red}">0</span><br>damage</div>
+      <div style="position:absolute;top:64px;left:50%;right:0;text-align:center;font-family:var(--mono);font-size:12px;color:${CSS.muted}">grows when ready<br><span id="dmgR" style="font-size:26px;color:${CSS.blue}">0</span><br>damage</div>
+      <div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:${CSS.hair}"></div>`;
+    elx.appendChild(hud);
+    const dmgL = hud.querySelector('#dmgL'), dmgR = hud.querySelector('#dmgR');
+    const budget = 120000;
+    function cumDamage(falls, step) { let s = 0; for (const f of falls) { if (f.step <= step) s += f.dmg; } return s; }
+    function updateSide(side, t) {
+      const trainStep = t * budget;
+      // size from example schedule
+      const ss = side.sizes; let size = 1;
+      if (ss && ss.example && ss.example.length) {
+        const idx = Math.min(ss.example.length - 1, Math.floor(t * (ss.example.length - 1)));
+        size = ss.example[idx];
+      } else if (ss && ss.iqm) {
+        const idx = Math.min(ss.iqm.length - 1, Math.floor(t * (ss.iqm.length - 1)));
+        size = ss.iqm[idx];
+      }
+      side.pivot.scale.setScalar(size);
+      side.bob.scale.setScalar(.6 + Math.pow(size, 3) * .6);
+      // theta animation: loop the 200-step adult trace, speed by scrub
+      const th = side.theta;
+      if (th.length) {
+        const i = Math.floor(t * 4 * (th.length - 1)) % th.length;
+        side.pivot.rotation.z = -th[i] * 2.2;
+      }
+      // fall flash near a fall event
+      const nearFall = side.falls.some(f => Math.abs(f.step - trainStep) < budget * .004);
+      side.flash.material.opacity = nearFall ? .12 * Math.pow(size, 2) : 0;
+      return cumDamage(side.falls, trainStep);
+    }
+    const st = {
+      camera: left.cam,
+      update(t) {
+        st._t = t;
+        const dl = updateSide(left, t), dr = updateSide(right, t);
+        dmgL.textContent = dl.toFixed(0); dmgR.textContent = dr.toFixed(1);
+      },
+      extraRender(r, y) {
+        const w2 = r.width / 2;
+        [[left, r.left], [right, r.left + w2]].forEach(([side, x]) => {
+          renderer.setViewport(x, y, w2, r.height); renderer.setScissor(x, y, w2, r.height);
+          side.cam.aspect = w2 / r.height; fitOrtho(side.cam, w2 / r.height); side.cam.updateProjectionMatrix();
+          renderer.render(side.sc, side.cam);
+        });
+      },
+    };
+    st.update(reduceMotion ? .8 : 0); return st;
+  });
+
+  /* ---------------- scroll wiring ---------------- */
+  function wireStage(name) {
+    const stObj = stages.find(s => s.el && (s.el.dataset.stage === name || s.el.dataset.scene === name));
+    if (!stObj) return;
+    if (name === 'hero') {
+      ScrollTrigger.create({
+        trigger: stObj.el.closest('.chapter') || stObj.el, start: 'top top', end: 'bottom top', scrub: 1,
+        onUpdate(self) { stObj.update(self.progress * .9); requestRender(); },
+      });
+      return;
+    }
+    const scrolly = stObj.el.closest('.scrolly') || stObj.el.parentElement;
+    ScrollTrigger.create({
+      trigger: scrolly, start: 'top top', end: 'bottom bottom', scrub: 1, invalidateOnRefresh: true,
+      onUpdate(self) { stObj.update(self.progress); requestRender(); },
+      onToggle() { requestRender(); },
+    });
+    if (reduceMotion) { stObj.update(name === 'h1' ? .4 : .85); }
+  }
+  ['hero', 'primer', 'h1', 'h2', 'h3', 'h4', 'h5'].forEach(wireStage);
+
+  // step cards fade in/out
+  gsap.utils.toArray('.step .card').forEach(card => {
+    gsap.fromTo(card, { autoAlpha: 0, y: 26 }, {
+      autoAlpha: 1, y: 0, duration: reduceMotion ? 0 : .6, ease: 'power2.out',
+      scrollTrigger: { trigger: card.parentElement, start: 'top 70%', end: 'bottom 20%', toggleActions: 'play none none reverse', fastScrollEnd: true },
+    });
+  });
+  // charts draw on entry
+  Object.entries(chartDraws).forEach(([k, obj]) => {
+    if (!obj) return;
+    const svg = document.getElementById('chart-' + k); if (!svg) return;
+    if (reduceMotion) { obj.draw(1); return; }
+    const state = { p: 0 };
+    gsap.to(state, {
+      p: 1, ease: 'none',
+      scrollTrigger: { trigger: svg, start: 'top 85%', end: 'top 30%', scrub: 1 },
+      onUpdate: () => obj.draw(state.p),
+    });
+  });
+
+  /* ---------------- growth ruler ---------------- */
+  (function ruler() {
+    const wrap = document.querySelector('#ruler .tickwrap'); if (!wrap) return;
+    const chapters = [
+      ['hero', 'birth'], ['ch-primer', 'one table'], ['ch1', 'blindfold'], ['ch2', 'drills'],
+      ['ch3', 'variation'], ['ch4', 'teachers'], ['ch5', 'growing'], ['ch6', 'lesson'], ['ch7', 'methods'],
+    ];
+    const pencil = wrap.querySelector('.pencil');
+    const btns = [];
+    chapters.forEach(([id, nm], i) => {
+      const b = document.createElement('button');
+      b.innerHTML = `<span class="mark"></span><span class="nm">${nm}</span>`;
+      b.style.bottom = (i / (chapters.length - 1)) * 100 + '%';
+      b.addEventListener('click', () => {
+        const target = document.getElementById(id);
+        if (target) gsap.to(window, { scrollTo: { y: target, autoKill: true }, duration: reduceMotion ? 0 : .9, ease: 'power2.inOut' });
+      });
+      wrap.appendChild(b); btns.push(b);
+    });
+    const fill = document.querySelector('#topbar .fill');
+    ScrollTrigger.create({
+      start: 0, end: () => document.documentElement.scrollHeight - window.innerHeight, scrub: 0,
+      onUpdate(self) {
+        pencil.style.height = (self.progress * 100) + '%';
+        if (fill) fill.style.width = (self.progress * 100) + '%';
+        const mid = window.scrollY + window.innerHeight * .5;
+        let idx = 0;
+        chapters.forEach(([id], i) => {
+          const elc = document.getElementById(id);
+          if (elc && elc.offsetTop <= mid) idx = i;
+        });
+        btns.forEach((b, i) => b.classList.toggle('active', i === idx));
+      },
+    });
+  })();
+
+  onResize();
+  document.fonts && document.fonts.ready.then(() => { ScrollTrigger.refresh(); requestRender(); });
+  window.addEventListener('load', () => { ScrollTrigger.refresh(); requestRender(); });
+})();
+
+</script>

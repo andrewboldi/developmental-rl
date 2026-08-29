@@ -1,18 +1,26 @@
-"""EXP1 — The Blindfold Test (H1: world models).
+"""EXP1 — The Blindfold Test (H1: world models). v2 per DESIGN.md
+"Amendments (v2) — EXP1".
 
-Train Q-learning vs DynaQ(planning=20)+touch in HOME_A for the same number
-of env steps, with greedy eval every EVAL_EVERY steps (sample-efficiency
+Train Q-learning vs DynaQ(planning=20)+touch vs update-matched
+Q-learning+replay (ReplayQ, 20 replayed updates per real step — the van
+Hasselt 2019 fairness baseline) in HOME_A for the same number of env
+steps, with greedy eval every EVAL_EVERY steps (sample-efficiency
 curves). Then freeze the DynaQ artifacts (Q, transition model, bump model)
 and run the blindfold table: {home A, home B} x {full state, no observation,
-bump-only} plus a random-policy chance floor. Blind conditions choose
-actions greedily on expected Q under a belief dead-reckoned through the
-learned model; touch conditions additionally filter the belief with the
-learned bump likelihood. Budgets are matched exactly (both agents take
-TRAIN_STEPS env steps; Dyna's planning is imagination, not env steps); eval
-and blindfold rollouts use their own seed-derived rngs, never touch agent
-state, and follow an identical protocol in every condition.
+bump-only} plus random-policy chance floors in BOTH homes. Blind conditions
+choose actions greedily on expected Q under a belief dead-reckoned through
+the learned model; touch conditions additionally filter the belief with the
+learned bump likelihood. Budgets are matched exactly (every agent takes
+TRAIN_STEPS env steps; Dyna's planning and ReplayQ's replay are extra
+updates, not env steps); eval and blindfold rollouts use their own
+seed-derived rngs, never touch agent state, and follow an identical
+protocol in every condition. Confirmatory seeds are offset by
+--seed-offset (default 100: seeds 100..129, disjoint from every seed ever
+used for tuning). Tests report Mann-Whitney (registered decision
+statistic) AND Welch t p-values, Holm within the primary family for both;
+the conclusion is per-claim verdicts (supported/refuted/null/boundary).
 
-python experiments/exp1_blindfold.py --seeds 30 --out results/exp1.json [--smoke] [--jobs 20]
+python experiments/exp1_blindfold.py --seeds 30 --out results/exp1.json [--smoke] [--jobs 20] [--seed-offset 100]
 """
 
 import argparse
@@ -20,9 +28,11 @@ import time
 from functools import partial
 
 import numpy as np
+from scipy.stats import ttest_ind
 
 from devrl.agents.dyna import BlindNavigator
 from devrl.agents.qlearning import QLearner
+from devrl.agents.replayq import ReplayQ
 from devrl.agents.touchnav import TouchDynaQ, TouchNavigator
 from devrl.envs.gridhome import HOME_A, HOME_B, GridHome
 from devrl.run import run_seeds, save_json
@@ -45,13 +55,14 @@ CONDITIONS = {
     "blind-B-touch": ("B", "touch"),
     "sighted-B-transfer": ("B", "state"),
     "random-A": ("A", "random"),
+    "random-B": ("B", "random"),  # v2: matched floor for HOME_B (A2)
 }
 COND_ORDER = list(CONDITIONS)
 TRAJ_CONDS = ["blind-A", "blind-A-touch", "blind-B", "blind-B-touch",
-              "random-A"]
+              "random-A", "random-B"]
 MAPS = {"A": HOME_A, "B": HOME_B}
-TRAIN_CONDS = ("qlearning-A", "dynaq-A")
-KIND_ID = {"qlearning": 0, "dynaq": 1}
+TRAIN_CONDS = ("qlearning-A", "dynaq-A", "replayq-A")
+KIND_ID = {"qlearning": 0, "dynaq": 1, "replayq": 2}
 
 
 def make_config(smoke=False):
@@ -106,8 +117,14 @@ def train_agent(kind, cfg, seed):
                   lr=cfg["lr"], gamma=cfg["gamma"], eps=cfg["eps"],
                   optimistic_init=cfg["optimistic_init"],
                   rng=np.random.default_rng((seed, 11, KIND_ID[kind])))
-    agent = (TouchDynaQ(planning_steps=cfg["planning_steps"], **common)
-             if kind == "dynaq" else QLearner(**common))
+    if kind == "dynaq":
+        agent = TouchDynaQ(planning_steps=cfg["planning_steps"], **common)
+    elif kind == "replayq":
+        # update-matched baseline (A3): same extra-update budget as Dyna's
+        # planning, drawn from remembered experience instead of a model
+        agent = ReplayQ(replay_steps=cfg["planning_steps"], **common)
+    else:
+        agent = QLearner(**common)
     curve, ckpts = [], []
     s, ep_len = env.reset(), 0
     for t in range(1, cfg["train_steps"] + 1):
@@ -201,12 +218,18 @@ def run_blind_condition(name, agent, cfg, seed):
     return metrics, trajs
 
 
-def run_seed(seed, cfg):
-    """One seed: train both agents in HOME_A, then the blindfold table on
-    the frozen DynaQ artifacts. Module-top-level for fork pickling."""
+def run_seed(seed, cfg, seed_offset=0):
+    """One seed: train the three agents in HOME_A, then the blindfold table
+    on the frozen DynaQ artifacts. Module-top-level for fork pickling.
+
+    The true seed is seed + seed_offset (A5): confirmatory runs use offset
+    100 so seeds 100..129 are disjoint from every tuning/probe seed."""
+    seed = seed + seed_offset
     _, ckpts, q_curve = train_agent("qlearning", cfg, seed)
+    _, _, r_curve = train_agent("replayq", cfg, seed)
     d_agent, _, d_curve = train_agent("dynaq", cfg, seed)
-    curves = {"qlearning-A": q_curve, "dynaq-A": d_curve}
+    curves = {"qlearning-A": q_curve, "dynaq-A": d_curve,
+              "replayq-A": r_curve}
     blind, trajs = {}, {}
     for name in COND_ORDER:
         metrics, t = run_blind_condition(name, d_agent, cfg, seed)
@@ -250,6 +273,30 @@ def safe_mann_whitney(a, b):
     if float(np.ptp(both)) == 0.0:
         return {"u": len(a) * len(b) / 2.0, "p": 1.0}
     return mann_whitney(a, b)
+
+
+def safe_welch(a, b):
+    """Welch t p-value (ttest_ind, equal_var=False) with the A4 degenerate
+    zero-variance guards: fully tied -> 1.0, two distinct constants -> 0.0."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    if float(np.ptp(a)) == 0.0 and float(np.ptp(b)) == 0.0:
+        return 1.0 if a[0] == b[0] else 0.0
+    return float(ttest_ind(a, b, equal_var=False).pvalue)
+
+
+def prediction_met(predicted, p, iqm_a, iqm_b):
+    """Score a test's registered prediction (A4).
+
+    Directional ('a < b' / 'a > b'): met iff the decision p (p_holm for
+    primaries, raw p for secondaries) is < 0.05 with the IQMs ordered as
+    predicted. Equivalence-style ('a ~ b'): met iff the RAW (uncorrected —
+    deliberately the harder criterion) MW p >= 0.05 — 'no detectable
+    difference', NOT a formal equivalence test."""
+    if predicted.startswith("a ~ b"):
+        return bool(p >= 0.05)
+    if predicted.startswith("a < b"):
+        return bool(p < 0.05 and iqm_a < iqm_b)
+    return bool(p < 0.05 and iqm_a > iqm_b)
 
 
 def _home_viz(map_str):
@@ -310,60 +357,205 @@ def aggregate(results, cfg, smoke, wall_clock):
                                  cfg["train_steps"])
     q_t90, q_frac = censor_times([r["t90"]["qlearning-A"] for r in results],
                                  cfg["train_steps"])
+    r_t90, r_frac = censor_times([r["t90"]["replayq-A"] for r in results],
+                                 cfg["train_steps"])
 
     def entry(name, family, metric, a_name, b_name, a, b, predicted):
         mw = safe_mann_whitney(a, b)
         return {"name": name, "family": family, "metric": metric,
                 "a": a_name, "b": b_name, "iqm_a": iqm(a), "iqm_b": iqm(b),
-                "u": mw["u"], "p": mw["p"], "predicted": predicted}
+                "u": mw["u"], "p": mw["p"], "p_welch": safe_welch(a, b),
+                "predicted": predicted}
 
+    t90_metric = "env steps to 90% eval success (censored -> budget+1)"
     primary = [
-        entry("dyna_faster_than_q_t90", "primary",
-              "env steps to 90% eval success (censored -> budget+1)",
+        entry("dyna_faster_than_q_t90", "primary", t90_metric,
               "dynaq-A", "qlearning-A", d_t90, q_t90, "a < b"),
-        entry("blindA_beats_blindB", "primary", "blindfold success rate",
-              "blind-A", "blind-B", succ["blind-A"], succ["blind-B"],
-              "a > b"),
+        entry("replay_faster_than_q_t90", "primary", t90_metric,
+              "replayq-A", "qlearning-A", r_t90, q_t90, "a < b"),
+        entry("dyna_vs_replay_t90", "primary", t90_metric,
+              "dynaq-A", "replayq-A", d_t90, r_t90,
+              "a ~ b (update-matched; van Hasselt 2019: the replay buffer "
+              "is a non-parametric model, so no model-specific edge is "
+              "expected)"),
+        entry("blindA_touch_beats_blindB_touch", "primary",
+              "blindfold success rate", "blind-A-touch", "blind-B-touch",
+              succ["blind-A-touch"], succ["blind-B-touch"], "a > b"),
         entry("touch_beats_pure_deadreckoning", "primary",
               "blindfold success rate", "blind-A-touch", "blind-A",
               succ["blind-A-touch"], succ["blind-A"], "a > b"),
     ]
-    for t, p_h in zip(primary, holm([t["p"] for t in primary])):
-        right_way = (t["iqm_a"] < t["iqm_b"] if t["predicted"] == "a < b"
-                     else t["iqm_a"] > t["iqm_b"])
-        t["p_holm"] = p_h
-        t["significant"] = bool(p_h < 0.05 and right_way)
-    primary[0]["censored_frac_a"] = d_frac
-    primary[0]["censored_frac_b"] = q_frac
+    # Holm within the 5-test primary family, separately for the registered
+    # decision statistic (Mann-Whitney) and the robustness Welch t (A4)
+    for t, p_h, pw_h in zip(primary, holm([t["p"] for t in primary]),
+                            holm([t["p_welch"] for t in primary])):
+        t["p_holm"], t["p_welch_holm"] = p_h, pw_h
+        if t["predicted"].startswith("a ~ b"):
+            # difference detected at the decision level (no direction);
+            # the equivalence-style prediction is scored on the RAW MW p
+            t["significant"] = bool(p_h < 0.05)
+            t["prediction_met"] = prediction_met(t["predicted"], t["p"],
+                                                 t["iqm_a"], t["iqm_b"])
+        else:
+            # directional primaries: p_holm < 0.05 in the predicted
+            # direction (v1 semantics; identical to prediction_met)
+            t["significant"] = prediction_met(t["predicted"], p_h,
+                                              t["iqm_a"], t["iqm_b"])
+            t["prediction_met"] = t["significant"]
+    cfracs = {"dynaq-A": d_frac, "qlearning-A": q_frac, "replayq-A": r_frac}
+    for t in primary:
+        if t["metric"] == t90_metric:
+            t["censored_frac_a"] = cfracs[t["a"]]
+            t["censored_frac_b"] = cfracs[t["b"]]
 
     secondary = [
+        entry("blindA_beats_blindB", "secondary", "blindfold success rate",
+              "blind-A", "blind-B", succ["blind-A"], succ["blind-B"],
+              "a > b (pure dead-reckoning pair; v1 primary, demoted per A1)"),
         entry("blindB_vs_randomA_chance_floor", "secondary",
               "blindfold success rate", "blind-B", "random-A",
               succ["blind-B"], succ["random-A"],
-              "a ~ b (chance floor; descriptive)"),
+              "a ~ b (cross-home floor; descriptive)"),
+        entry("blindB_vs_randomB_matched_floor", "secondary",
+              "blindfold success rate", "blind-B", "random-B",
+              succ["blind-B"], succ["random-B"],
+              "a > b (small residual competence above the matched floor)"),
+        entry("blindBtouch_vs_randomB_matched_floor", "secondary",
+              "blindfold success rate", "blind-B-touch", "random-B",
+              succ["blind-B-touch"], succ["random-B"],
+              "a > b (small residual competence above the matched floor)"),
         entry("sightedB_transfer_below_sightedA", "secondary",
               "blindfold success rate", "sighted-B-transfer", "sighted-A",
               succ["sighted-B-transfer"], succ["sighted-A"], "a < b"),
     ]
     for t in secondary:
         t["significant"] = bool(t["p"] < 0.05)
+        t["prediction_met"] = prediction_met(t["predicted"], t["p"],
+                                             t["iqm_a"], t["iqm_b"])
 
-    dyna_faster = primary[0]["significant"]
-    stranger_fails = bool(primary[1]["significant"] and
-                          iqm(succ["blind-B"]) - iqm(succ["random-A"]) < 0.15)
-    home_works = bool(iqm(succ["blind-A-touch"])
-                      >= 0.8 * iqm(succ["sighted-A"]))
-    touch_helps = bool(iqm(succ["blind-A-touch"]) >= iqm(succ["blind-A"]))
-    supported = bool(dyna_faster and stranger_fails and home_works)
+    # ---- per-claim verdicts (A6) -------------------------------------
+    by_name = {t["name"]: t for t in primary + secondary}
+
+    def sig_opposite(t):
+        """Significant at the decision level in the unpredicted direction."""
+        p = t.get("p_holm", t["p"])
+        wrong = (t["iqm_a"] > t["iqm_b"] if t["predicted"].startswith("a < b")
+                 else t["iqm_a"] < t["iqm_b"])
+        return bool(p < 0.05 and wrong)
+
+    d_iqm, q_iqm, r_iqm = iqm(d_t90), iqm(q_t90), iqm(r_t90)
+    s_iqm = {n: iqm(succ[n]) for n in COND_ORDER}
+
+    dq = by_name["dyna_faster_than_q_t90"]
+    v1 = ("supported" if dq["prediction_met"]
+          else "refuted" if sig_opposite(dq) else "null")
+
+    dvr = by_name["dyna_vs_replay_t90"]
+    rq = by_name["replay_faster_than_q_t90"]
+    closure = ((q_iqm - r_iqm) / (q_iqm - d_iqm)
+               if q_iqm != d_iqm else None)
+    if dvr["significant"] and dvr["iqm_a"] < dvr["iqm_b"]:
+        v2 = "supported"
+    elif (dvr["significant"] and dvr["iqm_a"] > dvr["iqm_b"]) or (
+            not dvr["significant"] and closure is not None
+            and closure >= 0.8):
+        v2 = "refuted"
+    else:
+        v2 = "null"
+    closure_txt = ("undefined (no Dyna t90 advantage over Q)"
+                   if closure is None else f"{closure:.0%}")
+
+    def home_rule(cond):
+        val, sighted = s_iqm[cond], s_iqm["sighted-A"]
+        return ("supported" if val >= 0.8 * sighted
+                else "refuted" if val < 0.5 * sighted else "boundary")
+
+    v3, v4 = home_rule("blind-A"), home_rule("blind-A-touch")
+
+    bat = by_name["blindA_touch_beats_blindB_touch"]
+    at, bt = bat["iqm_a"], bat["iqm_b"]
+    if bat["prediction_met"] and bt <= 0.5 * at:
+        v5 = "supported"
+    elif bat["prediction_met"] and bt <= 0.8 * at:
+        v5 = "boundary"
+    elif sig_opposite(bat) or bt > 0.8 * at:
+        v5 = "refuted"
+    else:
+        v5 = "null"
+
+    tbp = by_name["touch_beats_pure_deadreckoning"]
+    v6 = ("supported" if tbp["prediction_met"]
+          else "refuted" if sig_opposite(tbp) else "null")
+
+    claims = [
+        {"claim": "dyna-beats-q: DynaQ reaches 90% eval success in fewer "
+                  "env steps than sample-matched (update-unmatched) "
+                  "Q-learning",
+         "verdict": v1,
+         "evidence": (f"t90 IQM dynaq {d_iqm:.0f} vs qlearning {q_iqm:.0f} "
+                      f"(censored {d_frac:.0%}/{q_frac:.0%}); MW p_holm "
+                      f"{dq['p_holm']:.3g}, Welch p_holm "
+                      f"{dq['p_welch_holm']:.3g}")},
+        {"claim": "dyna-advantage-is-model-not-updates: the Dyna speedup "
+                  "survives an update-matched replay baseline (ReplayQ, 20 "
+                  "replayed updates per real step; van Hasselt 2019)",
+         "verdict": v2,
+         "evidence": (f"t90 IQM: qlearning {q_iqm:.0f}, replayq {r_iqm:.0f}, "
+                      f"dynaq {d_iqm:.0f}; replay closes {closure_txt} of "
+                      f"the Dyna advantage; dyna_vs_replay MW p "
+                      f"{dvr['p']:.3g} (p_holm {dvr['p_holm']:.3g}, Welch "
+                      f"p_holm {dvr['p_welch_holm']:.3g}); "
+                      f"replay_faster_than_q MW p_holm {rq['p_holm']:.3g}")},
+        {"claim": "pure-dead-reckoning-works-at-home: blind-A stays >= 0.8x "
+                  "sighted-A (DESIGN v1's literal prediction, scored "
+                  "honestly; refuted below 0.5x, boundary between)",
+         "verdict": v3,
+         "evidence": (f"success IQM blind-A {s_iqm['blind-A']:.3f} vs "
+                      f"sighted-A {s_iqm['sighted-A']:.3f}")},
+        {"claim": "touch-filtered-blind-works-at-home: blind-A-touch stays "
+                  ">= 0.8x sighted-A (refuted below 0.5x, boundary between)",
+         "verdict": v4,
+         "evidence": (f"success IQM blind-A-touch "
+                      f"{s_iqm['blind-A-touch']:.3f} vs sighted-A "
+                      f"{s_iqm['sighted-A']:.3f}")},
+        {"claim": "stranger-collapse: judged on the symmetric touch pair — "
+                  "the same blind+touch machinery falls far below home "
+                  "performance in HOME_B (<= 0.5x home), modestly above a "
+                  "matched random floor",
+         "verdict": v5,
+         "evidence": (f"success IQM blind-A-touch {at:.3f} vs blind-B-touch "
+                      f"{bt:.3f} (MW p_holm {bat['p_holm']:.3g}, Welch "
+                      f"p_holm {bat['p_welch_holm']:.3g}); random floors: "
+                      f"random-B {s_iqm['random-B']:.3f} (matched), "
+                      f"random-A {s_iqm['random-A']:.3f} (cross-home); "
+                      f"blind-B {s_iqm['blind-B']:.3f} vs matched floor MW "
+                      f"p {by_name['blindB_vs_randomB_matched_floor']['p']:.3g}, "
+                      f"blind-B-touch vs matched floor MW p "
+                      f"{by_name['blindBtouch_vs_randomB_matched_floor']['p']:.3g}")},
+        {"claim": "touch-helps-at-home: bump filtering beats pure dead "
+                  "reckoning in HOME_A",
+         "verdict": v6,
+         "evidence": (f"success IQM blind-A-touch "
+                      f"{s_iqm['blind-A-touch']:.3f} vs blind-A "
+                      f"{s_iqm['blind-A']:.3f}; MW p_holm "
+                      f"{tbp['p_holm']:.3g}, Welch p_holm "
+                      f"{tbp['p_welch_holm']:.3g}")},
+    ]
     summary = (
-        f"Blindfolded dead reckoning through the home-learned model keeps "
-        f"working in HOME_A (success IQM: sighted {iqm(succ['sighted-A']):.2f}, "
-        f"blind {iqm(succ['blind-A']):.2f}, blind+touch "
-        f"{iqm(succ['blind-A-touch']):.2f}) but collapses in the stranger's "
-        f"HOME_B (blind {iqm(succ['blind-B']):.2f} vs random floor "
-        f"{iqm(succ['random-A']):.2f}); DynaQ reached 90% eval success by "
-        f"step {iqm(d_t90):.0f} (censored {d_frac:.0%}) vs "
-        f"{iqm(q_t90):.0f} (censored {q_frac:.0%}) for Q-learning."
+        f"t90 to 90% eval success (IQM env steps): dynaq {d_iqm:.0f}, "
+        f"update-matched replayq {r_iqm:.0f}, qlearning {q_iqm:.0f} "
+        f"(censored {d_frac:.0%}/{r_frac:.0%}/{q_frac:.0%}). HOME_A "
+        f"blindfold success IQM: sighted {s_iqm['sighted-A']:.2f}, pure "
+        f"blind {s_iqm['blind-A']:.2f}, blind+touch "
+        f"{s_iqm['blind-A-touch']:.2f}. Stranger HOME_B, same machinery: "
+        f"blind+touch {s_iqm['blind-B-touch']:.2f}, pure blind "
+        f"{s_iqm['blind-B']:.2f}, vs matched random-B floor "
+        f"{s_iqm['random-B']:.2f} (cross-home random-A "
+        f"{s_iqm['random-A']:.2f}) — registered claim: far below home "
+        f"performance, modestly above a matched random floor "
+        f"(verdict: {v5}). Verdicts: "
+        + "; ".join(f"{c['claim'].split(':')[0]}={c['verdict']}"
+                    for c in claims) + "."
     )
 
     viz = {
@@ -381,6 +573,8 @@ def aggregate(results, cfg, smoke, wall_clock):
             "t90": {
                 "dynaq-A": {"iqm": iqm(d_t90), "ci": ci(d_t90),
                             "censored_frac": d_frac},
+                "replayq-A": {"iqm": iqm(r_t90), "ci": ci(r_t90),
+                              "censored_frac": r_frac},
                 "qlearning-A": {"iqm": iqm(q_t90), "ci": ci(q_t90),
                                 "censored_frac": q_frac},
             },
@@ -399,9 +593,18 @@ def aggregate(results, cfg, smoke, wall_clock):
             "bump": "touch signal felt after the action; null on terminal row",
         },
         "predictions": [
-            "blind-A close to sighted-A; touch closes most of the slip gap",
-            "blind-B at or near the random-A chance floor",
-            "DynaQ reaches 90% success in fewer env steps than Q-learning",
+            "DynaQ reaches 90% success in fewer env steps than 1-update "
+            "Q-learning",
+            "update-matched replay reproduces most of the speedup: replayq "
+            "faster than qlearning on t90, dynaq ~ replayq (van Hasselt "
+            "2019)",
+            "blind-A-touch far above blind-B-touch — the symmetric "
+            "stranger-collapse pair",
+            "blind-B far below home performance, modestly above the matched "
+            "random-B floor (and above the cross-home random-A floor)",
+            "touch filtering beats pure dead reckoning at home; pure "
+            "blind-A scored honestly against sighted-A (v1 literal "
+            "prediction)",
         ],
     }
 
@@ -409,18 +612,16 @@ def aggregate(results, cfg, smoke, wall_clock):
         "experiment": "exp1_blindfold",
         "hypothesis": HYPOTHESIS,
         "config": {**cfg, "n_seeds": n_seeds, "smoke": smoke,
+                   "seed_offset": int(min(r["seed"] for r in results)),
                    "budget_note": ("budget counts env steps only; Dyna "
-                                   "planning is imagination; eval rollouts "
+                                   "planning and ReplayQ replay are extra "
+                                   "updates, not env steps; eval rollouts "
                                    "are budget-free and identical across "
                                    "conditions")},
         "conditions": conditions,
         "curves": curves,
         "tests": primary + secondary,
-        "conclusion": {"supported": supported, "summary": summary,
-                       "criteria": {"dyna_sample_efficiency": dyna_faster,
-                                    "blind_home_works": home_works,
-                                    "blind_stranger_fails": stranger_fails,
-                                    "touch_helps": touch_helps}},
+        "conclusion": {"claims": claims, "summary": summary},
         "viz": viz,
         "wall_clock_s": float(wall_clock),
     }
@@ -433,20 +634,30 @@ def main():
     ap.add_argument("--smoke", action="store_true",
                     help="2 seeds, ~10x reduced budget")
     ap.add_argument("--jobs", type=int, default=20)
+    ap.add_argument("--seed-offset", type=int, default=100,
+                    help="true seed = index + offset (A5); the default 100 "
+                         "keeps confirmatory seeds 100..N+99 disjoint from "
+                         "every seed ever used for tuning (0..29) and from "
+                         "the verifiers' rerun (1000..1029)")
     args = ap.parse_args()
     cfg = make_config(smoke=args.smoke)
     n_seeds = 2 if args.smoke else args.seeds
     t0 = time.time()
-    results = run_seeds(partial(run_seed, cfg=cfg), n_seeds, n_jobs=args.jobs)
+    results = run_seeds(partial(run_seed, cfg=cfg,
+                                seed_offset=args.seed_offset),
+                        n_seeds, n_jobs=args.jobs)
     wall = time.time() - t0
     out = aggregate(results, cfg, smoke=args.smoke, wall_clock=wall)
     save_json(args.out, out)
-    print(f"exp1_blindfold: {n_seeds} seeds in {wall:.1f}s -> {args.out}")
+    print(f"exp1_blindfold: {n_seeds} seeds "
+          f"({args.seed_offset}..{args.seed_offset + n_seeds - 1}) "
+          f"in {wall:.1f}s -> {args.out}")
     for name in COND_ORDER:
         vals = [r["blind"][name]["success_rate"] for r in results]
         print(f"  {name:>20}: success IQM {iqm(vals):.2f}")
-    print(f"  supported={out['conclusion']['supported']}: "
-          f"{out['conclusion']['summary']}")
+    for c in out["conclusion"]["claims"]:
+        print(f"  {c['claim'].split(':')[0]:>36}: {c['verdict']}")
+    print(f"  {out['conclusion']['summary']}")
 
 
 if __name__ == "__main__":
