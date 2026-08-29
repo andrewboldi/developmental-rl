@@ -51,6 +51,7 @@ def exp1(j):
             "checkpoints": j["curves"]["checkpoints"],
             "dyna": curve(j["curves"]["conditions"]["dynaq-A"]),
             "q": curve(j["curves"]["conditions"]["qlearning-A"]),
+            "replay": curve(j["curves"]["conditions"]["replayq-A"]) if "replayq-A" in j["curves"]["conditions"] else None,
         },
         "t90": rnd(v["sample_efficiency"]["t90"], 1),
         "trajs": trajs,

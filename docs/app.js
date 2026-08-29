@@ -196,6 +196,7 @@
     xname: 'steps', legend: 'lg-exp1', threshold: 0.9, thresholdLabel: '90%', ymin: 0, ymax: 1, dp: 2,
     series: [
       { name: 'Dyna-Q (model)', color: CSS.blue, x: D.exp1.curves.checkpoints, y: D.exp1.curves.dyna.iqm, lo: D.exp1.curves.dyna.ci_lo, hi: D.exp1.curves.dyna.ci_hi },
+      { name: 'Q + replay (no model)', color: CSS.green, x: D.exp1.curves.checkpoints, y: D.exp1.curves.replay.iqm, lo: D.exp1.curves.replay.ci_lo, hi: D.exp1.curves.replay.ci_hi },
       { name: 'Q-learning', color: CSS.orange, x: D.exp1.curves.checkpoints, y: D.exp1.curves.q.iqm, lo: D.exp1.curves.q.ci_lo, hi: D.exp1.curves.q.ci_hi },
     ],
   });
@@ -206,6 +207,8 @@
       { name: 'drills, varied', color: CSS.blue, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions['drills-varied'].iqm, lo: D.exp2.curves.conditions['drills-varied'].ci_lo, hi: D.exp2.curves.conditions['drills-varied'].ci_hi },
       { name: 'drills, fixed', color: CSS.violet, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions['drills-fixed'].iqm, lo: D.exp2.curves.conditions['drills-fixed'].ci_lo, hi: D.exp2.curves.conditions['drills-fixed'].ci_hi },
       { name: 'whole games', color: CSS.orange, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions.whole.iqm, lo: D.exp2.curves.conditions.whole.ci_lo, hi: D.exp2.curves.conditions.whole.ci_hi },
+      { name: 'whole, optimistic', color: CSS.green, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions['whole-optimistic'].iqm },
+      { name: 'exploring starts', color: CSS.gold, x: D.exp2.curves.checkpoints, y: D.exp2.curves.conditions['explore-starts'].iqm },
     ],
   });
   // exp3: acquisition lines (left) + retention/transfer bars (right) in one svg
@@ -251,9 +254,10 @@
     xname: 'gen', legend: 'lg-exp4', ymin: 0, ymax: 10, dp: 2, xlabelPad: 0,
     series: [
       { name: 'distill', color: CSS.blue, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['generational-distill'].iqm, lo: D.exp4.greedy['generational-distill'].ci_lo, hi: D.exp4.greedy['generational-distill'].ci_hi },
+      { name: 'optimistic init', color: CSS.red, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['optimistic-init'].iqm },
       { name: 'weight-copy', color: CSS.orange, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['weight-copy'].iqm },
+      { name: 'random advice', color: CSS.violet, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['random-advice'].iqm },
       { name: 'one long life', color: CSS.green, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['one-long-life'].iqm },
-      { name: 'slow decay', color: CSS.violet, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['one-long-life-slow'].iqm },
       { name: 'no inherit', color: CSS.gold, x: [1, 2, 3, 4, 5], y: D.exp4.greedy['no-inheritance'].iqm },
     ],
   });
@@ -262,23 +266,23 @@
     series: [
       { name: 'adult, walk', color: CSS.red, x: D.exp5.damage['adult-walk'].steps, y: D.exp5.damage['adult-walk'].iqm, lo: D.exp5.damage['adult-walk'].lo, hi: D.exp5.damage['adult-walk'].hi },
       { name: 'adult, balance-first', color: CSS.orange, x: D.exp5.damage['adult-balance-first'].steps, y: D.exp5.damage['adult-balance-first'].iqm },
-      { name: 'grow linear', color: CSS.violet, x: D.exp5.damage['grow-linear'].steps, y: D.exp5.damage['grow-linear'].iqm, lo: D.exp5.damage['grow-linear'].lo, hi: D.exp5.damage['grow-linear'].hi },
+      { name: 'grow linear, walk', color: CSS.violet, x: D.exp5.damage['grow-linear-walk'].steps, y: D.exp5.damage['grow-linear-walk'].iqm, lo: D.exp5.damage['grow-linear-walk'].lo, hi: D.exp5.damage['grow-linear-walk'].hi },
       { name: 'grow jump', color: CSS.green, x: D.exp5.damage['grow-jump'].steps, y: D.exp5.damage['grow-jump'].iqm },
-      { name: 'grow adaptive', color: CSS.blue, x: D.exp5.damage['grow-adaptive'].steps, y: D.exp5.damage['grow-adaptive'].iqm, lo: D.exp5.damage['grow-adaptive'].lo, hi: D.exp5.damage['grow-adaptive'].hi },
+      { name: 'grow adaptive, walk', color: CSS.blue, x: D.exp5.damage['grow-adaptive-walk'].steps, y: D.exp5.damage['grow-adaptive-walk'].iqm, lo: D.exp5.damage['grow-adaptive-walk'].lo, hi: D.exp5.damage['grow-adaptive-walk'].hi },
     ],
   });
   // scorecard
   (function scorecard() {
     const sc = document.getElementById('scorecard'); if (!sc) return;
     const rows = [
-      ['H1', 'world models', true, '12× fewer steps with a model; blind-at-home 96% vs stranger 10%'],
-      ['H2', 'microtasks', true, 'drills reach mastery in 15.4k steps vs 38.9k (p=1.1e-9)'],
-      ['H3', 'variation', true, 'train worse, test better — retention p=1.2e-5, transfer p=.006'],
-      ['H4', 'teachers', true, 'lineage ratchets to 8.75; every control flat at 0.3 (p=.014)'],
-      ['H5', 'growing bodies', true, '14× less damage to adult competence (p≤2.1e-6); 2 sub-claims failed'],
+      ['H1', 'world models', '4 of 6', 'blind-at-home 97.5% ≈ sighted; stranger collapses to 29%. Refuted honestly: the Dyna speedup (update-count artifact) and pure dead reckoning.'],
+      ['H2', 'microtasks', '2 of 3', 'drills 15.1k vs 40.4k steps (p≤4e-9); structure beats mere diversity (p=1e-14). Boundary: optimism skips the need.'],
+      ['H3', 'variation', '3 of 4', 'retention p=5e-10 and transfer p=1e-5 replicate counterbalanced; mechanism PROVEN by ablation. Acquisition edge: boundary.'],
+      ['H4', 'teachers', '2 of 4', 'distill 10.0 vs every dose-matched control (p≤2e-20); random advice poisons. Boundary: global optimism solves small worlds.'],
+      ['H5', 'growing bodies', '2 of 4', '42× less damage AND a third faster, robust to physics arms. Reversed: gradualism and balance-first.'],
     ];
-    sc.innerHTML = rows.map(([h, nm, ok, txt]) =>
-      `<div class="tile ${ok ? 'win' : ''}"><div class="v">${h} <span class="chip ${ok ? 'ok' : 'no'}">${ok ? 'supported' : 'refuted'}</span></div><div class="l"><b>${nm}</b> — ${txt}</div></div>`).join('');
+    sc.innerHTML = rows.map(([h, nm, score, txt]) =>
+      `<div class="tile win"><div class="v">${h} <span class="chip ok">${score}</span></div><div class="l"><b>${nm}</b> — ${txt}</div></div>`).join('');
   })();
 
   /* ---------------- scenes ---------------- */
@@ -652,7 +656,7 @@
         theta: D.exp5.theta[cond] || [], sizes: D.exp5.sizes[cond], falls: D.exp5.falls[cond] || [] };
     }
     const left = pendulumScene('adult-walk', PAL.red);
-    const right = pendulumScene('grow-adaptive', PAL.blue);
+    const right = pendulumScene('grow-adaptive-walk', PAL.blue);
     // HTML damage counters
     const hud = document.createElement('div');
     hud.className = 'hud';
