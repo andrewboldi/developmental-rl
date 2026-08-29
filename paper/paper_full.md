@@ -300,7 +300,7 @@ are versioned in the repository's DESIGN.md.
 identical shells, identical start ("bed") and goal ("fridge") coordinates, and
 different interior walls. Motor noise: 10% probability the executed move is
 perpendicular to the intent. Reward 1 at the fridge; episode cap 60 steps
-(~3x shortest path); gamma 0.97.
+(~3.5x the 17-step shortest path); gamma 0.97.
 
 **Agents.** Q-learning; Dyna-Q with 20 planning updates per real step (its
 transition/reward model doubles as the agent's imagination); and — mandated by
@@ -480,9 +480,13 @@ At 60 fresh seeds: `generational-distill` ends at IQM **10.0** (48/60 lineages
 consolidate the distant goal; mean 8.0). Every v1 baseline — weight-copy, both
 long lives, no-inheritance — ends at exactly **0.3 on every seed** (candy;
 all four comparisons Welch Holm p = 1.2e-20). The mechanism telemetry shows
-why: long-lived agents *remember* the mountain (best-episode return ~ 10) while
-*doing* candy for 75,000 steps — knowledge they can no longer consolidate.
-The bottleneck converts exactly that gap into the next generation's prior.
+why, and shows the ratchet is genuinely cumulative: only 19 of 60 long-lived
+agents ever end holding a memory of the mountain (best-episode 10) — and every
+one of them still *does* candy at death, knowledge they can no longer
+consolidate. Likewise only 16 of 60 first-generation teachers remember the
+mountain at all, yet 48 of 60 lineages end there: each generation's own
+exploration adds new peaks to the next generation's inheritance, and the
+bottleneck converts every remembered peak into a prior the student can finish.
 
 The audit-mandated controls decompose the effect. `random-advice` — the same
 dose of optimism on random state-action pairs — ends at **0.0**, *below* the
@@ -530,19 +534,21 @@ evidently not the value function's learning curve alone.
 
 # 5. What failed, and what the failures bought
 
-Four registered claims were refuted and two landed on boundaries; none were
-quietly dropped. (1) The strong Dyna claim failed its update-matched control —
-the correct citation for the speedup is update count, and the model's real
-contribution in this system is blind action. (2) Pure dead reckoning is not
-home-competent under motor noise; competence needs closed-loop touch. (3) The
-acquisition half of contextual interference did not reach significance once
-block order was counterbalanced — the practice-room advantage of blocked
-practice is partly recency artifact even in silico. (4) H4's strong
-conjunction failed against global optimism, which converts to the paper's
-sharpest scope statement: instruction pays where exploration is undirected
-and optimism is unaffordable. (5–6) Gradualism and balance-first reversed —
-folk developmental staging did not survive contact with a system where only
-the value function matters.
+Six registered claims were refuted and two landed on boundaries; none were
+quietly dropped. Refuted: (1) the strong Dyna claim failed its update-matched
+control — the correct citation for the speedup is update count, and the
+model's real contribution in this system is blind action; (2) pure dead
+reckoning is not home-competent under motor noise — competence needs
+closed-loop touch; (3) H4's strong conjunction failed against global optimism,
+which converts to the paper's sharpest scope statement: instruction pays where
+exploration is undirected and optimism is unaffordable; (4) H4's
+plasticity-rescue claim failed — undecayed exploration alone does not save the
+long life; (5–6) gradualism and balance-first reversed — folk developmental
+staging did not survive contact with a system where only the value function
+matters. Boundaries: EXP2's drill benefit is exploration-regime-dependent, and
+EXP3's acquisition edge is direction-consistent but not significant once block
+order is counterbalanced — the practice-room advantage of blocked practice is
+partly recency artifact even in silico.
 
 We also disclose two v1 protocol violations caught by the audit and repaired
 in v2: hyperparameters tuned on seed ranges overlapping confirmation (fixed by

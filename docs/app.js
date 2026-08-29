@@ -276,7 +276,7 @@
     const sc = document.getElementById('scorecard'); if (!sc) return;
     const rows = [
       ['H1', 'world models', '4 of 6', 'blind-at-home 97.5% ≈ sighted; stranger collapses to 29%. Refuted honestly: the Dyna speedup (update-count artifact) and pure dead reckoning.'],
-      ['H2', 'microtasks', '2 of 3', 'drills 15.1k vs 40.4k steps (p≤4e-9); structure beats mere diversity (p=1e-14). Boundary: optimism skips the need.'],
+      ['H2', 'microtasks', '2 of 3', 'drills 15.1k vs 40.4k steps (p≤4e-9); structure beats mere diversity (Welch Holm p=4.9e-14). Boundary: optimism skips the need.'],
       ['H3', 'variation', '3 of 4', 'retention p=5e-10 and transfer p=1e-5 replicate counterbalanced; mechanism PROVEN by ablation. Acquisition edge: boundary.'],
       ['H4', 'teachers', '2 of 4', 'distill 10.0 vs every dose-matched control (p≤2e-20); random advice poisons. Boundary: global optimism solves small worlds.'],
       ['H5', 'growing bodies', '2 of 4', '42× less damage AND a third faster, robust to physics arms. Reversed: gradualism and balance-first.'],

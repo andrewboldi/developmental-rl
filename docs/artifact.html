@@ -128,10 +128,10 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
 <!-- ══════════ HERO ══════════ -->
 <section id="hero" class="chapter" data-scene="hero">
   <div class="inner">
-    <p class="eyebrow">Five experiments · 150 seeded runs · all code &amp; data public</p>
+    <p class="eyebrow">Five experiments · 200 seeded runs · all code &amp; data public</p>
     <h1>Growing Up to&nbsp;Learn</h1>
     <p class="sub">What reinforcement learning looks like when you raise it the way children are raised — with maps, drills, mess, teachers, and a body that starts small.</p>
-    <p class="meta">developmental-rl · numpy · 179 tests · every claim measured</p>
+    <p class="meta">developmental-rl · numpy · 245 tests · every claim measured</p>
   </div>
   <div class="scrollcue">scroll to begin</div>
 </section>
@@ -176,7 +176,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
       <h3>An honest twist: the speedup wasn't the model</h3>
       <p class="sub">Greedy success at the fridge, every 1k steps · fresh seeds 100–129 · IQM with 95% bootstrap CI</p>
       <div class="legend" id="lg-exp1"></div>
-      <svg class="chart" id="chart-exp1" role="img" aria-label="Learning curves: DynaQ reaches 90 percent success near 2000 steps, Q-learning near 25000"></svg>
+      <svg class="chart" id="chart-exp1" role="img" aria-label="Learning curves: DynaQ and update-matched replay reach 90 percent success near 2500 steps, Q-learning near 25500"></svg>
       <p class="figure-note">Dyna-Q reaches 90% in <span class="stat-inline">2,562 steps</span> vs <span class="stat-inline">25,500</span> for plain Q-learning — but an update-matched replay baseline (20 replayed updates per real step, no model at all) lands at <span class="stat-inline">2,500</span>, closing the entire gap (p=0.55). The famous speedup is an update-count effect, exactly as van Hasselt (2019) warned. What replay <em>cannot</em> do is walk blind: only the model supports dead reckoning. The world model's value here isn't faster learning — it's counterfactual use.</p>
     </div>
   </div>
@@ -202,7 +202,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
       <h3>Reverse curriculum over start states</h3>
       <p class="sub">Full-game success from kickoff, 20 greedy evals / 2k steps · 30 seeds · IQM ± 95% CI</p>
       <div class="legend" id="lg-exp2"></div>
-      <svg class="chart" id="chart-exp2" role="img" aria-label="Learning curves: drills-varied crosses 90 percent around 15000 steps, drills-fixed around 20000, whole games around 39000"></svg>
+      <svg class="chart" id="chart-exp2" role="img" aria-label="Learning curves: drills-varied crosses 90 percent around 15000 steps, drills-fixed around 21000; whole games only around 40000 by first crossing, with several seeds never arriving"></svg>
       <p class="figure-note">Same environment, same reward, same total steps. Drilled curves lift off during the drill phases (shaded). Exploring-starts proves diversity alone is worthless here; whole-optimistic proves a smarter explorer can skip the curriculum. Both boundaries are the ones the guide-policy literature predicts (Xie et al. 2021, JSRL).</p>
     </div>
   </div>
@@ -249,7 +249,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
   </div>
   <div class="scrolly"><div class="stage" data-stage="h4" aria-label="A dark grid with candy traps near the start and a distant goal. Across five generations an inherited path skeleton thickens into a golden thread reaching the goal."></div>
   <div class="steps">
-    <div class="step"><div class="card"><span class="k">generation 1</span><p>Lives, gorges on candy, stumbles onto the mountain once late in life — too rigid to consolidate it. Greedy performance at death: candy (0.3). Best memory: the mountain (10).</p></div></div>
+    <div class="step"><div class="card"><span class="k">generation 1</span><p>Lives, gorges on candy — and in about one lineage in four, stumbles onto the mountain once, too rigid to consolidate it. Greedy performance at death: candy (0.3), on every seed.</p></div></div>
     <div class="step"><div class="card"><span class="k">the bottleneck</span><p>Its advice is not its brain. It's the skeleton of its best days — the one lucky deep run — passed to a student plastic enough to finish the thought.</p></div></div>
     <div class="step"><div class="card"><span class="k">generation 5</span><p>At 60 fresh seeds the lineage ratchets to IQM <strong>10.0</strong> — 48 of 60 lineages end at the mountain. Weight-copy, both long lives, and no-inheritance stay at candy on <em>every single seed</em> (p≤1.8e-9, both statistics).</p></div></div>
     <div class="step"><div class="card"><span class="k">content, not just optimism</span><p>Prime a student with 100 <em>random</em> optimistic pairs instead of the teacher's episodes and it does worse than no teaching at all — 0.0, poisoned into loops. The advice works because of what it says, not the enthusiasm it says it with.</p></div></div>
@@ -257,11 +257,11 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
   </div></div><!-- /scrolly -->
   <div class="figure">
     <div class="panel">
-      <h3>Five generations, five conditions</h3>
-      <p class="sub">Greedy return at each generation's end · 30 seeds · IQM ± 95% CI · all four comparisons Holm p=.014</p>
+      <h3>Five generations, six of nine conditions</h3>
+      <p class="sub">Greedy return at each generation's end · 60 fresh seeds · IQM ± 95% CI · every baseline comparison Welch Holm p ≤ 1.2e-20</p>
       <div class="legend" id="lg-exp4"></div>
-      <svg class="chart" id="chart-exp4" role="img" aria-label="Per-generation curves: generational distillation ratchets upward to 8.75 while all four baselines stay flat at 0.3"></svg>
-      <p class="figure-note">Long-lived agents <em>remember</em> the mountain (best episode ≈ 10) yet <em>do</em> candy (0.3) for 75,000 steps — they know the way and cannot walk it. Distillation converts that gap into each next generation's head start. The dose-matched random-advice control (violet) shows the content matters; the optimistic-init control (red) marks the boundary where no teacher is needed at all.</p>
+      <svg class="chart" id="chart-exp4" role="img" aria-label="Per-generation curves: generational distillation ratchets upward to 10.0 while weight-copy, long lives, and no-inheritance stay flat at 0.3 and random advice falls to 0"></svg>
+      <p class="figure-note">The agents that do find the mountain — 19 of 60 long lives, 16 of 60 first-generation teachers — still <em>do</em> candy at death: they know the way and cannot walk it. The lineage ratchets anyway, to 48 of 60, because each generation's exploration adds new peaks to the next one's inheritance. The dose-matched random-advice control (violet) shows the content matters; the optimistic-init control (red) marks the boundary where no teacher is needed at all.</p>
     </div>
   </div>
 </section>
@@ -272,7 +272,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
     <p class="eyebrow"><span class="hyp">H5 · morphology</span> — chapter five</p>
     <h2>Small Bodies Fall Cheaply</h2>
     <p class="lede">Toddlers fall about seventeen times an hour and shrug it off — small bodies carry little energy into the ground. By the square-cube law they are also relatively strong: strength scales with s², weight with s³. Falling is how you learn to stand, and evolution priced falling at its cheapest exactly when you need thousands of them.</p>
-    <p>Our learner balances a torque-limited pendulum whose scale s sets everything honestly: length s, mass 15s³, strength 40s², and fall damage (s)⁴ — impact energy. Six conditions, 120,000 steps each, all evaluated on the <em>adult</em> body. Some train adult-sized from day one. Some start at half size and grow — on a schedule, or adaptively, growing only when the current body stops falling.</p>
+    <p>Our learner balances a torque-limited pendulum whose scale s sets everything honestly: length s, mass 15s³, strength 40s², and fall damage (s)⁴ — impact energy. Seven conditions, 120,000 steps each, all evaluated on the <em>adult</em> body. Some train adult-sized from day one. Some start at half size and grow — on a schedule, or adaptively, growing only when the current body stops falling.</p>
   </div>
   <div class="scrolly"><div class="stage" data-stage="h5" aria-label="Two pendulum creatures side by side: an adult-sized one that falls hard and often, and one that starts small, falls softly, and grows as it stabilizes. Damage counters accumulate."></div>
   <div class="steps">
@@ -285,7 +285,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
       <h3>Damage accumulated on the way to adult competence</h3>
       <p class="sub">Cumulative fall damage vs training step · 40 fresh seeds · IQM ± 95% CI · damage = (size)⁴ per fall</p>
       <div class="legend" id="lg-exp5"></div>
-      <svg class="chart" id="chart-exp5" role="img" aria-label="Damage curves: adult conditions accumulate roughly 880 units; growing conditions stay far lower, adaptive lowest at 62"></svg>
+      <svg class="chart" id="chart-exp5" role="img" aria-label="Damage curves: adult conditions accumulate around a thousand units; growth conditions stay far lower, grow-adaptive-walk lowest around 44"></svg>
       <p class="figure-note">On the confound-free pairing (growth vs adult, both walking from the start), growing bodies reach adult competence with 9–42× less damage (Welch p ≤ 4.3e-30) and 30–40% fewer steps. In animals, damage is death, injury, and metabolic cost — the currency evolution actually optimizes.</p>
     </div>
   </div>
@@ -338,7 +338,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
     </table>
     </div>
     <p class="marginal">Statistics: IQM point estimates; 95% percentile bootstrap (10k resamples); two-sided Mann-Whitney AND Welch t, Holm-corrected within each experiment's primary family; censored time-to-threshold assigned budget+1 with censoring fractions reported. Confirmatory runs on fresh seed ranges disjoint from every seed ever used for tuning. Budgets matched to the step; evaluation identical across conditions and excluded from budgets. Design amendments are versioned in DESIGN.md; every v1 claim that failed under audit is reported above, not deleted.</p>
-    <p>Everything is reproducible from the repository: environments, agents, experiment scripts, 179 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs.</p>
+    <p>Everything is reproducible from the repository: environments, agents, experiment scripts, 245 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs.</p>
     <p><a href="https://github.com/andrewboldi/developmental-rl">github.com/andrewboldi/developmental-rl</a></p>
   </div>
   <footer>
@@ -638,7 +638,7 @@ window.DATA = {"exp1":{"homes":{"A":{"ascii":["#############","#S...#......#","#
     const sc = document.getElementById('scorecard'); if (!sc) return;
     const rows = [
       ['H1', 'world models', '4 of 6', 'blind-at-home 97.5% ≈ sighted; stranger collapses to 29%. Refuted honestly: the Dyna speedup (update-count artifact) and pure dead reckoning.'],
-      ['H2', 'microtasks', '2 of 3', 'drills 15.1k vs 40.4k steps (p≤4e-9); structure beats mere diversity (p=1e-14). Boundary: optimism skips the need.'],
+      ['H2', 'microtasks', '2 of 3', 'drills 15.1k vs 40.4k steps (p≤4e-9); structure beats mere diversity (Welch Holm p=4.9e-14). Boundary: optimism skips the need.'],
       ['H3', 'variation', '3 of 4', 'retention p=5e-10 and transfer p=1e-5 replicate counterbalanced; mechanism PROVEN by ablation. Acquisition edge: boundary.'],
       ['H4', 'teachers', '2 of 4', 'distill 10.0 vs every dose-matched control (p≤2e-20); random advice poisons. Boundary: global optimism solves small worlds.'],
       ['H5', 'growing bodies', '2 of 4', '42× less damage AND a third faster, robust to physics arms. Reversed: gradualism and balance-first.'],
