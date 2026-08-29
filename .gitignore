@@ -8,3 +8,4 @@ paper/*.aux
 paper/*.log
 paper/*.out
 .ruff_cache/
+.playwright-mcp/

@@ -4,29 +4,36 @@ An experimental research program testing five hypotheses about how RL should sit
 **between imitation and evaluation** — the way humans learn: from instruction,
 world models, drills, teachers, and growing bodies.
 
-## The five hypotheses
+**Interactive results:** https://andrewboldi.github.io/developmental-rl/ ·
+**Paper:** [`paper/paper.pdf`](paper/paper.pdf) ·
+**Literature synthesis:** [`RESEARCH.md`](RESEARCH.md) ·
+**Versioned protocols:** [`DESIGN.md`](DESIGN.md)
 
-| # | Name | Claim |
-|---|------|-------|
-| H1 | **The Blindfold Test** | An agent with a learned world model can act without observations in a *familiar* environment but not a *strange* one; model-based learning (Dyna) dominates model-free in sample efficiency. |
-| H2 | **Microtasks** | Drill-based part-training (shoot, then dribble, then play) reaches whole-task mastery in fewer environment steps than whole-task-only training. |
-| H3 | **Variation Practice** | Varied/interleaved practice looks *worse during training* but *wins at test* under novel perturbation — the contextual-interference effect, in RL form. |
-| H4 | **Generational Teaching** | Iterated teach-and-relearn — an aging agent distills principles to a fresh, plastic student — beats both weight-copying and one agent trained for the combined budget. |
-| H5 | **Growing Bodies** | Starting small (cheap falls, quick dynamics) and growing toward the adult body, balance-first, beats training the adult body directly. |
+## The five hypotheses — as the data left them
 
-Every hypothesis is validated with multi-seed runs, confidence intervals, and
-significance tests. Results feed a paper (`paper/`) and an interactive
-Three.js + GSAP scroll experience (`site/`).
+| # | Name | What survived fresh-seed, Holm-corrected, dual-statistic verification |
+|---|------|------|
+| H1 | **The Blindfold Test** | With a learned touch filter, blind navigation at "home" matches sighted (0.975 vs 0.973) and collapses in a "stranger's home" (0.290, floor 0.033). **Refuted honestly:** the famous Dyna speedup — an update-matched replay control closes 100% of it. The model's unique value is acting blind, not learning fast. |
+| H2 | **Microtasks** | Start-state drills reach full-game mastery in 15,125 steps vs 40,375 (p≤4e-9). Uniform start diversity is worthless (p=0.39 vs whole) — targeted structure carries it. **Boundary:** optimistic initialization reproduces the whole effect; drills pay for undirected explorers. |
+| H3 | **Variation Practice** | The Shea–Morgan crossover, counterbalanced: interleaved wins retention (0.910 vs 0.793, p=5e-10) and transfer (0.779 vs 0.621). **Mechanism proven by ablation** — remove shared features and the crossover vanishes (p=0.92). Acquisition edge: boundary. |
+| H4 | **Generational Teaching** | Episodic-bottleneck distillation ratchets to 10.0 IQM (48/60 lineages) while weight-copy, long lives, and random optimistic advice all fail (p≤2e-20; random advice *poisons* to 0.0). **Boundary:** global optimism solves this small world outright — teaching pays where optimism is unaffordable. |
+| H5 | **Growing Bodies** | Confound-free pairing: growth reaches adult competence with 9–42× less fall damage AND 30–40% fewer steps, robust to physics variants. **Reversed:** gradualism (abrupt growth is cheaper) and balance-first staging (walking-from-the-start wins). |
+
+Every claim above is scored by a pre-registered rule on fresh seeds disjoint
+from all tuning, with both Mann-Whitney and Welch tests, Holm-corrected. Four
+registered claims were refuted, two landed on boundaries — all reported, none
+deleted. The program went through a 16-agent adversarial verification pass and
+a mandated hardening round; the audit trail lives in the PR history.
 
 ## Layout
 
 ```
 src/devrl/        core library: environments, agents, harness, stats
-experiments/      one runnable script per hypothesis
-tests/            pytest suite
-results/          JSON + figures produced by real runs
-paper/            manuscript (markdown -> PDF)
-site/             Three.js + GSAP visualization, driven by results/ data
+experiments/      one runnable script per hypothesis (v2, with controls)
+tests/            pytest suite (245 tests)
+results/          per-seed JSON produced by the committed scripts
+paper/            manuscript (markdown -> 16pp PDF), figures, bibliography
+docs/             Three.js + GSAP interactive site (GitHub Pages), real data
 ```
 
 ## Reproduce
@@ -34,6 +41,15 @@ site/             Three.js + GSAP visualization, driven by results/ data
 ```bash
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
-pytest
-python -m devrl.run_all          # runs every experiment, all seeds
+pytest                                  # 245 tests
+python -m devrl.run_all                 # rerun every experiment, all seeds
+python docs/build_data.py               # regenerate the site's data
+python paper/make_figures.py            # regenerate the paper's figures
+(cd paper && python assemble.py && ./build.sh)   # rebuild the PDF
+```
+
+Single experiment, custom scale:
+
+```bash
+python experiments/exp4_generations.py --seeds 60 --seed-offset 100 --out results/exp4.json
 ```
