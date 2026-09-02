@@ -146,10 +146,23 @@ def exp5(j):
     return out
 
 
+def exp6(j):
+    ec = j["viz"]["eval_curves"] if "eval_curves" in j.get("viz", {}) else j["curves"]
+    conds = ec["conditions"] if "conditions" in ec else ec
+    out = {"curves": {"checkpoints": ec.get("checkpoints") or j["curves"].get("checkpoints"),
+                      "conditions": {k: curve(c) for k, c in (conds.items() if isinstance(conds, dict) else [])}},
+           "tests": rnd(j.get("tests"), 6), "conclusion": j["conclusion"]}
+    v = j.get("viz", {})
+    for k in ("t90_iqm", "practice_heatmaps", "drill_heatmaps", "heatmaps"):
+        if k in v:
+            out[k] = rnd(v[k], 3)
+    return out
+
+
 def main():
     data = {
         "exp1": exp1(R(1)), "exp2": exp2(R(2)), "exp3": exp3(R(3)),
-        "exp4": exp4(R(4)), "exp5": exp5(R(5)),
+        "exp4": exp4(R(4)), "exp5": exp5(R(5)), "exp6": exp6(R(6)),
     }
     js = "window.DATA = " + json.dumps(data, separators=(",", ":")) + ";\n"
     out = ROOT / "docs" / "data.js"

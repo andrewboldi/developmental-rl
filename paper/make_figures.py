@@ -96,9 +96,15 @@ def fig4():
     j = R(4)
     pg = j["viz"]["per_generation_curves"]["greedy_return"]
     fig, a = plt.subplots(figsize=(4.6, 2.7))
-    for i, (k, c) in enumerate(pg["conditions"].items()):
+    picks = [("generational-distill", C["blue"]), ("optimistic-init", C["red"]),
+             ("weight-copy", C["orange"]), ("random-advice", C["violet"]),
+             ("reset-replay-full", C["gold"]), ("no-inheritance", C["green"])]
+    for k, col in picks:
+        c = pg["conditions"].get(k)
+        if not c:
+            continue
         gens = list(range(1, len(c["iqm"]) + 1))
-        curveband(a, gens, c["iqm"], c.get("ci_lo"), c.get("ci_hi"), ORDER[i % 6], k)
+        curveband(a, gens, c["iqm"], c.get("ci_lo"), c.get("ci_hi"), col, k)
     a.set(xlabel="generation", ylabel="greedy return at generation end",
           title="Generational teaching", xticks=list(range(1, 6)))
     a.legend(fontsize=6.5)
@@ -117,8 +123,25 @@ def fig5():
     fig.tight_layout(); fig.savefig(FIGS / "fig5_growing.pdf"); plt.close(fig)
 
 
+def fig6():
+    j = R(6)
+    ec = j["viz"]["eval_curves"]
+    fig, a = plt.subplots(figsize=(4.6, 2.7))
+    picks = [("teacher-drills", C["blue"]), ("self-drills", C["green"]),
+             ("self-drills-late", C["gold"]), ("whole", C["orange"])]
+    for k, col in picks:
+        c = ec["conditions"].get(k)
+        if not c:
+            continue
+        curveband(a, ec["checkpoints"], c["iqm"], c.get("ci_lo"), c.get("ci_hi"), col, k)
+    a.axhline(.9, color=C["gold"], ls="--", lw=.8)
+    a.set(xlabel="training steps", ylabel="full-game success", title="The Self-Coach")
+    a.legend(fontsize=7)
+    fig.tight_layout(); fig.savefig(FIGS / "fig6_selfcoach.pdf"); plt.close(fig)
+
+
 if __name__ == "__main__":
-    for f in (fig1, fig2, fig3, fig4, fig5):
+    for f in (fig1, fig2, fig3, fig4, fig5, fig6):
         try:
             f()
             print(f"{f.__name__} ok")

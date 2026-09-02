@@ -136,10 +136,10 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
 <!-- ══════════ HERO ══════════ -->
 <section id="hero" class="chapter" data-scene="hero">
   <div class="inner">
-    <p class="eyebrow">Five experiments · 200 seeded runs · all code &amp; data public</p>
+    <p class="eyebrow">Five hypotheses · seven experiments · all code &amp; data public</p>
     <h1>Growing Up to&nbsp;Learn</h1>
     <p class="sub">What reinforcement learning looks like when you raise it the way children are raised — with maps, drills, mess, teachers, and a body that starts small.</p>
-    <p class="meta">developmental-rl · numpy · 245 tests · every claim measured</p>
+    <p class="meta">developmental-rl · numpy · 321 tests · every claim measured</p>
   </div>
   <div class="scrollcue">scroll to begin</div>
 </section>
@@ -214,6 +214,16 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
       <p class="figure-note">Same environment, same reward, same total steps. Drilled curves lift off during the drill phases (shaded). Exploring-starts proves diversity alone is worthless here; whole-optimistic proves a smarter explorer can skip the curriculum. Both boundaries are the ones the guide-policy literature predicts (Xie et al. 2021, JSRL).</p>
     </div>
   </div>
+  <div class="figure">
+    <div class="panel">
+      <h3>Can the agent coach itself?</h3>
+      <p class="sub">EXP6 · no teacher: episodes restart from moments in the agent's own best games · 30 fresh seeds</p>
+      <div class="legend" id="lg-exp6"></div>
+      <svg class="chart" id="chart-exp6" role="img" aria-label="Learning curves: self-devised drills cross 90 percent around 29000 steps — faster than whole games near 40000, slower than teacher drills near 15000"></svg>
+      <div id="heat-exp6" aria-label="Three heatmaps of where the self-coach chose to start practice episodes: early starts spread widely, later starts concentrate along the scoring path"></div>
+      <p class="figure-note">The founding question of this program: with no teacher, can an agent devise its own microtasks? Yes — restarting from its own best-episode moments beats raw play by 28% (t90 <span class="stat-inline">29,000</span> vs <span class="stat-inline">40,375</span>, Holm p=.02 both statistics). And the teacher still earns their keep: the designed curriculum is another <span class="stat-inline">13,875 steps</span> faster (p=2.9e-7) — a measured price for the generations of compressed experience a teacher carries. The maps show where the self-coach chose to practice: early restarts scatter; late restarts hug the scoring path it discovered.</p>
+    </div>
+  </div>
 </section>
 
 <!-- ══════════ H3 VARIATION ══════════ -->
@@ -269,7 +279,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
       <p class="sub">Greedy return at each generation's end · 60 fresh seeds · IQM ± 95% CI · every baseline comparison Welch Holm p ≤ 1.2e-20</p>
       <div class="legend" id="lg-exp4"></div>
       <svg class="chart" id="chart-exp4" role="img" aria-label="Per-generation curves: generational distillation ratchets upward to 10.0 while weight-copy, long lives, and no-inheritance stay flat at 0.3 and random advice falls to 0"></svg>
-      <p class="figure-note">The agents that do find the mountain — 19 of 60 long lives, 16 of 60 first-generation teachers — still <em>do</em> candy at death: they know the way and cannot walk it. The lineage ratchets anyway, to 48 of 60, because each generation's exploration adds new peaks to the next one's inheritance. The dose-matched random-advice control (violet) shows the content matters; the optimistic-init control (red) marks the boundary where no teacher is needed at all.</p>
+      <p class="figure-note">The agents that do find the mountain — 19 of 60 long lives, 16 of 60 first-generation teachers — still <em>do</em> candy at death: they know the way and cannot walk it. The lineage ratchets anyway, to 48 of 60, because each generation's exploration adds new peaks to the next one's inheritance. The dose-matched random-advice control (violet) shows the content matters; the optimistic-init control (red) marks the boundary where no teacher is needed at all. And the decisive identifiability control: fresh students that replayed <em>entire</em> goal-bearing teacher lifetimes consolidated 0 of 35 mountains (dose-matched replay: 0 of 54) versus the distill lineage's 129 of 129 — inheriting raw experience is not inheriting the lesson.</p>
     </div>
   </div>
 </section>
@@ -317,7 +327,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
     <p class="eyebrow">synthesis</p>
     <h2>Five Curves, One Lesson</h2>
     <p class="lede">Every mechanism that survived verification worked the same way: it changed <em>which experience the learner got</em>, not how the learner updates. Drills repositioned experience. Variation shuffled it. Teachers curated it across lifetimes. Small bodies discounted its price. And the world model earned its keep not by learning faster but by letting the learner act on experience it wasn't currently having.</p>
-    <p>That is what "between imitation and evaluation" means operationally. Pure evaluation wastes lifetimes rediscovering what the last lifetime knew; pure imitation caps the student at the teacher. The productive middle is a narrow, curated channel of experience — a drill, an anecdote, a start state — feeding a learner that remains free to disagree. The audit added the boundary: this channel pays where exploration is undirected and mistakes are expensive, which is precisely the condition animals live under.</p>
+    <p>That is what "between imitation and evaluation" means operationally. Pure evaluation wastes lifetimes rediscovering what the last lifetime knew; pure imitation caps the student at the teacher. The productive middle is a narrow, curated channel of experience — a drill, an anecdote, a start state — feeding a learner that remains free to disagree. The audit added the boundary: this channel pays where exploration is undirected and mistakes are expensive, which is precisely the condition animals live under. The extension wave closed the loop: an agent can curate its own experience from episodic memory — a self-coach worth 28% — and a teacher's curated experience is worth roughly double that again, which is what instruction <em>is</em>.</p>
   </div>
   <div class="figure">
     <div class="panel">
@@ -342,11 +352,13 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
         <tr><td>H3</td><td>3 passages · 6 shared motifs · 8 keys</td><td>linear Q ± shared features; counterbalanced orders</td><td>40</td><td>450 episodes</td></tr>
         <tr><td>H4</td><td>TrapGrid 15×11, candy 0.3, goal 10</td><td>Q, plasticity decay; random-advice &amp; optimism controls</td><td>60</td><td>5×15k steps</td></tr>
         <tr><td>H5</td><td>Pendulum, l=s, m=15s³, τ=40s², dmg=s⁴ (+s³ torque &amp; damping robustness arms)</td><td>tabular Q, 765 states × 5 torques</td><td>40</td><td>120k steps</td></tr>
+        <tr><td>E6</td><td>SoccerGrid — self-coach: restarts from own top-10 episodes</td><td>tabular Q; whole / teacher / self / self-annealed</td><td>30</td><td>60k steps</td></tr>
+        <tr><td>E7</td><td>5 fresh TrapGrids + 5 fresh home pairs (generated, guarded)</td><td>headline pairings replicated per layout</td><td>20/15</td><td>as originals</td></tr>
       </tbody>
     </table>
     </div>
     <p class="marginal">Statistics: IQM point estimates; 95% percentile bootstrap (10k resamples); two-sided Mann-Whitney AND Welch t, Holm-corrected within each experiment's primary family; censored time-to-threshold assigned budget+1 with censoring fractions reported. Confirmatory runs on fresh seed ranges disjoint from every seed ever used for tuning. Budgets matched to the step; evaluation identical across conditions and excluded from budgets. Design amendments are versioned in DESIGN.md; every v1 claim that failed under audit is reported above, not deleted.</p>
-    <p>Everything is reproducible from the repository: environments, agents, experiment scripts, 245 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs.</p>
+    <p>Everything is reproducible from the repository: environments, agents, experiment scripts, 321 tests, this page, and the paper. One command reruns any experiment; the data behind every chart on this page is the committed output of those runs.</p>
     <p><a href="https://github.com/andrewboldi/developmental-rl">github.com/andrewboldi/developmental-rl</a></p>
   </div>
   <footer>

@@ -32,7 +32,14 @@ abstract: |
   unnecessary. Fifth, growing bodies: on the confound-free pairing, a growth
   curriculum reaches adult competence with 9–42x less cumulative fall damage
   and 30–40% fewer steps — while two folk sub-claims (gradual growth,
-  balance-before-walking) are significantly reversed. We report the failures
+  balance-before-walking) are significantly reversed. Two extensions close the
+  loop: an agent can coach itself — restarting from moments in its own best
+  episodes beats raw practice by 28%, though expert-designed drills remain
+  another 2x faster (the measured value of instruction) — and a
+  reset-with-full-replay control shows curation is causal: fresh students
+  replaying entire goal-bearing teacher lifetimes consolidate 0/35 discovered
+  goals versus the distilled lineage's 129/129. Both headline effects
+  replicate across freshly generated layouts. We report the failures
   alongside the successes; the surviving thesis is that developmental
   scaffolds work by curating which experience a learner gets, and that they
   pay precisely where exploration is undirected and mistakes are expensive —
@@ -396,6 +403,30 @@ factorial cells that isolate morphology from task staging). Robustness arms
 rerun the primary pairing under a muscle-torque s^3 law and under size-scaled
 damping.
 
+## 3.7 EXP6 — The Self-Coach
+
+The program's founding question: with no teacher, can an agent devise its own
+microtasks? Environment: `SoccerGrid` unchanged. Conditions (60k steps, 30
+fresh seeds): `whole`; `teacher-drills` (EXP2's drills-varied protocol,
+bit-identical rerun, enforced by test); `self-drills` — the agent keeps an
+online episodic memory of its top-10 episodes by return, and for the first 40%
+of budget starts 75% of episodes from a uniformly sampled state snapshot drawn
+from those episodes' visited states ("practice moments from my best games"),
+falling back to restarts from any visited state until the first score;
+`self-drills-late` (the same mechanism with the memory-start probability
+annealed linearly over the whole budget).
+
+## 3.8 EXP7 — Layout-resampling robustness
+
+Generators (`layouts.py`, guarded and tested) produce fresh TrapGrid instances
+(candy positions resampled under a random-walk absorption guard) and fresh
+home pairs (random room partitions, same shell and endpoints, solvability and
+path-length guards). The two headline pairings are replicated per instance:
+EXP4's distill vs no-inheritance on 5 TrapGrids (20 seeds each) and EXP1's
+blind-A-touch vs blind-B-touch on 5 home pairs (15 seeds each). Registered
+rule: robustness holds iff the direction replicates at per-instance p < 0.05
+in at least 4 of 5 instances.
+
 # 4. Results
 
 Every claim below is scored by its pre-registered rule; "supported" and
@@ -498,7 +529,20 @@ the registered "plasticity decay is the strander" rescue-claim is **refuted**
 as stated (the lr component still decayed; the triangulation is in the
 repository). And `optimistic-init` — global Q0 = 5.0, one long life — solves
 TrapGrid outright, 60/60, beating even the distill lineage (Welch Holm
-p = 6.0e-4). The strong conjunctive claim "advice content matters beyond any
+p = 6.0e-4).
+
+The v3 identifiability controls settle the "isn't this just resets?" question
+directly. A fresh student that replays its teacher's *entire* 15,000-transition
+lifetime log before living — raw experience inheritance at matched plasticity —
+ends at the candy floor on all 60 seeds, as does the dose-matched variant
+replaying 100 transitions (both vs distill: MW Holm p = 2.5e-9, Welch Holm
+p = 1.5e-20). The consolidation accounting is the sharpest statistic in the
+program: 35 goal-bearing full logs were handed to fresh students and replayed
+in their entirety, and **0 of 35** were consolidated into policy; the distill
+lineage consolidated **129 of 129** goal-bearing advice hand-offs. A shuffled
+single pass of TD updates cannot propagate value down a long path; priming the
+exact trajectory can. Inheriting raw experience is not inheriting the lesson —
+the curation is causal. The strong conjunctive claim "advice content matters beyond any
 optimism control" is therefore **refuted**, and the honest statement of H4 is
 conditional: *among content-bearing channels and dose-matched controls,
 episodic distillation is uniquely effective; where blanket optimism over the
@@ -532,9 +576,42 @@ little total time mid-growth — not from smoothness of the schedule, and not
 from imitating infant task staging. What infant development optimizes is
 evidently not the value function's learning curve alone.
 
+## 4.6 EXP6: the agent can coach itself — and the teacher is still worth double
+
+![EXP6. The Self-Coach: an agent restarting from moments in its own best
+games beats whole-game practice; the teacher-designed curriculum remains
+substantially faster.](figs/fig6_selfcoach.pdf)
+
+`self-drills` reaches 90% full-game success in **29,000** steps (IQM) versus
+**40,375** for `whole` — 28% faster, from nothing but the agent's own episodic
+memory (MW Holm p = 0.021, Welch Holm p = 0.020; 2/30 vs 6/30 censored). The
+registered "self matches teacher" claim is **refuted**, informatively:
+`teacher-drills` at **15,125** steps beats the self-coach by 13,875 steps
+(Welch Holm p = 2.5e-6; gap CI [9,125, 19,500] against a pre-registered
++3,025 margin). The schedule ablation (`self-drills-late`, 28,750) shows the
+result is not an artifact of the phase boundary. The mechanism telemetry
+mirrors the design: fallback exploration restarts dominate only until the
+first scored episode, after which the practice-start distribution contracts
+onto the discovered scoring path. Read together with EXP4, this quantifies the
+founding intuition: an agent can curate its own experience within one
+lifetime (worth 28% here), and instruction — experience curated across
+lifetimes by someone who already knows the path — is worth roughly a further
+2x. Both channels beat raw practice; neither replaces the other.
+
+## 4.7 EXP7: the headline effects are not layout artifacts
+
+On five freshly generated TrapGrids, distill-vs-no-inheritance replicates in
+4/5 instances with zero significant reversals (the miss: IQM 8.0 vs 0.3 at
+n = 20, p = 0.078 — direction strongly held). On five freshly generated home
+pairs, the blindfold contrast replicates in **5/5** instances (per-instance
+MW p between 2.4e-5 and 3.8e-4; pooled n = 75 vs 75: IQM 0.89 vs 0.13, Welch
+Holm p = 2.0e-30). Both registered robustness rules are met; the program's
+two headline results are properties of the mechanisms, not of the two
+hand-drawn maps they were discovered on.
+
 # 5. What failed, and what the failures bought
 
-Six registered claims were refuted and two landed on boundaries; none were
+Seven registered claims were refuted and two landed on boundaries; none were
 quietly dropped. Refuted: (1) the strong Dyna claim failed its update-matched
 control — the correct citation for the speedup is update count, and the
 model's real contribution in this system is blind action; (2) pure dead
@@ -545,7 +622,8 @@ exploration is undirected and optimism is unaffordable; (4) H4's
 plasticity-rescue claim failed — undecayed exploration alone does not save the
 long life; (5–6) gradualism and balance-first reversed — folk developmental
 staging did not survive contact with a system where only the value function
-matters. Boundaries: EXP2's drill benefit is exploration-regime-dependent, and
+matters; (7) self-devised drills do not match teacher-designed drills — the
+self-coach works, and the teacher premium is real and large. Boundaries: EXP2's drill benefit is exploration-regime-dependent, and
 EXP3's acquisition edge is direction-consistent but not significant once block
 order is counterbalanced — the practice-room advantage of blocked practice is
 partly recency artifact even in silico.
@@ -598,7 +676,7 @@ rather than certainty.
 
 # 8. Reproducibility
 
-Everything is public: environments, agents, experiment scripts, 245 tests, the
+Everything is public: environments, agents, experiment scripts, 321 tests, the
 versioned design document with amendments, all raw per-seed results, the paper
 source, and the interactive site. One command reruns any experiment
 (`python -m devrl.run_all`); every number in this paper is generated by a

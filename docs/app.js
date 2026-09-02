@@ -271,6 +271,41 @@
       { name: 'grow adaptive, walk', color: CSS.blue, x: D.exp5.damage['grow-adaptive-walk'].steps, y: D.exp5.damage['grow-adaptive-walk'].iqm, lo: D.exp5.damage['grow-adaptive-walk'].lo, hi: D.exp5.damage['grow-adaptive-walk'].hi },
     ],
   });
+  chartDraws.exp6 = lineChart('chart-exp6', {
+    xname: 'steps', legend: 'lg-exp6', threshold: 0.9, thresholdLabel: '90%', ymin: 0, ymax: 1, dp: 2,
+    series: [
+      { name: 'teacher drills', color: CSS.blue, x: D.exp6.curves.checkpoints, y: D.exp6.curves.conditions['teacher-drills'].iqm, lo: D.exp6.curves.conditions['teacher-drills'].ci_lo, hi: D.exp6.curves.conditions['teacher-drills'].ci_hi },
+      { name: 'self-drills', color: CSS.green, x: D.exp6.curves.checkpoints, y: D.exp6.curves.conditions['self-drills'].iqm, lo: D.exp6.curves.conditions['self-drills'].ci_lo, hi: D.exp6.curves.conditions['self-drills'].ci_hi },
+      { name: 'self, annealed', color: CSS.gold, x: D.exp6.curves.checkpoints, y: D.exp6.curves.conditions['self-drills-late'].iqm },
+      { name: 'whole games', color: CSS.orange, x: D.exp6.curves.checkpoints, y: D.exp6.curves.conditions.whole.iqm, lo: D.exp6.curves.conditions.whole.ci_lo, hi: D.exp6.curves.conditions.whole.ci_hi },
+    ],
+  });
+  // exp6 practice heatmaps: where the self-coach chose to start episodes
+  (function heat6() {
+    const host = document.getElementById('heat-exp6'); if (!host || !D.exp6.practice_heatmaps) return;
+    const hm = D.exp6.practice_heatmaps['self-drills'];
+    const snaps = hm && hm.windows;
+    if (!snaps || !snaps.length) return;
+    host.style.cssText = 'display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 4px';
+    snaps.slice(0, 3).forEach((snap, si) => {
+      const grid = snap.agent_counts;
+      if (!Array.isArray(grid) || !Array.isArray(grid[0])) return;
+      const Hn = grid.length, Wn = grid[0].length;
+      const cell = 16;
+      const wrap = document.createElement('div');
+      const label = snap.label || ['early drills', 'mid drills', 'end of drills'][si] || '';
+      let maxv = 1; grid.forEach(row => row.forEach(v => { if (v > maxv) maxv = v; }));
+      let cells = '';
+      for (let rr = 0; rr < Hn; rr++) for (let cc = 0; cc < Wn; cc++) {
+        const t = Math.pow(grid[rr][cc] / maxv, .5);
+        const col = t === 0 ? '#16203485' : `rgba(76,134,216,${(.15 + .85 * t).toFixed(2)})`;
+        cells += `<rect x="${cc * cell}" y="${rr * cell}" width="${cell - 1.5}" height="${cell - 1.5}" rx="2" fill="${col}"/>`;
+      }
+      wrap.innerHTML = `<svg width="${Wn * cell}" height="${Hn * cell}" viewBox="0 0 ${Wn * cell} ${Hn * cell}" role="img">${cells}</svg>
+        <div style="font-family:var(--mono);font-size:10.5px;color:${CSS.muted};letter-spacing:.1em;text-transform:uppercase;margin-top:4px">${label}</div>`;
+      host.appendChild(wrap);
+    });
+  })();
   // scorecard
   (function scorecard() {
     const sc = document.getElementById('scorecard'); if (!sc) return;
@@ -280,6 +315,7 @@
       ['H3', 'variation', '3 of 4', 'retention p=5e-10 and transfer p=1e-5 replicate counterbalanced; mechanism PROVEN by ablation. Acquisition edge: boundary.'],
       ['H4', 'teachers', '2 of 4', 'distill 10.0 vs every dose-matched control (p≤2e-20); random advice poisons. Boundary: global optimism solves small worlds.'],
       ['H5', 'growing bodies', '2 of 4', '42× less damage AND a third faster, robust to physics arms. Reversed: gradualism and balance-first.'],
+      ['E6', 'the self-coach', '1 of 2', 'an agent devises useful drills from its own best episodes (28% faster than raw play); the teacher premium is real — designed drills are ~2× faster still.'],
     ];
     sc.innerHTML = rows.map(([h, nm, score, txt]) =>
       `<div class="tile win"><div class="v">${h} <span class="chip ok">${score}</span></div><div class="l"><b>${nm}</b> — ${txt}</div></div>`).join('');
