@@ -733,3 +733,331 @@ argmax policy loops); `curves.big_goal.stat_note` says to plot the mean
 (v1's smoke JSON silently concluded the opposite of the full run). The
 viz block gains the four new conditions everywhere (curves, final greedy
 paths, per-generation records) plus a `condition_labels` map.
+
+---
+
+## Amendments (v3) — EXP6 (new experiment): The Self-Coach (H6)
+
+The founding brief's untested idea: when no teacher exists, the agent must
+DEVISE its own microtasks ("ok, let's work on learning 1 measure"). EXP2
+established that teacher-designed start-state drills beat whole-game
+practice; EXP6 asks whether an agent can recover that benefit with no
+external curriculum designer, by restarting practice from moments of its
+own remembered best episodes.
+
+**Environment.** The existing `SoccerGrid`, read-only and unchanged (11x7
+pitch, sparse goal-only reward, 100-step cap enforced by the training
+loop). Curricula are expressed exactly as in EXP2, purely through
+`reset(agent=..., ball=...)`. The `whole` and `teacher-drills` arms reuse
+EXP2's protocol functions (`start_state`, `phase_at`), eval functions,
+and hyperparameters (lr 0.3, gamma 0.99, eps 0.15, Q0=0), imported from
+`exp2_microtask.py`, with the identical rng stream layout — those two
+arms are bit-for-bit reruns of EXP2's `whole` and `drills-varied`
+(a built-in replication check, enforced by test).
+
+**Conditions** (every arm trains exactly 60k env steps; eval identical
+everywhere, budget-free, rng-disjoint from training; 30 seeds):
+
+- `whole`: full games from kickoff for the whole budget (= EXP2 whole).
+- `teacher-drills`: EXP2's drills-varied — first 20% of budget
+  shoot-drill spawns (carrying, random attacking-third cell), next 20%
+  dribble-drill spawns (random left-half cell, ball at center), final
+  60% kickoff games.
+- `self-drills`: the agent coaches itself. It maintains an online
+  episodic memory of its top-10 episodes by undiscounted return (ties ->
+  the earlier episode wins; with SoccerGrid's binary returns the memory
+  therefore converges on the FIRST ten scoring episodes). During the
+  first 40% of the budget (the teacher arms' total drill share), each
+  episode starts, with probability 0.75, from a state snapshot (agent
+  cell + ball status) sampled uniformly from the UNION of states visited
+  in the remembered top episodes — "practice moments from my best
+  games" — and otherwise from kickoff. While the memory holds no scoring
+  episode yet, the practice draw falls back to a uniform sample over ALL
+  states visited so far (exploration restarts). Final 60% of the budget:
+  kickoff only.
+- `self-drills-late`: schedule-sensitivity ablation — the identical
+  mechanism, but the memory-start probability anneals 0.75 -> 0 linearly
+  across the WHOLE budget (p(t) = 0.75 * (1 - t/budget); no hard phase
+  boundary). Expected practice mass 0.375 of episodes, spread thin,
+  vs self-drills' front-loaded 0.75 over 40%.
+
+Mechanism details, registered: "states visited in an episode" are the
+states from which the agent chose actions (pre-action states), so
+terminal states are excluded by construction and every snapshot is a
+legal restart; the union is deduplicated and sampled uniformly over
+DISTINCT states (sorted for determinism); coach bookkeeping consumes no
+rng, and practice draws consume the same start-state stream the EXP2
+arms use, only when the memory-start probability is positive (a coin,
+plus one index draw when the candidate set is non-empty; an empty set —
+possible only before any state was visited — falls back to kickoff);
+episodes cut by budget exhaustion mid-episode are not added to memory.
+While fewer than 10 scoring episodes exist, the memory's remaining
+slots hold the earliest zero-return episodes, so practice anneals
+naturally from broad exploration restarts to goal-corridor moments as
+successes accumulate.
+
+**Eval** (identical across conditions, unchanged from EXP2): 20 greedy
+full-game episodes from kickoff every 2k steps on a separate env and rng
+(`default_rng([seed, step])`), excluded from every budget. Primary
+metric: time to 90% eval success; censored seeds reported and imputed at
+budget+1 (conservative).
+
+**Registered primary family** (Holm within family, m=2, applied to the
+MW p-values and the Welch p-values separately; every test reports both
+the two-sided Mann-Whitney U and Welch's t — scipy `ttest_ind`,
+`equal_var=False` — with EXP2's degenerate-sample guards):
+
+1. self-drills vs whole            (claim 1)
+2. self-drills vs teacher-drills   (claim 2 — direction reported; either
+                                    outcome is informative)
+
+Descriptive context (both statistics, raw p, no Holm, no claim rides on
+them): teacher-drills vs whole (EXP2 replication check), self-drills-late
+vs whole, and self-drills vs self-drills-late (schedule sensitivity).
+Final-success comparisons for the primary pairs are secondary.
+
+**Per-claim verdicts** (`conclusion = {claims, summary}`; a test's
+`significant` = MW Holm p < 0.05 and `welch_significant` = Welch Holm
+p < 0.05; n_sig in {0, 1, 2} counts them; direction by IQM of imputed
+t90):
+
+- Claim 1 — "an agent can devise useful drills from its own episodic
+  memory" (self-drills vs whole): n_sig=2 with self-drills faster ->
+  supported; n_sig=2 with whole faster -> refuted; n_sig=1 -> boundary;
+  n_sig=0 -> null.
+- Claim 2 — "self-devised drills match teacher-designed drills"
+  (self-drills vs teacher-drills), an equivalence-style claim that never
+  accepts a bare null (EXP5 A3 precedent). With diff = IQM(self t90) -
+  IQM(teacher t90) (positive = self slower), its 95% percentile
+  bootstrap CI (10k independent resamples), and a pre-registered margin
+  of +20% of the teacher IQM: n_sig=0 with CI upper bound within the
+  margin -> supported (equivalence within margin); n_sig=0 otherwise ->
+  null (underpowered, reported as such); any detection (n_sig>=1) with
+  teacher-drills faster -> refuted if the CI upper bound exceeds the
+  margin, else boundary (detectably slower, but bounded within the
+  practical margin); n_sig=2 with self-drills faster -> supported
+  (self-coaching matches and even beats the teacher); any other
+  one-legged detection -> boundary. Whichever way it lands, the evidence
+  quantifies the value of expert curriculum design (the teacher's step
+  advantage, absolute and as a fraction of teacher t90) or the agent's
+  self-sufficiency.
+
+**Seeds.** Confirmatory run: 30 fresh seeds 100-129 via `--seed-offset`
+(default 100). Dev and test probes use seeds 0-50 only; the self-coach
+mechanism has no tuned hyperparameters (k=10, p=0.75, 40% phase, the
+annealed schedule, and the top-10/ties-earlier rule are all fixed by
+this registration before any confirmatory data was seen). The numeric
+overlap with EXP2's confirmatory range is deliberate for the two rerun
+arms (bit-identical replication of EXP2's shipped data) and immaterial
+for the self arms (new mechanism, different stream consumption). Smoke
+mode: 2 seeds, 1/10 budget, stamped `config.smoke=true` plus a
+non-confirmatory `conclusion.note`.
+
+**Viz contract.** Eval curves (IQM + bootstrap CI) for all four
+conditions; a t90 table (IQM, CI, censored counts, final success); phase
+blocks annotated with the memory-start probability schedule; greedy
+kickoff trajectories at 25/50/100% of budget per condition (EXP2
+format); per-seed self-coach stats (first scoring episode step and
+memory/fallback/kickoff start counts); and — the headline — the
+self-coach's chosen practice-start heatmaps over the pitch: counts per
+agent cell (plus ball-position counts and carried count) in three equal
+windows (early/mid/end) of the practice phase (self-drills: the first
+40% of budget; self-drills-late: the whole budget), for the
+representative median-final seed and as a cross-seed mean — "where it
+decided to practice".
+
+**Files.** `experiments/exp6_selfcoach.py`, `tests/test_exp6.py`,
+`results/exp6.json`. No `src/` module is modified; the self-coach's
+top-k memory lives in the experiment file (deliberately self-contained:
+`distill.py` is under concurrent modification by another workstream).
+
+---
+
+## Amendments (v3) — EXP4 reset-with-replay identifiability control
+
+Registered extension addressing RESEARCH.md's single most likely objection
+to EXP4 — the fresh-optimizer confound ("isn't this just resets?"): the
+distill student's advantage could be fresh plasticity alone plus ANY
+inherited signal, not curated content. Nikishin et al. (ICML 2022) improve
+deep RL by periodically REINITIALIZING the network while RETAINING the full
+replay buffer — the unfiltered transmission channel; Ash & Adams (NeurIPS
+2020) show warm-starting hurts, justifying fresh students. RESEARCH.md
+names the missing arm explicitly: "fresh Q-table plus replay of the
+teacher's ENTIRE transition history ... the comparison that answers 'how is
+this different from resets'". The decision rules below were fixed in
+`tests/test_exp4.py` (TDD) before the v3 confirmatory run was executed.
+
+**New conditions** (appended as rng stream indices 9 and 10; every
+pre-existing condition keeps its v2 stream index, so the nine original arms
+are bit-identical reruns — verified against the committed v2 results on the
+full 60-seed range):
+
+- `reset-replay-full`: each generation, a fresh student (fresh Q, fresh
+  schedules) first replays the immediate teacher's ENTIRE lifetime
+  transition log — all 15,000 (s, a, r, s2, done) tuples, shuffled by the
+  condition rng — as ONE full pass of standard Q-updates at the student's
+  initial lr (lr0 = 0.3, held fixed; the student's age stays 0, so the
+  lived lr/eps schedules are exactly every other fresh student's), then
+  lives its own 15k steps while logging. Generation 1 has no teacher and
+  replays nothing, matching distill's advice-free generation 1. Raw
+  experience inheritance at full dose with full plasticity — the
+  Nikishin-style reset channel in the generational format.
+- `reset-replay-100`: identical, but replaying `replay_dose` = 100
+  transitions drawn uniformly WITHOUT replacement from the log (100
+  distinct log entries — dose-matched to the advice bottleneck's 100
+  primed (s, a) cells; `replay_dose == advice_cap` by construction,
+  asserted in tests). Raw experience inheritance at matched dose.
+
+**Budget symmetry (registered accounting rule).** Replay pretraining is
+free exactly the way advice priming is free: advice priming writes 100 Q
+cells and consumes no env steps; replay pretraining performs its Q-updates
+from the dead teacher's log and likewise consumes no env steps and no
+plasticity (fixed-lr updates outside the agent — age untouched). Every
+condition trains exactly gens x life = 75k env steps; the inheritance
+channel (100 curated pairs, 100 raw transitions, the full 15k log, or a
+full Q copy) is the manipulated variable and is budget-free in every arm.
+Stated in the results JSON as `config.free_inheritance`.
+
+**Transition logging.** Transitions are recorded in the experiment loop
+(`_live` gains an optional log; `qlearning.py`/`dyna.py` untouched).
+`distill.py` gains `TransitionLog` (append-only lifetime log with
+rng-shuffled full pass and uniform no-replacement sampling; `done` stored
+exactly as fed to the teacher's Q-update, so cap-truncated transitions
+bootstrap on replay too) and `replay_pretrain` (one in-order pass of
+standard Q-updates, semantics identical to `QLearner.update`, mutating Q
+in place and touching no agent state). Raw logs are never serialized;
+per-seed output records `replayed_by_gen` (the dose actually replayed:
+[0, 15000, 15000, 15000, 15000] and [0, 100, 100, 100, 100]).
+
+**Enlarged primary family (m=9).** `generational-distill vs
+reset-replay-full` and `generational-distill vs reset-replay-100` join the
+seven v2 primaries (inserted before the claim-4 rescue comparison); Holm
+is applied across the enlarged 9-comparison family to Mann-Whitney and
+Welch separately, registered significance still requiring BOTH
+Holm-adjusted p < 0.05. The tie-break robustness family is unchanged
+(m=7): tie-break sensitivity is orthogonal to the reset control.
+
+**New claim 5 — "curated advice beats raw experience inheritance at
+matched plasticity"** — scored conjunctively on the two new comparisons
+under the v2 per-comparison verdict rule and the v2 conjunction (any leg
+refuted -> refuted; both supported -> supported; both null -> null;
+otherwise boundary). Registered honesty clause: the evidence carries a
+FIXED map (`_replay_story`, pinned in tests) from the two leg verdicts to
+the interpretation — in particular, if reset-replay-full matches distill
+(null/boundary) while the dose-matched leg still wins, the evidence must
+state plainly that the bottleneck story NARROWS to dose efficiency; if the
+full-log replay wins, the bottleneck story fails and is reported as such.
+The evidence also carries a descriptive discovery-vs-consolidation
+accounting (goal-bearing hand-offs and successor consolidations for both
+replay arms and distill) so a one-sided reading of "replay never worked"
+or "replay never discovered" cannot hide in the aggregate.
+
+**Seeds and run.** Confirmatory run: `--seeds 60 --seed-offset 100`
+(seeds 100..159, the harmonized cross-experiment range). The nine original
+arms are bit-identical reruns of v2 (identical streams, identical
+outcomes); the two new arms draw fresh stream indices ([seed, 9],
+[seed, 10]) never run before this amendment was written. Disclosure: the
+v2 outcomes of the original arms were known when this amendment was
+written; no v3 design choice derives from any run of the new arms, whose
+structural tests used only seeds 0-7 at ~75x reduced budget (TINY) and
+smoke scale.
+
+---
+
+## Amendments (v3) — EXP7 (layout-resampling robustness)
+
+Registered before the EXP7 confirmatory run; decision rules fixed in
+`tests/test_exp7.py` (TDD) first. Motivation: both headline results were
+measured on single fixed layouts, so their conclusions are scoped to those
+instances — Whiteson et al. (2011) environment overfitting; RESEARCH.md
+lists "single fixed layouts scope conclusions to those layouts" under
+pseudo-replication (critic P7). EXP7 replicates each headline pairing —
+and nothing else — across freshly generated environment instances drawn
+from the same design family. No original experiment file or env is
+modified; the envs already accept `map_str`.
+
+**Instance generators** (`src/devrl/envs/layouts.py`, meta-seed 202609;
+generation draws only from the passed rng, so instances are fully
+deterministic and reproducible):
+
+- `gen_trapgrid(rng)`: the original 15x11 open shell with the standard S
+  (5,1) and far-right G (5,13); the 3 terminal candy cells resampled
+  uniformly over left-third floor cells (columns 1..5 — the original
+  candies live in 3..5), never on or Chebyshev-adjacent to S. A candidate
+  is accepted only if BFS-connected, S->G solvable dodging candy, and
+  calibrated: a uniform random walk must be absorbed into candy in
+  [80%, 98%] of 2000 probe episodes (cap 120), rejecting and resampling
+  otherwise, at most 50 tries. The original TRAP_MAP measures ~0.93, inside
+  the band — generated instances trap exploration the way the original
+  does, without copying its trap coordinates.
+- `gen_home_pair(rng)`: two 13x11 homes with the original shell and the
+  original S (1,1) / G (2,7) coordinates; interior walls from a random room
+  partition — recursive splits with door openings, parity-constrained
+  (walls on even rows/cols, doors on odd) so a door can never be plugged or
+  approach-blocked by a later perpendicular wall: full floor connectivity
+  holds by construction and is verified by BFS anyway. Both maps must have
+  shortest path in [10, 25] (originals: 17 and 11) and the pair must differ
+  in >= 10 wall cells.
+
+**Part 1 — EXP4 headline on 5 generated TrapGrids.** Conditions:
+`generational-distill` vs `no-inheritance` only (the claim-1 pairing), 20
+seeds per instance, budgets matched exactly (each condition trains 5 x 15k
+= 75k env steps per instance x seed). Machinery constants identical to
+EXP4 v2 (halflife 5000 aging, memory k=3 earliest-tie, advice cap 100 at
+Q=5.0, gamma 0.99, cap 120); `tests/test_exp7.py` verifies the replication
+lineage code bit-identical to `exp4_generations._run_condition` on the
+original map and rng stream. Metric: final greedy return at generation 5;
+eval is the same deterministic argmax rollout (budget-free, rng-free,
+byte-identical across conditions), on the instance's own map.
+
+**Part 2 — EXP1 headline on 5 generated home pairs.** Train TouchDynaQ
+(planning 20, slip 0.1, gamma 0.97, lr 0.1, eps 0.1, optimistic init 1.0)
+for exactly 40k env steps in generated home A, then the blindfold table on
+the frozen artifacts: `sighted-A`, `blind-A-touch`, `blind-B-touch`,
+`random-B`; 15 seeds per instance, 30 episodes per condition, cap 60.
+Headline pair: blind-A-touch vs blind-B-touch success rate (EXP1 v2's A1
+primary). Only one agent trains per (instance, seed) — all blindfold
+conditions evaluate the same frozen artifacts, so training budgets cannot
+differ across the compared conditions; blindfold env rng streams are keyed
+(seed, instance, episode) and shared across conditions (identical slip
+noise), policy rngs are eval-owned, and every eval/blindfold stream is
+key-disjoint from the training streams. Training-curve cadence is
+eval_every=4000 (10 checkpoints; coarser than EXP1's 1000 — the
+sample-efficiency claim is not re-litigated here, the curve is
+descriptive).
+
+**Registered decision rule (both parts).** For each generated instance,
+the headline comparison is tested with the uncorrected two-sided
+Mann-Whitney at alpha 0.05 — uncorrected because each instance is an
+independent replication on its own fresh layout; Welch t and rank-biserial
+effect sizes are reported per instance alongside. With n_rep = #instances
+significant in the headline direction and n_rev = #instances significant
+in the reversed direction (direction on IQM, mean fallback on ties):
+
+- supported iff n_rep >= 4 (the task-registered >= 4/5 rule; it takes
+  precedence even if the remaining instance reverses — any significant
+  reversal is disclosed in the evidence);
+- boundary iff n_rep in {2, 3};
+- refuted iff n_rep <= 1 and n_rev >= 1;
+- null otherwise.
+
+Pooled cross-instance stats (per-seed values concatenated across
+instances, MW + Welch, Holm within the m=2 pooled family applied to each
+statistic separately; pooled `significant` requires both Holm'd p < 0.05)
+are reported as context and do not gate the verdicts. Conclusion is two
+per-claim verdicts (`exp4-layout-robustness`, `exp1-layout-robustness`).
+
+**Seeds.** `--seed-offset` (default 100): part 1 uses seeds 100..119,
+part 2 seeds 100..114 per instance — fresh for EXP7 (no EXP7 tuning ever
+used any seed; the layouts themselves are new). Rng streams are keyed
+[seed, 800+i, cond] (part-1 training), [seed, 900..950+i, ...] (part-2
+training/eval/blindfold), all disjoint from each other and from the
+generation streams [202609, 40|10, i].
+
+**Output.** `results/exp7_layouts.json` follows the shared contract;
+`viz` carries the 5 generated TrapGrid maps and 5 home pairs (ascii, with
+S/G/candies, shortest paths, wall diffs, measured absorption rates),
+per-instance effect sizes (IQM pair, rank-biserial, p), pooled
+per-generation and training curves, and pooled + per-instance blindfold
+summaries. Smoke mode (2 seeds/instance, ~1/10 budget) stamps
+`config.smoke` and a non-confirmatory `conclusion.note`.
