@@ -337,7 +337,7 @@ shared-parameter interference, demonstrated by ablation.
 At 60 fresh seeds: `generational-distill` ends at IQM **10.0** (48/60 lineages
 consolidate the distant goal; mean 8.0). Every v1 baseline — weight-copy, both
 long lives, no-inheritance — ends at exactly **0.3 on every seed** (candy;
-all four comparisons Welch Holm p = 1.2e-20). The mechanism telemetry shows
+all four comparisons Welch Holm p = 1.5e-20). The mechanism telemetry shows
 why, and shows the ratchet is genuinely cumulative: only 19 of 60 long-lived
 agents ever end holding a memory of the mountain (best-episode 10) — and every
 one of them still *does* candy at death, knowledge they can no longer

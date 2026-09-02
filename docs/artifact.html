@@ -268,7 +268,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--hair);margin-top:4
   <div class="figure">
     <div class="panel">
       <h3>Five generations, six of nine conditions</h3>
-      <p class="sub">Greedy return at each generation's end · 60 fresh seeds · IQM ± 95% CI · every baseline comparison Welch Holm p ≤ 1.2e-20</p>
+      <p class="sub">Greedy return at each generation's end · 60 fresh seeds · IQM ± 95% CI · every baseline comparison Welch Holm p ≤ 1.5e-20</p>
       <div class="legend" id="lg-exp4"></div>
       <svg class="chart" id="chart-exp4" role="img" aria-label="Per-generation curves: generational distillation ratchets upward to 10.0 while weight-copy, long lives, and no-inheritance stay flat at 0.3 and random advice falls to 0"></svg>
       <p class="figure-note">The agents that do find the mountain — 19 of 60 long lives, 16 of 60 first-generation teachers — still <em>do</em> candy at death: they know the way and cannot walk it. The lineage ratchets anyway, to 48 of 60, because each generation's exploration adds new peaks to the next one's inheritance. The dose-matched random-advice control (violet) shows the content matters; the optimistic-init control (red) marks the boundary where no teacher is needed at all. And the decisive identifiability control: fresh students that replayed <em>entire</em> goal-bearing teacher lifetimes consolidated 0 of 35 mountains (dose-matched replay: 0 of 54) versus the distill lineage's 129 of 129 — inheriting raw experience is not inheriting the lesson.</p>
@@ -687,7 +687,7 @@ window.DATA = {"exp1":{"homes":{"A":{"ascii":["#############","#S...#......#","#
       ['H1', 'world models', '4 of 6', 'blind-at-home 97.5% ≈ sighted; stranger collapses to 29%. Refuted honestly: the Dyna speedup (update-count artifact) and pure dead reckoning.'],
       ['H2', 'microtasks', '2 of 3', 'drills 15.1k vs 40.4k steps (p≤4e-9); structure beats mere diversity (Welch Holm p=4.9e-14). Boundary: optimism skips the need.'],
       ['H3', 'variation', '3 of 4', 'retention p=5e-10 and transfer p=1e-5 replicate counterbalanced; mechanism PROVEN by ablation. Acquisition edge: boundary.'],
-      ['H4', 'teachers', '2 of 4', 'distill 10.0 vs every dose-matched control (p≤2e-20); random advice poisons. Boundary: global optimism solves small worlds.'],
+      ['H4', 'teachers', '3 of 5', 'distill 10.0 vs every dose-matched control incl. full-lifetime replay (p≤1.5e-20); random advice poisons. Boundary: global optimism solves small worlds.'],
       ['H5', 'growing bodies', '2 of 4', '42× less damage AND a third faster, robust to physics arms. Reversed: gradualism and balance-first.'],
       ['E6', 'the self-coach', '1 of 2', 'an agent devises useful drills from its own best episodes (28% faster than raw play); the teacher premium is real — designed drills are ~2× faster still.'],
     ];
