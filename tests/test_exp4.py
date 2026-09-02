@@ -5,8 +5,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from devrl.agents.distill import (EpisodicMemory, apply_advice, extract_advice,
-                                  halflife_schedule)
+from devrl.agents.distill import (EpisodicMemory, TransitionLog, apply_advice,
+                                  extract_advice, halflife_schedule,
+                                  replay_pretrain)
 from devrl.envs.trapgrid import TrapGrid
 
 _spec = importlib.util.spec_from_file_location(
@@ -98,6 +99,67 @@ def test_apply_advice_sets_only_advised_pairs():
     assert Q.sum() == 10.0
 
 
+def test_transition_log_records_full_lifetime():
+    log = TransitionLog()
+    assert len(log) == 0
+    log.add(0, 1, 0.0, 5, False)
+    log.add(5, 2, 10.0, 9, True)
+    assert len(log) == 2
+    assert log.transitions == [(0, 1, 0.0, 5, False), (5, 2, 10.0, 9, True)]
+    assert isinstance(log.transitions[1][4], bool)  # done stored as bool
+
+
+def test_transition_log_shuffled_is_rng_permutation_of_everything():
+    log = TransitionLog()
+    for i in range(50):
+        log.add(i, i % 4, float(i), i + 1, False)
+    out = log.shuffled(np.random.default_rng(0))
+    assert sorted(out) == sorted(log.transitions)  # nothing lost, nothing added
+    assert out != log.transitions  # actually shuffled
+    assert out == log.shuffled(np.random.default_rng(0))  # rng-deterministic
+    assert out != log.shuffled(np.random.default_rng(1))
+    assert log.transitions[0] == (0, 0, 0.0, 1, False)  # log itself untouched
+
+
+def test_transition_log_sample_uniform_without_replacement():
+    log = TransitionLog()
+    for i in range(200):
+        log.add(i, 0, 0.0, i + 1, False)
+    got = log.sample(np.random.default_rng(3), 100)
+    assert len(got) == 100
+    assert len(set(got)) == 100  # distinct log entries: no replacement
+    assert set(got) <= set(log.transitions)
+    assert got == log.sample(np.random.default_rng(3), 100)  # rng-deterministic
+    assert got != log.sample(np.random.default_rng(4), 100)
+
+
+def test_replay_pretrain_is_one_pass_of_q_updates_at_fixed_lr():
+    Q = np.zeros((6, 2))
+    trans = [
+        (0, 1, 10.0, 5, True),   # terminal: target = r, no bootstrap
+        (1, 0, 0.0, 0, False),   # bootstraps through Q[0] AFTER the 1st update
+        (1, 0, 0.0, 0, False),   # sequential pass: sees its own prior effect
+    ]
+    out = replay_pretrain(Q, trans, lr=0.5, gamma=0.9)
+    assert out is Q  # in place
+    assert Q[0, 1] == pytest.approx(5.0)  # 0 + 0.5*(10 - 0)
+    # 2nd: target 0.9*5=4.5 -> 2.25; 3rd: 2.25 + 0.5*(4.5-2.25) = 3.375
+    assert Q[1, 0] == pytest.approx(3.375)
+    assert Q.sum() == pytest.approx(5.0 + 3.375)  # only replayed pairs move
+
+
+def test_replay_pretrain_touches_no_agent_state():
+    # the plasticity symmetry with advice priming: replay writes Q only —
+    # the student's age (hence its lr/eps schedules) is untouched
+    ag = exp4._agent_for("reset-replay-full", exp4.FULL, np.random.default_rng(0))
+    replay_pretrain(ag.Q, [(0, 1, 10.0, 5, True)] * 50,
+                    lr=exp4.FULL["lr0"], gamma=exp4.FULL["gamma"])
+    assert ag.age == 0
+    assert ag.current_lr() == exp4.FULL["lr0"]
+    assert ag.current_eps() == exp4.FULL["eps0"]
+    assert ag.Q[0, 1] != 0.0
+
+
 def test_halflife_schedule_matches_design_constants():
     lr = halflife_schedule(0.3, 5000)
     eps = halflife_schedule(0.4, 5000)
@@ -118,17 +180,24 @@ def test_full_config_pins_design_numbers():
     assert c["gamma"] == 0.99 and c["cap"] == 120
     assert c["memory_k"] == 3 and c["advice_cap"] == 100
     assert c["advice_value"] == 5.0 and c["n_boot"] == 10000
+    # v3: raw-replay dose is matched to the advice bottleneck by construction
+    assert c["replay_dose"] == c["advice_cap"] == 100
     s = exp4.SMOKE
     assert s["life"] == 1500 and s["halflife"] == 500 and s["slow_halflife"] == 2500
+    assert s["replay_dose"] == 100
 
 
-def test_conditions_registered_order_keeps_originals_then_v2_arms():
-    # original five first (stream indices unchanged), v2 arms appended
+def test_conditions_registered_order_keeps_originals_then_added_arms():
+    # original five first, v2 arms next, v3 reset-replay arms appended: every
+    # pre-existing condition keeps its rng stream index, so the v2 arms are
+    # bit-identical reruns and only the two new arms draw fresh streams
     assert exp4.CONDITIONS == [
         "generational-distill", "weight-copy", "one-long-life",
         "one-long-life-slow", "no-inheritance",
         "generational-distill-shortest", "random-advice",
-        "optimistic-init", "constant-eps-life"]
+        "optimistic-init", "constant-eps-life",
+        "reset-replay-full", "reset-replay-100"]
+    assert exp4.REPLAY_CONDITIONS == ("reset-replay-full", "reset-replay-100")
 
 
 def test_agent_for_constant_eps_life_keeps_eps_while_lr_decays():
@@ -156,6 +225,14 @@ def test_agent_for_standard_and_slow_conditions():
     slow = exp4._agent_for("one-long-life-slow", exp4.FULL, np.random.default_rng(0))
     slow.age = 25000
     assert slow.current_lr() == pytest.approx(0.15)  # slow halflife 25k
+    # v3 replay students are standard fresh students: Q0=0, standard decay —
+    # plasticity exactly matched to the distill student
+    for cond in ("reset-replay-full", "reset-replay-100"):
+        rp = exp4._agent_for(cond, exp4.FULL, np.random.default_rng(0))
+        assert np.all(rp.Q == 0.0) and rp.age == 0
+        rp.age = 5000
+        assert rp.current_lr() == pytest.approx(0.15)
+        assert rp.current_eps() == pytest.approx(0.2)
 
 
 def test_random_advice_pairs_are_valid_dedup_and_capped():
@@ -223,6 +300,65 @@ def test_run_seed_budgets_matched_and_structured():
     assert "advice_by_gen" not in r["one-long-life"]
 
 
+def test_replay_conditions_are_budget_free_and_dose_matched():
+    r = exp4._run_seed(0, TINY)
+    life, gens = TINY["life"], TINY["gens"]
+    full, dose = r["reset-replay-full"], r["reset-replay-100"]
+    # budget symmetry: replay updates are free the same way advice priming
+    # is free — they consume no env steps, so the trained budget is exact
+    assert full["steps_trained"] == dose["steps_trained"] == gens * life
+    # gen 1 has no teacher and replays nothing (matching distill's
+    # advice-free gen 1); afterwards the full arm replays the teacher's
+    # ENTIRE lifetime log, the dose arm exactly replay_dose transitions
+    assert full["replayed_by_gen"] == [0] + [life] * (gens - 1)
+    assert dose["replayed_by_gen"] == [0] + [TINY["replay_dose"]] * (gens - 1)
+    for res in (full, dose):
+        assert "advice_by_gen" not in res  # raw channel, no curated advice
+        assert "log" not in res and "transitions" not in res  # never serialized
+    assert "replayed_by_gen" not in r["generational-distill"]
+    assert "replayed_by_gen" not in r["one-long-life"]
+
+
+def test_live_records_the_exact_transition_stream():
+    # the log IS the lived experience: replaying the logged actions through a
+    # twin deterministic env reproduces every (s, a, r, s2, done) tuple
+    env = TrapGrid(cap=TINY["cap"])
+    agent = exp4._agent_for("reset-replay-full", TINY, np.random.default_rng(7))
+    log = TransitionLog()
+    exp4._live(agent, env, EpisodicMemory(3), 50, log=log)
+    assert len(log) == 50  # one entry per env step, cap-truncations included
+    twin = TrapGrid(cap=TINY["cap"])
+    s = twin.reset()
+    for ls, la, lrew, ls2, ldone in log.transitions:
+        assert ls == s
+        s2, r, done, info = twin.step(la)
+        assert (ls2, lrew, ldone) == (s2, r, done)
+        s = twin.reset() if done or info["truncated"] else s2
+
+
+def test_replay_wiring_fresh_student_initial_lr_right_dose(monkeypatch):
+    # replay_pretrain must be called once per generation after the first,
+    # on the STILL-FRESH student's zero Q table (before it lives), at the
+    # student's initial lr, with the registered dose
+    calls = []
+    real = exp4.replay_pretrain
+
+    def spy(Q, transitions, lr, gamma):
+        calls.append({"n": len(transitions), "lr": lr, "gamma": gamma,
+                      "fresh": bool(np.all(Q == 0.0))})
+        return real(Q, transitions, lr, gamma)
+
+    monkeypatch.setattr(exp4, "replay_pretrain", spy)
+    exp4._run_condition("reset-replay-full", np.random.default_rng(0), TINY)
+    assert [c["n"] for c in calls] == [TINY["life"]] * (TINY["gens"] - 1)
+    exp4._run_condition("reset-replay-100", np.random.default_rng(0), TINY)
+    assert [c["n"] for c in calls[TINY["gens"] - 1:]] == (
+        [TINY["replay_dose"]] * (TINY["gens"] - 1))
+    for c in calls:
+        assert c["lr"] == TINY["lr0"] and c["gamma"] == TINY["gamma"]
+        assert c["fresh"]  # fresh Q at replay time: full plasticity preserved
+
+
 def test_run_seed_is_deterministic_per_seed():
     assert exp4._run_seed(3, TINY) == exp4._run_seed(3, TINY)
     assert exp4._run_seed(0, TINY) != exp4._run_seed(1, TINY)
@@ -288,6 +424,8 @@ def test_combine_verdicts_for_conjunctive_claims():
 
 
 def test_primary_and_robustness_families_cover_the_mandated_comparisons():
+    # v3 enlarges the primary family (m=9) with the two reset-replay
+    # identifiability controls; the tie-break robustness family is unchanged
     assert exp4.PRIMARY_COMPARISONS == [
         ("generational-distill", "weight-copy"),
         ("generational-distill", "one-long-life"),
@@ -295,6 +433,8 @@ def test_primary_and_robustness_families_cover_the_mandated_comparisons():
         ("generational-distill", "no-inheritance"),
         ("generational-distill", "random-advice"),
         ("generational-distill", "optimistic-init"),
+        ("generational-distill", "reset-replay-full"),
+        ("generational-distill", "reset-replay-100"),
         ("constant-eps-life", "one-long-life"),
     ]
     assert exp4.ROBUSTNESS_COMPARISONS == [
@@ -317,6 +457,15 @@ def test_aggregate_meets_output_contract(tmp_path):
     assert out["experiment"] == "exp4_generations"
     assert out["config"]["seed_offset"] == 100
     assert out["config"]["eval_protocol"]
+    # v3 budget-symmetry accounting documented in config: replay updates are
+    # free (no env steps) exactly the way advice priming is free
+    note = out["config"]["free_inheritance"]
+    assert "no env steps" in note and "advice priming" in note
+    # per-seed replay doses surface in the JSON (the raw log itself never does)
+    rf = out["conditions"]["reset-replay-full"]["seeds"][0]
+    assert rf["replayed_by_gen"] == [0] + [TINY["life"]] * (TINY["gens"] - 1)
+    r100 = out["conditions"]["reset-replay-100"]["seeds"][0]
+    assert r100["replayed_by_gen"] == [0] + [TINY["replay_dose"]] * (TINY["gens"] - 1)
     # curves: checkpoint steps + IQM + CI bounds for every condition
     gr = out["curves"]["greedy_return"]
     assert gr["steps"] == [200, 400, 600, 800, 1000]
@@ -350,6 +499,17 @@ def test_aggregate_meets_output_contract(tmp_path):
     for c in con["claims"]:
         assert c["verdict"] in VERDICTS and c["evidence"]
     assert con["summary"]
+    # claim 5 evidence names both replay controls and carries the registered
+    # interpretation sentence for its verdict pair
+    ev5 = con["claims"][4]["evidence"]
+    assert "reset-replay-full" in ev5 and "reset-replay-100" in ev5
+    assert any(phrase in ev5 for phrase in
+               ("content selection", "dose efficiency", "not identifiable",
+                "fails", "matched dose"))
+    # descriptive guard against the "replay arms never found the goal"
+    # misreading: goal-bearing hand-off counts are reported for both replay
+    # arms alongside distill's
+    assert "Discovery-vs-consolidation" in ev5
     # viz: layout, curves, advice trajectories, paths for ALL conditions
     viz = out["viz"]
     grid = viz["grid"]
@@ -372,12 +532,31 @@ def test_aggregate_meets_output_contract(tmp_path):
     assert loaded["viz"]["grid"]["goal"] == [5, 13]
 
 
-def test_claims_are_the_four_mandated_ones():
+def test_claims_are_the_five_mandated_ones():
     assert exp4.CLAIM_NAMES == (
         "peak-experience distillation ratchets across generations",
         "the bottleneck beats weight copying",
         "advice content matters beyond optimism scatter",
-        "plasticity decay is what strands the long life")
+        "plasticity decay is what strands the long life",
+        "curated advice beats raw experience inheritance at matched plasticity")
+
+
+def test_replay_story_covers_every_registered_interpretation():
+    # the honesty clause is registered as a fixed map from the two comparison
+    # verdicts to the interpretation sentence — including the narrowing to
+    # dose efficiency when the full raw log matches curated advice
+    story = exp4._replay_story
+    assert "content selection" in story("supported", "supported")
+    for v_full in ("null", "boundary"):
+        assert "dose efficiency" in story(v_full, "supported")
+        assert "not identifiable" in story(v_full, "null")
+        assert "not identifiable" in story(v_full, "boundary")
+        assert "not identifiable" in story(v_full, "refuted")
+    for v_100 in ("supported", "null", "boundary", "refuted"):
+        assert "fails" in story("refuted", v_100)
+    assert "matched dose" in story("supported", "null")
+    assert "matched dose" in story("supported", "boundary")
+    assert "matched dose" in story("supported", "refuted")
 
 
 def test_smoke_aggregate_carries_nonconfirmatory_note():

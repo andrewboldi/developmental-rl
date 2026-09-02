@@ -83,6 +83,52 @@ def apply_advice(Q, advice, value=5.0):
     return Q
 
 
+class TransitionLog:
+    """Append-only record of a lifetime's (s, a, r, s2, done) transitions.
+
+    The raw-experience inheritance channel (EXP4 v3): where the advice
+    bottleneck hands a fresh student 100 curated (s, a) pairs, the
+    reset-with-replay control hands it this log — the teacher's ENTIRE
+    unfiltered experience, the Nikishin et al. (2022) reset channel — or a
+    uniform sample of it, dose-matched to the bottleneck. `done` is stored
+    exactly as it was fed to the teacher's Q-update, so a replay reproduces
+    the update semantics (bootstrapping through cap truncations included).
+    """
+
+    def __init__(self):
+        self.transitions = []
+
+    def add(self, s, a, r, s2, done):
+        self.transitions.append((int(s), int(a), float(r), int(s2), bool(done)))
+
+    def __len__(self):
+        return len(self.transitions)
+
+    def shuffled(self, rng):
+        """Every transition, in rng-shuffled order (the log is left intact)."""
+        return [self.transitions[int(i)]
+                for i in rng.permutation(len(self.transitions))]
+
+    def sample(self, rng, n):
+        """`n` distinct log entries drawn uniformly WITHOUT replacement, in
+        rng order — matching the advice bottleneck's n distinct pairs."""
+        idx = rng.choice(len(self.transitions), size=n, replace=False)
+        return [self.transitions[int(i)] for i in idx]
+
+
+def replay_pretrain(Q, transitions, lr, gamma):
+    """One pass of standard Q-updates over `transitions` in the given order,
+    at a FIXED lr, mutating Q in place. The update rule mirrors
+    QLearner.update exactly (target = r, or r + gamma * max Q[s2] when not
+    done) but touches no agent state: the student's age — hence its lr/eps
+    schedules — is untouched, so replay pretraining, like advice priming,
+    costs no env steps and no plasticity."""
+    for s, a, r, s2, done in transitions:
+        target = r if done else r + gamma * Q[s2].max()
+        Q[s, a] += lr * (target - Q[s, a])
+    return Q
+
+
 def halflife_schedule(base, halflife):
     """base * 2^(-age/halflife): plasticity that halves every `halflife`
     updates — young agents learn and explore, old agents are rigid."""
